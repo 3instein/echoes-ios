@@ -1,16 +1,37 @@
+// GameScene.swift
+
 import SceneKit
 
 class GameScene: SCNScene {
+    var playerEntity: PlayerEntity!
     var cameraNode: SCNNode!
     
     override init() {
         super.init()
         
-        // Load the ship scene from the Scenes folder
         if let houseScene = SCNScene(named: "house.scn") {
-            for childNode in houseScene.rootNode.childNodes {
-                rootNode.addChildNode(childNode)
+                    for childNode in houseScene.rootNode.childNodes {
+                        rootNode.addChildNode(childNode)
+                    }
+                }
+        
+        // Create a new player entity
+        playerEntity = PlayerEntity()
+        
+        if let playerNode = playerEntity.playerNode {
+            rootNode.addChildNode(playerNode)
+            
+            // Attach the existing camera node from the player to the scene
+            cameraNode = playerNode.childNode(withName: "Camera", recursively: true)
+            if cameraNode != nil {
+                // Make optional adjustments to the camera if needed
+                cameraNode?.camera?.fieldOfView = 75
+                cameraNode?.camera?.automaticallyAdjustsZRange = true
+            } else {
+                print("Warning: Camera node named 'Camera' not found in Player model")
             }
+        } else {
+            print("Warning: Player node named 'Player' not found in Player model")
         }
         
         // Add a default light to the scene
@@ -30,14 +51,6 @@ class GameScene: SCNScene {
         ambientLight.color = UIColor.white
         ambientLightNode.light = ambientLight
         rootNode.addChildNode(ambientLightNode)
-
-        // Add a camera to the scene
-        cameraNode = SCNNode()
-        cameraNode.camera = SCNCamera()
-        cameraNode.position = SCNVector3(x: 0, y: 125, z: 190)
-        cameraNode.camera?.fieldOfView = 75
-        cameraNode.camera?.automaticallyAdjustsZRange = true
-        rootNode.addChildNode(cameraNode)
     }
     
     required init?(coder aDecoder: NSCoder) {
