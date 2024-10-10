@@ -5,17 +5,18 @@ import SceneKit
 
 class PlayerEntity: GKEntity {
     var movementComponent: MovementComponent!
-    var playerNode: SCNNode!
+    var playerNode: SCNNode?
     
-    override init() {
+    init(in houseRootNode: SCNNode) {
         super.init()
         
-        // Load the player model from the art.scnassets folder
-        if let playerScene = SCNScene(named: "art.scnassets/Player.scn") {
-            playerNode = playerScene.rootNode.childNode(withName: "Player", recursively: true)
-            if let playerNode = playerNode {
-                playerNode.position = SCNVector3(x: 0, y: 0, z: 0)
-            }
+        // Locate the player model from the already loaded house scene
+        playerNode = houseRootNode.childNode(withName: "player", recursively: true)
+        
+        if let playerNode = playerNode {
+            
+        } else {
+            print("Warning: Player node named 'Player' not found in house model")
         }
         
         // Create a movement component to handle player movement
