@@ -2,6 +2,7 @@
 
 import UIKit
 import SceneKit
+import GameplayKit
 
 class GameViewController: UIViewController {
     var scnView: SCNView!
@@ -9,6 +10,7 @@ class GameViewController: UIViewController {
     var playerEntity: PlayerEntity!
     var forwardButton: UIButton!
     var movementTimer: Timer?
+    var movementSystem: MovementSystem!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -23,6 +25,12 @@ class GameViewController: UIViewController {
 
         // Set up the PlayerEntity
         playerEntity = gameScene.playerEntity
+        
+        // Set up the MovementSystem
+        movementSystem = MovementSystem(componentClass: MovementComponent.self)
+        if let movementComponent = playerEntity.movementComponent {
+            movementSystem.addComponent(movementComponent)
+        }
         
         // Configure the SCNView
         scnView.allowsCameraControl = false // Disabling manual camera control for testing the movement
@@ -53,8 +61,8 @@ class GameViewController: UIViewController {
     }
     
     @objc func startMovingForward() {
-        // Start a timer to move the player forward smoothly
-        movementTimer = Timer.scheduledTimer(timeInterval: 0.02, target: self, selector: #selector(movePlayerForward), userInfo: nil, repeats: true)
+        // Start a timer to update the movement system smoothly
+        movementTimer = Timer.scheduledTimer(timeInterval: 0.02, target: self, selector: #selector(updateMovementSystem), userInfo: nil, repeats: true)
     }
     
     @objc func stopMovingForward() {
@@ -63,17 +71,9 @@ class GameViewController: UIViewController {
         movementTimer = nil
     }
     
-    @objc func movePlayerForward() {
-        // Move the player forward in the direction it is currently facing
-        if let playerNode = playerEntity.playerNode {
-            let moveVector = SCNVector3(x: 0, y: 0, z: 0.5) // Move in the negative z direction for smooth movement
-            let transformedMoveVector = playerNode.simdTransform * simd_float4(moveVector.x, moveVector.y, moveVector.z, 0)
-            playerNode.position = SCNVector3(
-                x: playerNode.position.x + transformedMoveVector.x,
-                y: playerNode.position.y + transformedMoveVector.y,
-                z: playerNode.position.z + transformedMoveVector.z
-            )
-        }
+    @objc func updateMovementSystem() {
+        // Update the movement system
+        movementSystem.updateMovement(deltaTime: 0.02)
     }
     
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {

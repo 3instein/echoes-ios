@@ -14,14 +14,12 @@ class PlayerEntity: GKEntity {
         playerNode = houseRootNode.childNode(withName: "player", recursively: true)
         
         if let playerNode = playerNode {
-            
+            // Create a movement component to handle player movement
+            movementComponent = MovementComponent(node: playerNode)
+            addComponent(movementComponent)
         } else {
             print("Warning: Player node named 'Player' not found in house model")
         }
-        
-        // Create a movement component to handle player movement
-        movementComponent = MovementComponent()
-        addComponent(movementComponent)
     }
     
     required init?(coder aDecoder: NSCoder) {
