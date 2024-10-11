@@ -49,7 +49,17 @@ class GameViewController: UIViewController {
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        joystickComponent.joystickView.frame = CGRect(x: 50, y: self.view.bounds.height - joystickComponent.joystickSize - 50, width: joystickComponent.joystickSize, height: joystickComponent.joystickSize)
+        
+        // Update the frame of scnView
+        scnView.frame = self.view.bounds
+
+        // Update joystick position
+        joystickComponent.joystickView.frame = CGRect(
+            x: 50,
+            y: self.view.bounds.height - joystickComponent.joystickSize - 50,
+            width: joystickComponent.joystickSize,
+            height: joystickComponent.joystickSize
+        )
     }
     
     override func viewWillDisappear(_ animated: Bool) {
