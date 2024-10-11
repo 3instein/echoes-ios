@@ -10,34 +10,37 @@ class GameScene: SCNScene {
         super.init()
 
         // Load the house scene from the Scenes folder
-        if let houseScene = SCNScene(named: "Scene 1.scn") {
-            // Add the house's nodes to the root node of the GameScene
-            for childNode in houseScene.rootNode.childNodes {
-                rootNode.addChildNode(childNode)
-            }
-            
-            // Create a new player entity and initialize it using the house scene's root node
-            playerEntity = PlayerEntity(in: rootNode)
-
-            if let playerNode = playerEntity.playerNode {
-                // Add player node to the GameScene's rootNode
-                rootNode.addChildNode(playerNode)
-                
-                // Attach the existing camera node from the player model to the scene
-                cameraNode = playerNode.childNode(withName: "Camera", recursively: true)
-                if let cameraNode = cameraNode {
-                    // Make optional adjustments to the camera if needed
-                    cameraNode.camera?.fieldOfView = 75
-                    cameraNode.camera?.automaticallyAdjustsZRange = true
-                } else {
-                    print("Warning: Camera node named 'Camera' not found in Player model")
-                }
-            } else {
-                print("Warning: Player node named 'Player' not found in House model")
-            }
-        } else {
-            print("Warning: House scene 'house.scn' not found")
+        guard let houseScene = SCNScene(named: "Scene 1.scn") else {
+            print("Warning: House scene 'Scene 1.scn' not found")
+            return
         }
+
+        // Add the house's nodes to the root node of the GameScene
+        for childNode in houseScene.rootNode.childNodes {
+            rootNode.addChildNode(childNode)
+        }
+
+        // Create a new player entity and initialize it using the house scene's root node
+        playerEntity = PlayerEntity(in: rootNode)
+
+        guard let playerNode = playerEntity.playerNode else {
+            print("Warning: Player node named 'Player' not found in house model")
+            return
+        }
+
+        // Add player node to the GameScene's rootNode
+        rootNode.addChildNode(playerNode)
+
+        // Attach the existing camera node from the player model to the scene
+        cameraNode = playerNode.childNode(withName: "Camera", recursively: true)
+        guard let cameraNode = cameraNode else {
+            print("Warning: Camera node named 'Camera' not found in Player model")
+            return
+        }
+
+        // Make optional adjustments to the camera if needed
+        cameraNode.camera?.fieldOfView = 75
+        cameraNode.camera?.automaticallyAdjustsZRange = true
 
         // Add a default light to the scene
         let lightNode = SCNNode()
