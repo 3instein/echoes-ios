@@ -5,8 +5,8 @@ import SceneKit
 
 class MovementComponent: GKComponent {
     let playerNode: SCNNode
-    let xSpeed: Float = 60
-    let zSpeed: Float = 45
+    let xSpeed: Float = -60
+    let zSpeed: Float = -45
     
     var joystickComponent: VirtualJoystickComponent?
     
@@ -25,9 +25,9 @@ class MovementComponent: GKComponent {
         let direction = joystick.direction
         let deltaTime = Float(seconds)
         let movementVector = SCNVector3(
-            x: -Float(direction.x) * xSpeed * (deltaTime),
+            x: Float(direction.x) * xSpeed * (deltaTime),
             y: 0,
-            z: -Float(direction.y) * zSpeed * deltaTime
+            z: Float(direction.y) * zSpeed * deltaTime
         )
         playerNode.localTranslate(by: movementVector)
     }
