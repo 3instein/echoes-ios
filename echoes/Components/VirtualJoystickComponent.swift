@@ -9,7 +9,6 @@ class VirtualJoystickComponent: GKComponent {
     var direction: CGPoint = .zero
     let joystickSize: CGFloat = 150.0
     let knobSize: CGFloat = 70.0
-    var inactivityTimer: DispatchWorkItem?
 
     override init() {
         super.init()
@@ -47,7 +46,6 @@ class VirtualJoystickComponent: GKComponent {
         switch gesture.state {
         case .began:
             isTouching = true
-            cancelInactivityTimer()
         case .changed:
             let limitedDistance = min(distance, maxDistance)
             let angle = atan2(offset.y, offset.x)
@@ -59,27 +57,8 @@ class VirtualJoystickComponent: GKComponent {
             isTouching = false
             direction = .zero
             joystickKnob.frame.origin = CGPoint(x: (joystickSize - knobSize) / 2, y: (joystickSize - knobSize) / 2)
-            startInactivityTimer()
         default:
             break
         }
     }
-
-    private func startInactivityTimer() {
-        inactivityTimer = DispatchWorkItem { [weak self] in
-            self?.hideJoystick()
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: inactivityTimer!)
-    }
-
-    private func cancelInactivityTimer() {
-        inactivityTimer?.cancel()
-    }
-
-    private func hideJoystick() {
-        UIView.animate(withDuration: 0.3) {
-            self.joystickView.alpha = 0.0
-        }
-    }
 }
-
