@@ -1,10 +1,12 @@
 // GameScene.swift
 
 import SceneKit
+import UIKit
 
 class GameScene: SCNScene {
     var playerEntity: PlayerEntity!
     var cameraNode: SCNNode!
+    var cameraComponent: CameraComponent!
 
     override init() {
         super.init()
@@ -41,6 +43,9 @@ class GameScene: SCNScene {
         // Make optional adjustments to the camera if needed
         cameraNode.camera?.fieldOfView = 75
         cameraNode.camera?.automaticallyAdjustsZRange = true
+
+        // Initialize the CameraComponent for handling panning movement
+        cameraComponent = CameraComponent(cameraNode: cameraNode)
 
         // Add a default light to the scene
         let lightNode = SCNNode()
