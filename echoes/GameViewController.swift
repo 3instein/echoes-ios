@@ -1,116 +1,90 @@
-//
-//  GameViewController.swift
-//  echoes
-//
-//  Created by Reynaldi Kindarto on 08/10/24.
-//
+// GameViewController.swift
 
 import UIKit
-import QuartzCore
 import SceneKit
 
 class GameViewController: UIViewController {
+    var scnView: SCNView!
+    var gameScene: GameScene!
+    var playerEntity: PlayerEntity!
+    var forwardButton: UIButton!
+    var movementTimer: Timer?
 
     override func viewDidLoad() {
         super.viewDidLoad()
+
+        // Set up the SCNView
+        scnView = SCNView(frame: self.view.frame)
+        self.view.addSubview(scnView)
         
-        // create a new scene
-        let scene = SCNScene(named: "art.scnassets/ship.scn")!
+        // Set up the GameScene
+        gameScene = GameScene()
+        scnView.scene = gameScene
+
+        // Set up the PlayerEntity
+        playerEntity = gameScene.playerEntity
         
-        // create and add a camera to the scene
-        let cameraNode = SCNNode()
-        cameraNode.camera = SCNCamera()
-        scene.rootNode.addChildNode(cameraNode)
-        
-        // place the camera
-        cameraNode.position = SCNVector3(x: 0, y: 0, z: 15)
-        
-        // create and add a light to the scene
-        let lightNode = SCNNode()
-        lightNode.light = SCNLight()
-        lightNode.light!.type = .omni
-        lightNode.position = SCNVector3(x: 0, y: 10, z: 10)
-        scene.rootNode.addChildNode(lightNode)
-        
-        // create and add an ambient light to the scene
-        let ambientLightNode = SCNNode()
-        ambientLightNode.light = SCNLight()
-        ambientLightNode.light!.type = .ambient
-        ambientLightNode.light!.color = UIColor.darkGray
-        scene.rootNode.addChildNode(ambientLightNode)
-        
-        // retrieve the ship node
-        let ship = scene.rootNode.childNode(withName: "ship", recursively: true)!
-        
-        // animate the 3d object
-        ship.runAction(SCNAction.repeatForever(SCNAction.rotateBy(x: 0, y: 2, z: 0, duration: 1)))
-        
-        // retrieve the SCNView
-        let scnView = self.view as! SCNView
-        
-        // set the scene to the view
-        scnView.scene = scene
-        
-        // allows the user to manipulate the camera
-        scnView.allowsCameraControl = true
-        
-        // show statistics such as fps and timing information
+        // Configure the SCNView
+        scnView.allowsCameraControl = false // Disabling manual camera control for testing the movement
         scnView.showsStatistics = true
-        
-        // configure the view
         scnView.backgroundColor = UIColor.black
+
+        // Create and set up the forward button
+        forwardButton = UIButton(type: .system)
+        forwardButton.setTitle("Move Forward", for: .normal)
+        forwardButton.backgroundColor = UIColor.systemBlue
+        forwardButton.setTitleColor(.white, for: .normal)
+        forwardButton.layer.cornerRadius = 10
+        forwardButton.translatesAutoresizingMaskIntoConstraints = false
         
-        // add a tap gesture recognizer
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
-        scnView.addGestureRecognizer(tapGesture)
+        // Add target actions for button press and release
+        forwardButton.addTarget(self, action: #selector(startMovingForward), for: .touchDown)
+        forwardButton.addTarget(self, action: #selector(stopMovingForward), for: [.touchUpInside, .touchUpOutside, .touchCancel])
+        
+        self.view.addSubview(forwardButton)
+        
+        // Set button constraints
+        NSLayoutConstraint.activate([
+            forwardButton.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
+            forwardButton.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: -50),
+            forwardButton.widthAnchor.constraint(equalToConstant: 150),
+            forwardButton.heightAnchor.constraint(equalToConstant: 50)
+        ])
     }
     
-    @objc
-    func handleTap(_ gestureRecognize: UIGestureRecognizer) {
-        // retrieve the SCNView
-        let scnView = self.view as! SCNView
-        
-        // check what nodes are tapped
-        let p = gestureRecognize.location(in: scnView)
-        let hitResults = scnView.hitTest(p, options: [:])
-        // check that we clicked on at least one object
-        if hitResults.count > 0 {
-            // retrieved the first clicked object
-            let result = hitResults[0]
-            
-            // get its material
-            let material = result.node.geometry!.firstMaterial!
-            
-            // highlight it
-            SCNTransaction.begin()
-            SCNTransaction.animationDuration = 0.5
-            
-            // on completion - unhighlight
-            SCNTransaction.completionBlock = {
-                SCNTransaction.begin()
-                SCNTransaction.animationDuration = 0.5
-                
-                material.emission.contents = UIColor.black
-                
-                SCNTransaction.commit()
-            }
-            
-            material.emission.contents = UIColor.red
-            
-            SCNTransaction.commit()
+    @objc func startMovingForward() {
+        // Start a timer to move the player forward smoothly
+        movementTimer = Timer.scheduledTimer(timeInterval: 0.02, target: self, selector: #selector(movePlayerForward), userInfo: nil, repeats: true)
+    }
+    
+    @objc func stopMovingForward() {
+        // Invalidate the movement timer to stop moving the player
+        movementTimer?.invalidate()
+        movementTimer = nil
+    }
+    
+    @objc func movePlayerForward() {
+        // Move the player forward in the direction it is currently facing
+        if let playerNode = playerEntity.playerNode {
+            let moveVector = SCNVector3(x: 0, y: 0, z: 0.5) // Move in the negative z direction for smooth movement
+            let transformedMoveVector = playerNode.simdTransform * simd_float4(moveVector.x, moveVector.y, moveVector.z, 0)
+            playerNode.position = SCNVector3(
+                x: playerNode.position.x + transformedMoveVector.x,
+                y: playerNode.position.y + transformedMoveVector.y,
+                z: playerNode.position.z + transformedMoveVector.z
+            )
         }
-    }
-    
-    override var prefersStatusBarHidden: Bool {
-        return true
     }
     
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
-        if UIDevice.current.userInterfaceIdiom == .phone {
-            return .allButUpsideDown
-        } else {
-            return .all
-        }
+        return .landscape
     }
 
+    override var shouldAutorotate: Bool {
+        return true
+    }
+
+    override var prefersStatusBarHidden: Bool {
+        return true
+    }
 }
