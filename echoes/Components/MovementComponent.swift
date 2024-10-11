@@ -1,14 +1,28 @@
-import GameplayKit
+// MovementComponent.swift
 
-class MovementComponent: GKAgent3D {
-    override init() {
+import GameplayKit
+import SceneKit
+
+class MovementComponent: GKComponent {
+    private var node: SCNNode
+    private var velocity: Float = 0.5
+
+    init(node: SCNNode) {
+        self.node = node
         super.init()
-        // Set some movement properties, like speed
-        self.maxSpeed = 5.0
-        self.maxAcceleration = 10.0
     }
-    
-    required init(coder aDecoder: NSCoder) {
+
+    required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    func moveForward() {
+        let moveVector = SCNVector3(x: 0, y: 0, z: velocity)
+        let transformedMoveVector = node.simdTransform * simd_float4(moveVector.x, moveVector.y, moveVector.z, 0)
+        node.position = SCNVector3(
+            x: node.position.x + transformedMoveVector.x,
+            y: node.position.y + transformedMoveVector.y,
+            z: node.position.z + transformedMoveVector.z
+        )
     }
 }
