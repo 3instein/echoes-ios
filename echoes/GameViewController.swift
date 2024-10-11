@@ -1,4 +1,4 @@
-// GameViewController.swift
+// GameViewController.swift (Modified for joystick integration)
 
 import UIKit
 import SceneKit
@@ -8,9 +8,7 @@ class GameViewController: UIViewController {
     var scnView: SCNView!
     var gameScene: GameScene!
     var playerEntity: PlayerEntity!
-    var forwardButton: UIButton!
-    var movementTimer: Timer?
-    var movementSystem: MovementSystem!
+    var joystickComponent: VirtualJoystickComponent!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,56 +24,49 @@ class GameViewController: UIViewController {
         // Set up the PlayerEntity
         playerEntity = gameScene.playerEntity
         
-        // Set up the MovementSystem
-        movementSystem = MovementSystem(componentClass: MovementComponent.self)
+        // Set up joystick component
+        joystickComponent = VirtualJoystickComponent()
+        joystickComponent.attachToView(self.view)
+        
+        // Link the joystick with the movement component
         if let movementComponent = playerEntity.movementComponent {
-            movementSystem.addComponent(movementComponent)
+            movementComponent.joystickComponent = joystickComponent
         }
         
         // Configure the SCNView
-        scnView.allowsCameraControl = false // Disabling manual camera control for testing the movement
+        scnView.allowsCameraControl = false
         scnView.showsStatistics = true
         scnView.backgroundColor = UIColor.black
 
-        // Create and set up the forward button
-        forwardButton = UIButton(type: .system)
-        forwardButton.setTitle("Move Forward", for: .normal)
-        forwardButton.backgroundColor = UIColor.systemBlue
-        forwardButton.setTitleColor(.white, for: .normal)
-        forwardButton.layer.cornerRadius = 10
-        forwardButton.translatesAutoresizingMaskIntoConstraints = false
+        // Start the update loop
+        let displayLink = CADisplayLink(target: self, selector: #selector(updateScene))
+        displayLink.add(to: .main, forMode: .default)
+    }
+    
+    @objc func updateScene() {
+    playerEntity.movementComponent?.update(deltaTime: 0.016)
+}
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
         
-        // Add target actions for button press and release
-        forwardButton.addTarget(self, action: #selector(startMovingForward), for: .touchDown)
-        forwardButton.addTarget(self, action: #selector(stopMovingForward), for: [.touchUpInside, .touchUpOutside, .touchCancel])
-        
-        self.view.addSubview(forwardButton)
-        
-        // Set button constraints
-        NSLayoutConstraint.activate([
-            forwardButton.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
-            forwardButton.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: -50),
-            forwardButton.widthAnchor.constraint(equalToConstant: 150),
-            forwardButton.heightAnchor.constraint(equalToConstant: 50)
-        ])
+        // Update the frame of scnView
+        scnView.frame = self.view.bounds
+
+        // Update joystick position
+        joystickComponent.joystickView.frame = CGRect(
+            x: 50,
+            y: self.view.bounds.height - joystickComponent.joystickSize - 50,
+            width: joystickComponent.joystickSize,
+            height: joystickComponent.joystickSize
+        )
     }
     
-    @objc func startMovingForward() {
-        // Start a timer to update the movement system smoothly
-        movementTimer = Timer.scheduledTimer(timeInterval: 0.02, target: self, selector: #selector(updateMovementSystem), userInfo: nil, repeats: true)
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        joystickComponent.joystickView.removeFromSuperview()
     }
-    
-    @objc func stopMovingForward() {
-        // Invalidate the movement timer to stop moving the player
-        movementTimer?.invalidate()
-        movementTimer = nil
-    }
-    
-    @objc func updateMovementSystem() {
-        // Update the movement system
-        movementSystem.updateMovement(deltaTime: 0.02)
-    }
-    
+
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
         return .landscape
     }

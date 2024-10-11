@@ -19,7 +19,7 @@ class PlayerEntity: GKEntity {
         self.playerNode = playerNode
 
         // Create a movement component to handle player movement
-        movementComponent = MovementComponent(node: playerNode)
+        movementComponent = MovementComponent(playerNode: playerNode)
         addComponent(movementComponent)
     }
 

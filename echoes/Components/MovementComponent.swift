@@ -4,25 +4,31 @@ import GameplayKit
 import SceneKit
 
 class MovementComponent: GKComponent {
-    private var node: SCNNode
-    private var velocity: Float = 0.5
-
-    init(node: SCNNode) {
-        self.node = node
+    let playerNode: SCNNode
+    let xSpeed: Float = -60
+    let zSpeed: Float = -45
+    
+    var joystickComponent: VirtualJoystickComponent?
+    
+    init(playerNode: SCNNode) {
+        self.playerNode = playerNode
         super.init()
     }
 
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
-    func moveForward() {
-        let moveVector = SCNVector3(x: 0, y: 0, z: velocity)
-        let transformedMoveVector = node.simdTransform * simd_float4(moveVector.x, moveVector.y, moveVector.z, 0)
-        node.position = SCNVector3(
-            x: node.position.x + transformedMoveVector.x,
-            y: node.position.y + transformedMoveVector.y,
-            z: node.position.z + transformedMoveVector.z
+    
+    override func update(deltaTime seconds: TimeInterval) {
+        guard let joystick = joystickComponent, joystick.isTouching else { return }
+        
+        let direction = joystick.direction
+        let deltaTime = Float(seconds)
+        let movementVector = SCNVector3(
+            x: Float(direction.x) * xSpeed * (deltaTime),
+            y: 0,
+            z: Float(direction.y) * zSpeed * deltaTime
         )
+        playerNode.localTranslate(by: movementVector)
     }
 }
