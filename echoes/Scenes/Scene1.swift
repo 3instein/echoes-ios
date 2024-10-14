@@ -23,7 +23,7 @@ class Scene1: SCNScene {
         }
 
         // Create a new player entity and initialize it using the house scene's root node
-        playerEntity = PlayerEntity(in: rootNode)
+        playerEntity = PlayerEntity(in: rootNode, cameraNode: cameraNode)
 
         guard let playerNode = playerEntity.playerNode else {
             print("Warning: Player node named 'Player' not found in house model")
