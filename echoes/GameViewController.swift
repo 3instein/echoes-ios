@@ -26,8 +26,10 @@ class GameViewController: UIViewController {
         scnView.scene = gameScene
 
         // Set up the PlayerEntity
-        playerEntity = gameScene.playerEntity
-        
+        if let gameScene = scnView.scene as? Scene1 {
+            playerEntity = PlayerEntity(in: gameScene.rootNode, cameraNode: gameScene.cameraNode)
+        }
+
         // Set up joystick component
         joystickComponent = VirtualJoystickComponent()
         joystickComponent.attachToView(self.view)
