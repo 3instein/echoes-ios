@@ -44,7 +44,7 @@ class GameScene: SCNScene {
         cameraNode.camera?.fieldOfView = 75
         cameraNode.camera?.automaticallyAdjustsZRange = true
 
-        // Initialize the CameraComponent for handling panning movement
+        // Add the camera component to handle the camera logic
         cameraComponent = CameraComponent(cameraNode: cameraNode)
 
         // Add a default light to the scene
@@ -64,6 +64,10 @@ class GameScene: SCNScene {
         ambientLight.color = UIColor.white
         ambientLightNode.light = ambientLight
         rootNode.addChildNode(ambientLightNode)
+    }
+
+    func setupGestureRecognizers(for view: UIView) {
+        cameraComponent.setupGestureRecognizers(for: view)
     }
 
     required init?(coder aDecoder: NSCoder) {
