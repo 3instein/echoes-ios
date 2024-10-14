@@ -1,10 +1,11 @@
+// GameViewController.swift
+
 import UIKit
 import SceneKit
 import GameplayKit
 
 class GameViewController: UIViewController {
     var scnView: SCNView!
-    var gameScene: GameScene!
     var playerEntity: PlayerEntity!
     var joystickComponent: VirtualJoystickComponent!
 
@@ -15,19 +16,23 @@ class GameViewController: UIViewController {
         scnView = SCNView(frame: self.view.frame)
         self.view.addSubview(scnView)
 
-        // Set up the GameScene
-        gameScene = GameScene()
-        scnView.scene = gameScene
+        // Configure the SceneManager with the SCNView
+        SceneManager.shared.configure(with: scnView)
+
+        // Load the initial game scene
+        SceneManager.shared.loadScene1()
 
         // Set up the PlayerEntity
-        playerEntity = gameScene.playerEntity
+        if let gameScene = scnView.scene as? Scene1 {
+            playerEntity = gameScene.playerEntity
+        }
 
         // Set up joystick component
         joystickComponent = VirtualJoystickComponent()
         joystickComponent.attachToView(self.view)
 
         // Link the joystick with the movement component
-        if let movementComponent = playerEntity.movementComponent {
+        if let movementComponent = playerEntity?.movementComponent {
             movementComponent.joystickComponent = joystickComponent
         }
 
@@ -37,7 +42,9 @@ class GameViewController: UIViewController {
         scnView.backgroundColor = UIColor.black
 
         // Set up the camera gesture recognizers
-        gameScene.setupGestureRecognizers(for: scnView)
+        if let gameScene = scnView.scene as? Scene1 {
+            gameScene.setupGestureRecognizers(for: scnView)
+        }
 
         // Start the update loop
         let displayLink = CADisplayLink(target: self, selector: #selector(updateScene))
@@ -45,7 +52,7 @@ class GameViewController: UIViewController {
     }
 
     @objc func updateScene() {
-        playerEntity.movementComponent?.update(deltaTime: 0.016)
+        playerEntity?.movementComponent?.update(deltaTime: 0.016)
     }
 
     override func viewDidLayoutSubviews() {
