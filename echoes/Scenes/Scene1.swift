@@ -44,7 +44,7 @@ class Scene1: SCNScene {
         cameraNode.camera?.fieldOfView = 75
         cameraNode.camera?.automaticallyAdjustsZRange = true
 
-        // Initialize the CameraComponent for handling panning movement
+        // Add the camera component to handle the camera logic
         cameraComponent = CameraComponent(cameraNode: cameraNode)
 
         // Add a default light to the scene
@@ -64,53 +64,10 @@ class Scene1: SCNScene {
         ambientLight.color = UIColor.white
         ambientLightNode.light = ambientLight
         rootNode.addChildNode(ambientLightNode)
-        
-        if let boxNode = rootNode.childNode(withName: "box", recursively: true) {
-            attachAudio(to: boxNode, audioFileName: "swanlake.wav")
-            addBoxVisualization(to: boxNode)
-        } else {
-            print("Warning: Node named 'box' not found in the scene")
-        }
-        
-        func attachAudio(to node: SCNNode, audioFileName: String) {
-            // Load the audio file as an SCNAudioSource
-            guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
-                print("Warning: Audio file '\(audioFileName)' not found")
-                return
-            }
+    }
 
-            // Preload the audio for smooth playback
-            audioSource.loops = true
-            audioSource.isPositional = true
-            audioSource.shouldStream = false
-            audioSource.load()
-            audioSource.volume = 100.0
-
-            // Create an SCNAction to play the audio source
-            let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: false)
-            
-            // Run the action on the node
-            node.runAction(playAudioAction)
-        }
-        
-        func addBoxVisualization(to node: SCNNode) {
-            // Create a box geometry
-            let boxGeometry = SCNBox(width: 100, height: 100, length: 100, chamferRadius: 0)
-
-            // Create a material for the box
-            let boxMaterial = SCNMaterial()
-            boxMaterial.diffuse.contents = UIColor.red // Set the color of the box to red
-            boxGeometry.materials = [boxMaterial]
-
-            // Create a node with the box geometry
-            let boxNode = SCNNode(geometry: boxGeometry)
-            
-            // Position the box in the scene
-            boxNode.position = SCNVector3(0, 0.5, 0) // Adjust position so the box sits above ground level
-
-            // Add the box node as a child of the given node (the "box" node)
-            node.addChildNode(boxNode)
-        }
+    func setupGestureRecognizers(for view: UIView) {
+        cameraComponent.setupGestureRecognizers(for: view)
     }
 
     required init?(coder aDecoder: NSCoder) {
