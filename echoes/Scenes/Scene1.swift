@@ -3,7 +3,7 @@
 import SceneKit
 import UIKit
 
-class GameScene: SCNScene {
+class Scene1: SCNScene {
     var playerEntity: PlayerEntity!
     var cameraNode: SCNNode!
     var cameraComponent: CameraComponent!
