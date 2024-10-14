@@ -1,4 +1,4 @@
-// GameViewController.swift
+// GameViewController.swift (Modified for joystick integration)
 
 import UIKit
 import SceneKit
@@ -6,8 +6,13 @@ import GameplayKit
 
 class GameViewController: UIViewController {
     var scnView: SCNView!
+    var gameScene: Scene1!
     var playerEntity: PlayerEntity!
     var joystickComponent: VirtualJoystickComponent!
+    var audioSource: SCNAudioSource!
+    let scene = SCNScene(named: "art.scnassets/musicbox.scn")!
+    
+    lazy var musicBoxNode = scene.rootNode.childNode(withName: "musicbox", recursively: true)!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -15,49 +20,40 @@ class GameViewController: UIViewController {
         // Set up the SCNView
         scnView = SCNView(frame: self.view.frame)
         self.view.addSubview(scnView)
-
-        // Configure the SceneManager with the SCNView
-        SceneManager.shared.configure(with: scnView)
-
-        // Load the initial game scene
-        SceneManager.shared.loadScene1()
+        
+        // Set up the GameScene
+        gameScene = Scene1()
+        scnView.scene = gameScene
 
         // Set up the PlayerEntity
-        if let gameScene = scnView.scene as? Scene1 {
-            playerEntity = gameScene.playerEntity
-        }
-
+        playerEntity = gameScene.playerEntity
+        
         // Set up joystick component
         joystickComponent = VirtualJoystickComponent()
         joystickComponent.attachToView(self.view)
-
+        
         // Link the joystick with the movement component
-        if let movementComponent = playerEntity?.movementComponent {
+        if let movementComponent = playerEntity.movementComponent {
             movementComponent.joystickComponent = joystickComponent
         }
-
+        
         // Configure the SCNView
         scnView.allowsCameraControl = false
         scnView.showsStatistics = true
         scnView.backgroundColor = UIColor.black
 
-        // Set up the camera gesture recognizers
-        if let gameScene = scnView.scene as? Scene1 {
-            gameScene.setupGestureRecognizers(for: scnView)
-        }
-
         // Start the update loop
         let displayLink = CADisplayLink(target: self, selector: #selector(updateScene))
         displayLink.add(to: .main, forMode: .default)
     }
-
+    
     @objc func updateScene() {
-        playerEntity?.movementComponent?.update(deltaTime: 0.016)
-    }
-
+    playerEntity.movementComponent?.update(deltaTime: 0.016)
+}
+    
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-
+        
         // Update the frame of scnView
         scnView.frame = self.view.bounds
 
@@ -69,7 +65,7 @@ class GameViewController: UIViewController {
             height: joystickComponent.joystickSize
         )
     }
-
+    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         joystickComponent.joystickView.removeFromSuperview()
