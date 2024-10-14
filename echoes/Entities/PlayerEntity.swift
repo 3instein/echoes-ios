@@ -1,5 +1,3 @@
-// PlayerEntity.swift
-
 import GameplayKit
 import SceneKit
 
@@ -7,7 +5,7 @@ class PlayerEntity: GKEntity {
     var movementComponent: MovementComponent!
     var playerNode: SCNNode?
 
-    init(in houseRootNode: SCNNode) {
+    init(in houseRootNode: SCNNode, cameraNode: SCNNode?) {
         super.init()
 
         // Locate the player model from the already loaded house scene
@@ -19,7 +17,7 @@ class PlayerEntity: GKEntity {
         self.playerNode = playerNode
 
         // Create a movement component to handle player movement
-        movementComponent = MovementComponent(playerNode: playerNode)
+        movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode)
         addComponent(movementComponent)
     }
 
