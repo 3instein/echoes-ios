@@ -20,10 +20,14 @@ class GameViewController: UIViewController {
         SceneManager.shared.configure(with: scnView)
 
         // Load the initial game scene
-        SceneManager.shared.loadScene1()
+//        SceneManager.shared.loadScene1()
+        SceneManager.shared.loadScene3()
 
         // Set up the PlayerEntity
-        if let gameScene = scnView.scene as? Scene1 {
+//        if let gameScene = scnView.scene as? Scene1 {
+//            playerEntity = PlayerEntity(in: gameScene.rootNode, cameraNode: gameScene.cameraNode)
+//        }
+        if let gameScene = scnView.scene as? Scene3 {
             playerEntity = PlayerEntity(in: gameScene.rootNode, cameraNode: gameScene.cameraNode)
         }
 
