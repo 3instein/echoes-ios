@@ -6,9 +6,9 @@ import UIKit
 class Scene3: SCNScene {
     var playerEntity: PlayerEntity!
     var cameraNode: SCNNode!
-    var cameraComponent: CameraComponent!
+    var cameraComponent: CameraComponent?
     var doorNode: SCNNode?
-    var scnView: SCNView!
+    var scnView: SCNView?
     
     override init() {
         super.init()
@@ -25,7 +25,7 @@ class Scene3: SCNScene {
         }
         
         // Find the door node in the scene
-        doorNode = rootNode.childNode(withName: "door_exterior", recursively: true)
+        doorNode = rootNode.childNode(withName: "door", recursively: true)
         
         // Create a new player entity and initialize it using the house scene's root node
         playerEntity = PlayerEntity(in: rootNode, cameraNode: cameraNode)
@@ -45,11 +45,7 @@ class Scene3: SCNScene {
             return
         }
         
-        // Make optional adjustments to the camera if needed
-        cameraNode.camera?.fieldOfView = 75
-        cameraNode.camera?.automaticallyAdjustsZRange = true
-        
-        // Add the camera component to handle the camera logic
+        // Initialize cameraComponent with a valid cameraNode
         cameraComponent = CameraComponent(cameraNode: cameraNode)
         
         // Add a default light to the scene
@@ -72,7 +68,14 @@ class Scene3: SCNScene {
     }
     
     func setupGestureRecognizers(for view: SCNView) {
+        // Save a reference to the SCNView
         self.scnView = view
+        
+        // Ensure cameraComponent is initialized properly before using it
+        guard let cameraComponent = cameraComponent else {
+            print("Error: CameraComponent is nil. Cannot set up gesture recognizers.")
+            return
+        }
         
         // Gesture recognizer for camera control
         cameraComponent.setupGestureRecognizers(for: view)
