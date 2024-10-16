@@ -1,6 +1,6 @@
 # Define download URLs
 SCENE1_URL=https://drive.google.com/uc?export=download&id=1_Cdmk8AnOk5VmO-DVv1W9sshUUvpsHrh&export=download&authuser=0&confirm=t&uuid=eee07aef-dff2-4f4f-89d9-5b1fe3d7cbf7&at=AN_67v3YwVEkLSElXT3J49tozP57:1729044061491
-SCENE2_URL=https://drive.google.com/uc?export=download&id=1GWXm7IIy87CYizBZkt4a9HAnNUZmqQid&export=download&authuser=0&confirm=t&uuid=6e235890-6285-47fa-8463-82f5ec86a99c&at=AN_67v233D7ZczqpYMBqh31dbPRd:1729044107981
+SCENE2_URL=https://drive.google.com/uc?export=download&id=11MB2fBK4F4tZqS5gOd4wxLnIM_WtyKFx
 SCENE4_URL=https://drive.google.com/uc?export=download&id=1_Cdmk8AnOk5VmO-DVv1W9sshUUvpsHrh&export=download&authuser=0&confirm=t&uuid=eee07aef-dff2-4f4f-89d9-5b1fe3d7cbf7&at=AN_67v3YwVEkLSElXT3J49tozP57:1729044061491
 
 # Define target directory to store the downloaded scenes
@@ -17,16 +17,10 @@ $(SCENES_DIR):
 download_scenes: $(SCENES_DIR)
 	@echo "Downloading Scene 1..."
 	@curl -L -o $(SCENES_DIR)/scene1.scn "$(SCENE1_URL)"
-	# Rename the file to Scene 1.scn
-	@mv $(SCENES_DIR)/scene1.scn $(SCENES_DIR)/Scene1.scn
 	@echo "Downloading Scene 2..."
-	@curl -L -o $(SCENES_DIR)/scene2.scn "$(SCENE2_URL)"
-	# Rename the file to Scene 2.scn
-	@mv $(SCENES_DIR)/scene2.scn $(SCENES_DIR)/Scene2.scn
+	@gdown -O $(SCENES_DIR)/scene2.scn "https://drive.google.com/uc?id=11MB2fBK4F4tZqS5gOd4wxLnIM_WtyKFx"
 	@echo "Downloading Scene 4..."
 	@curl -L -o $(SCENES_DIR)/scene4.scn "$(SCENE4_URL)"
-	# Rename the file to Scene 4.scn
-	@mv $(SCENES_DIR)/scene4.scn $(SCENES_DIR)/Scene4.scn
 	@echo "All scenes downloaded!"
 
 # Clean all scenes - remove the scenes directory
