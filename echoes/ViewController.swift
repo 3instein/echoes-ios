@@ -56,6 +56,9 @@ class ViewController: UIViewController {
         settingsButton = createButton(withText: "Settings")
         creditsButton = createButton(withText: "Credits")
         
+        // Add action to the play button
+        playButton.addTarget(self, action: #selector(playButtonTapped), for: .touchUpInside)
+        
         // Add buttons to the view
         view.addSubview(playButton)
         view.addSubview(settingsButton)
@@ -93,6 +96,12 @@ class ViewController: UIViewController {
         button.translatesAutoresizingMaskIntoConstraints = false
         
         return button
+    }
+    
+    @objc func playButtonTapped() {
+        let gameVC = GameViewController()
+        gameVC.modalPresentationStyle = .fullScreen // If you want full screen
+        present(gameVC, animated: false, completion: nil)
     }
     
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
