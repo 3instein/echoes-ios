@@ -1,4 +1,5 @@
 import UIKit
+import AVFoundation // Import AVFoundation for audio playback
 
 class ViewController: UIViewController {
     
@@ -7,9 +8,12 @@ class ViewController: UIViewController {
     var playButton: UIButton!
     var settingsButton: UIButton!
     var creditsButton: UIButton!
+    var audioPlayer: AVAudioPlayer? // Add AVAudioPlayer property
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        playBackgroundMusic() // Call function to play the soundtrack
 
         // Initialize the image view
         mainMenuImageView = UIImageView()
@@ -98,7 +102,23 @@ class ViewController: UIViewController {
         return button
     }
     
+    func playBackgroundMusic() {
+        if let musicURL = Bundle.main.url(forResource: "Soundtrack", withExtension: "mp3") {
+            do {
+                audioPlayer = try AVAudioPlayer(contentsOf: musicURL)
+                audioPlayer?.numberOfLoops = -1 // Loop the audio indefinitely
+                audioPlayer?.play()
+            } catch {
+                print("Failed to load and play the soundtrack: \(error)")
+            }
+        } else {
+            print("Soundtrack.mp3 file not found.")
+        }
+    }
+    
     @objc func playButtonTapped() {
+        audioPlayer?.stop()
+
         // Navigate to SceneOpening to show the video
         let sceneOpeningVC = SceneOpening()
         sceneOpeningVC.modalPresentationStyle = .fullScreen

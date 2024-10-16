@@ -16,11 +16,12 @@ class SceneOpening: UIViewController {
         super.viewDidLoad()
         
         // Load and play video
-        if let videoURL = Bundle.main.url(forResource: "scene 1_voice over", withExtension: "mp4") {
+        if let videoURL = Bundle.main.url(forResource: "Scene 1", withExtension: "mp4") {
             player = AVPlayer(url: videoURL)
             let playerViewController = AVPlayerViewController()
             playerViewController.player = player
             playerViewController.showsPlaybackControls = false
+            playerViewController.videoGravity = .resizeAspectFill
             
             // Present the player view controller
             self.addChild(playerViewController)
