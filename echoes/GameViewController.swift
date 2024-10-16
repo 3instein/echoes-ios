@@ -24,7 +24,7 @@ class GameViewController: UIViewController {
 
         // Set up the PlayerEntity
         if let gameScene = scnView.scene as? Scene1 {
-            playerEntity = PlayerEntity(in: gameScene.rootNode, cameraNode: gameScene.cameraNode)
+            playerEntity = PlayerEntity(in: gameScene.rootNode, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode)
         }
 
         // Set up joystick component
@@ -53,6 +53,11 @@ class GameViewController: UIViewController {
 
     @objc func updateScene() {
         playerEntity?.movementComponent?.update(deltaTime: 0.016)
+        
+        // Update light position to follow player
+        if let gameScene = scnView.scene as? Scene1 {
+            gameScene.updateLightPosition()
+        }
     }
 
     override func viewDidLayoutSubviews() {
