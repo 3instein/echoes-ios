@@ -1,13 +1,15 @@
 import UIKit
+import AVKit // Import AVKit for video playback
 
 class ViewController: UIViewController {
-    
+
     var titleLabel: UILabel!
     var mainMenuImageView: UIImageView!
     var playButton: UIButton!
     var settingsButton: UIButton!
     var creditsButton: UIButton!
-    
+    var player: AVPlayer?
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -66,20 +68,17 @@ class ViewController: UIViewController {
         
         // Auto Layout for the buttons
         NSLayoutConstraint.activate([
-            // Add margin to the top of the first button
             playButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            playButton.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 40), // Increase this constant to add margin from the center
+            playButton.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: 40),
             
-            // Reduce gap between the buttons
             settingsButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            settingsButton.topAnchor.constraint(equalTo: playButton.bottomAnchor, constant: 10), // Reduce this constant for a smaller gap
+            settingsButton.topAnchor.constraint(equalTo: playButton.bottomAnchor, constant: 10),
             
             creditsButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            creditsButton.topAnchor.constraint(equalTo: settingsButton.bottomAnchor, constant: 10) // Reduce this constant for a smaller gap
+            creditsButton.topAnchor.constraint(equalTo: settingsButton.bottomAnchor, constant: 10)
         ])
-
     }
-    
+
     func createButton(withText text: String) -> UIButton {
         let button = UIButton(type: .system)
         button.setTitle(text, for: .normal)
@@ -97,13 +96,44 @@ class ViewController: UIViewController {
         
         return button
     }
-    
+
     @objc func playButtonTapped() {
-        let gameVC = GameViewController()
-        gameVC.modalPresentationStyle = .fullScreen // If you want full screen
-        present(gameVC, animated: false, completion: nil)
+        if let videoURL = Bundle.main.url(forResource: "scene 1_voice over", withExtension: "mp4") {
+            player = AVPlayer(url: videoURL)
+            let playerViewController = AVPlayerViewController()
+            playerViewController.player = player
+            playerViewController.showsPlaybackControls = false // Hide playback controls
+
+            present(playerViewController, animated: true) {
+                self.player?.play() // Play video automatically
+            }
+
+            // Ensure the observer is properly set for the player's current item
+            NotificationCenter.default.addObserver(self, selector: #selector(videoDidFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem)
+        } else {
+            print("Video file not found.")
+        }
     }
-    
+
+    @objc func videoDidFinishPlaying() {
+        print("Video finished playing")
+
+        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem)
+        
+        // Dismiss the AVPlayerViewController before presenting GameViewController
+        dismiss(animated: false) {
+            // Transition to Scene 1 (GameViewController)
+            let gameVC = GameViewController()
+            gameVC.modalPresentationStyle = .fullScreen
+            self.present(gameVC, animated: false, completion: {
+                print("GameViewController presented")
+            })
+        }
+    }
+
+
+
+
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
         return .landscape
     }
@@ -116,4 +146,3 @@ class ViewController: UIViewController {
         return true
     }
 }
-
