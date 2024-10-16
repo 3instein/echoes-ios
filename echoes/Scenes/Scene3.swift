@@ -9,6 +9,7 @@ class Scene3: SCNScene {
     var cameraComponent: CameraComponent?
     var doorNode: SCNNode?
     var scnView: SCNView?
+    var isDoorOpen = false
     
     override init() {
         super.init()
@@ -39,7 +40,7 @@ class Scene3: SCNScene {
         rootNode.addChildNode(playerNode)
         
         // Attach the existing camera node from the player model to the scene
-        cameraNode = playerNode.childNode(withName: "Camera", recursively: true)
+        cameraNode = playerNode.childNode(withName: "camera", recursively: true)
         guard let cameraNode = cameraNode else {
             print("Warning: Camera node named 'Camera' not found in Player model")
             return
@@ -94,8 +95,8 @@ class Scene3: SCNScene {
         // Perform the hit test on the SCNView
         let hitResults = scnView.hitTest(location, options: [:])
         
-        // Check if the door was tapped
-        if let result = hitResults.first(where: { $0.node == doorNode }) {
+        // Check if the door was tapped and the door hasn't been opened yet
+        if let result = hitResults.first(where: { $0.node == doorNode }), !isDoorOpen {
             openDoor()
         }
     }
@@ -106,6 +107,7 @@ class Scene3: SCNScene {
         // Animate the door opening (rotating around the Y-axis)
         let openDoorAction = SCNAction.rotateBy(x: 0, y: -.pi / 2, z: 0, duration: 2.0)
         doorNode.runAction(openDoorAction)
+        isDoorOpen = true
     }
     
     required init?(coder aDecoder: NSCoder) {
