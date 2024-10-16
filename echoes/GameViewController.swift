@@ -20,10 +20,10 @@ class GameViewController: UIViewController {
         SceneManager.shared.configure(with: scnView)
 
         // Load the initial game scene
-        SceneManager.shared.loadScene1()
+        SceneManager.shared.loadScene2()
 
         // Set up the PlayerEntity
-        if let gameScene = scnView.scene as? Scene1 {
+        if let gameScene = scnView.scene as? Scene2 {
             playerEntity = PlayerEntity(in: gameScene.rootNode, cameraNode: gameScene.cameraNode)
         }
 
@@ -42,7 +42,7 @@ class GameViewController: UIViewController {
         scnView.backgroundColor = UIColor.black
 
         // Set up the camera gesture recognizers
-        if let gameScene = scnView.scene as? Scene1 {
+        if let gameScene = scnView.scene as? Scene2 {
             gameScene.setupGestureRecognizers(for: scnView)
         }
 
