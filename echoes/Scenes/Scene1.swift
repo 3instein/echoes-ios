@@ -1,5 +1,3 @@
-// GameScene.swift
-
 import SceneKit
 import UIKit
 
@@ -7,9 +5,11 @@ class Scene1: SCNScene {
     var playerEntity: PlayerEntity!
     var cameraNode: SCNNode!
     var cameraComponent: CameraComponent!
+    var lightNode: SCNNode!
 
     override init() {
         super.init()
+        lightNode = SCNNode()
 
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "Scene 1.scn") else {
@@ -23,7 +23,7 @@ class Scene1: SCNScene {
         }
 
         // Create a new player entity and initialize it using the house scene's root node
-        playerEntity = PlayerEntity(in: rootNode, cameraNode: cameraNode)
+        playerEntity = PlayerEntity(in: rootNode, cameraNode: cameraNode, lightNode: lightNode)
 
         guard let playerNode = playerEntity.playerNode else {
             print("Warning: Player node named 'Player' not found in house model")
@@ -48,22 +48,33 @@ class Scene1: SCNScene {
         cameraComponent = CameraComponent(cameraNode: cameraNode)
 
         // Add a default light to the scene
-        let lightNode = SCNNode()
         let light = SCNLight()
         light.type = .omni
-        light.intensity = 1000
+        light.intensity = 20
         lightNode.light = light
-        lightNode.position = SCNVector3(x: 0, y: 20, z: 20)
+
+        // Set the initial position of the lightNode to match the playerNode's position
+        lightNode.position = playerNode.position
         rootNode.addChildNode(lightNode)
 
         // Add an ambient light to the scene
         let ambientLightNode = SCNNode()
         let ambientLight = SCNLight()
         ambientLight.type = .ambient
-        ambientLight.intensity = 500
-        ambientLight.color = UIColor.white
+        ambientLight.intensity = 20
+        ambientLight.color = UIColor.blue
         ambientLightNode.light = ambientLight
         rootNode.addChildNode(ambientLightNode)
+
+        // Initialize MovementComponent with lightNode reference
+        let movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode)
+        playerEntity.addComponent(movementComponent)
+    }
+
+    // Function to update the light position to follow the player
+    func updateLightPosition() {
+        guard let playerNode = playerEntity.playerNode else { return }
+        lightNode.position = playerNode.position
     }
 
     func setupGestureRecognizers(for view: UIView) {
