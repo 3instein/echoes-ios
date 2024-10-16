@@ -18,15 +18,15 @@ download_scenes: $(SCENES_DIR)
 	@echo "Downloading Scene 1..."
 	@curl -L -o $(SCENES_DIR)/scene1.scn "$(SCENE1_URL)"
 	# Rename the file to Scene 1.scn
-	@mv $(SCENES_DIR)/scene1.scn $(SCENES_DIR)/Scene\ 1.scn
+	@mv $(SCENES_DIR)/scene1.scn $(SCENES_DIR)/Scene1.scn
 	@echo "Downloading Scene 2..."
 	@curl -L -o $(SCENES_DIR)/scene2.scn "$(SCENE2_URL)"
 	# Rename the file to Scene 2.scn
-	@mv $(SCENES_DIR)/scene2.scn $(SCENES_DIR)/Scene\ 2.scn
+	@mv $(SCENES_DIR)/scene2.scn $(SCENES_DIR)/Scene2.scn
 	@echo "Downloading Scene 4..."
 	@curl -L -o $(SCENES_DIR)/scene4.scn "$(SCENE4_URL)"
 	# Rename the file to Scene 4.scn
-	@mv $(SCENES_DIR)/scene4.scn $(SCENES_DIR)/Scene\ 4.scn
+	@mv $(SCENES_DIR)/scene4.scn $(SCENES_DIR)/Scene4.scn
 	@echo "All scenes downloaded!"
 
 # Clean all scenes - remove the scenes directory
