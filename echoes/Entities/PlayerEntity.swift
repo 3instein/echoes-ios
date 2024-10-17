@@ -5,7 +5,7 @@ class PlayerEntity: GKEntity {
     var movementComponent: MovementComponent!
     var playerNode: SCNNode?
 
-    init(in houseRootNode: SCNNode, cameraNode: SCNNode?) {
+    init(in houseRootNode: SCNNode, cameraNode: SCNNode?, lightNode: SCNNode) { // Add lightNode as a parameter
         super.init()
 
         // Locate the player model from the already loaded house scene
@@ -16,8 +16,8 @@ class PlayerEntity: GKEntity {
 
         self.playerNode = playerNode
 
-        // Create a movement component to handle player movement
-        movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode)
+        // Create a movement component to handle player movement, including the light node
+        movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode) // Pass lightNode
         addComponent(movementComponent)
     }
 
