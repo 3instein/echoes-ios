@@ -8,6 +8,7 @@ class GameViewController: UIViewController {
     var scnView: SCNView!
     var playerEntity: PlayerEntity!
     var joystickComponent: VirtualJoystickComponent!
+    var scene1: Scene1!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -20,10 +21,19 @@ class GameViewController: UIViewController {
         SceneManager.shared.configure(with: scnView)
 
         // Load the initial game scene
-        SceneManager.shared.loadScene6()
+        SceneManager.shared.loadScene1()
+
+        // Now check if the loaded scene is Scene1 and assign it to the scene1 variable
+        if let loadedScene = scnView.scene as? Scene1 {
+            scene1 = loadedScene
+            // Call displayPuzzlePieces after ensuring scene1 is not nil
+            scene1.displayPuzzlePieces(on: self.view)
+        } else {
+            print("Error: Scene1 not loaded correctly")
+        }
 
         // Set up the PlayerEntity
-        if let gameScene = scnView.scene as? Scene6 {
+        if let gameScene = scnView.scene as? Scene1 {
             playerEntity = PlayerEntity(in: gameScene.rootNode, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode)
             
             // Set up fog properties for the scene
@@ -53,6 +63,8 @@ class GameViewController: UIViewController {
         let displayLink = CADisplayLink(target: self, selector: #selector(updateScene))
         displayLink.add(to: .main, forMode: .default)
     }
+
+
 
     @objc func updateScene() {
         playerEntity?.movementComponent?.update(deltaTime: 0.016)
