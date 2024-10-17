@@ -35,7 +35,6 @@ class SceneManager {
         scnView?.scene = scene1
         currentScene = scene1
     }
-
     func loadScene2() {
         let scene2 = Scene2()  // Assuming Scene2 also accepts lightNode
         scnView?.scene = scene2
@@ -53,6 +52,4 @@ class SceneManager {
            scnView?.scene = scene4
            currentScene = scene4
     }
-
-    // Add more scene-loading functions if needed, all using the shared lightNode
 }
