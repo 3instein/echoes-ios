@@ -29,9 +29,22 @@
 		C957340C2CB4C64E00E35F32 /* echoesUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = echoesUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C96865842CBF5C9100016CD7 /* Exceptions for "echoes" folder in "echoes" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C95733EC2CB4C64C00E35F32 /* echoes */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C95733EF2CB4C64C00E35F32 /* echoes */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C96865842CBF5C9100016CD7 /* Exceptions for "echoes" folder in "echoes" target */,
+			);
 			path = echoes;
 			sourceTree = "<group>";
 		};
@@ -397,6 +410,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = S4Z9KPA382;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = echoes/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -425,6 +439,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = S4Z9KPA382;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = echoes/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
