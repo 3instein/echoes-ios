@@ -1,4 +1,9 @@
-// GameScene.swift
+//
+//  Scene2.swift
+//  echoes
+//
+//  Created by Pelangi Masita Wati on 17/10/24.
+//
 
 import SceneKit
 import UIKit
@@ -7,7 +12,6 @@ class Scene2: SCNScene {
     var playerEntity: PlayerEntity!
     var cameraNode: SCNNode!
     var cameraComponent: CameraComponent!
-    var lightNode: SCNNode!
 
     override init() {
         super.init()
@@ -24,7 +28,7 @@ class Scene2: SCNScene {
         }
 
         // Create a new player entity and initialize it using the house scene's root node
-        playerEntity = PlayerEntity(in: rootNode, cameraNode: cameraNode, lightNode: lightNode)
+        playerEntity = PlayerEntity(in: rootNode, cameraNode: cameraNode)
 
         guard let playerNode = playerEntity.playerNode else {
             print("Warning: Player node named 'Player' not found in house model")
@@ -66,40 +70,48 @@ class Scene2: SCNScene {
         ambientLightNode.light = ambientLight
         rootNode.addChildNode(ambientLightNode)
         
-        if let boxNode = rootNode.childNode(withName: "box", recursively: true) {
-            attachAudio(to: boxNode, audioFileName: "swanlake.wav")
-            addBoxVisualization(to: boxNode)
-        } else {
-            print("Warning: Node named 'box' not found in the scene")
+//        if let boxNode = rootNode.childNode(withName: "box", recursively: true) {
+//            attachAudio(to: boxNode, audioFileName: "swanlake.wav", volume: 0.5)
+//            addBoxVisualization(to: boxNode)
+//        }
+
+        if let thunderNode = rootNode.childNode(withName: "wind", recursively: true) {
+            attachAudio(to: thunderNode, audioFileName: "wind.wav", volume: 0.5)
+            addBoxVisualization(to: thunderNode)
         }
         
-        if let thunderNode = rootNode.childNode(withName: "thunder", recursively: true) {
-            attachAudio(to: thunderNode, audioFileName: "thunder.wav")
+        if let thunderNode = rootNode.childNode(withName: "crow", recursively: true) {
+            attachAudio(to: thunderNode, audioFileName: "crow.wav", volume: 0.5)
             addBoxVisualization(to: thunderNode)
-        } else {
-            print("Warning: Node named 'thunder' not found in the scene")
         }
 
+        movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 20.0)
+        
+        self.background.contents = UIColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0) 
     }
     
-    func attachAudio(to node: SCNNode, audioFileName: String) {
-        // Load the audio file as an SCNAudioSource
+    func movePlayer(to position: SCNVector3, duration: TimeInterval) {
+        guard let playerNode = playerEntity?.playerNode else { return }
+        let moveAction = SCNAction.move(to: position, duration: duration)
+        moveAction.timingMode = .easeInEaseOut
+        playerNode.runAction(moveAction)
+    }
+    
+    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float = 1.0) {
         guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
             print("Warning: Audio file '\(audioFileName)' not found")
             return
         }
 
-        // Preload the audio for smooth playback
         audioSource.loops = true
         audioSource.isPositional = true
         audioSource.shouldStream = false
         audioSource.load()
-        audioSource.volume = 100.0
+        
+        audioSource.volume = volume
 
-        // Create an SCNAction to play the audio source
         let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: false)
         
-        // Run the action on the node
         node.runAction(playAudioAction)
     }
     
