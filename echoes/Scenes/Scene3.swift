@@ -15,8 +15,8 @@ class Scene3: SCNScene {
         super.init()
         
         // Load the house scene from the Scenes folder
-        guard let houseScene = SCNScene(named: "Scene 3.scn") else {
-            print("Warning: House scene 'Scene 3.scn' not found")
+        guard let houseScene = SCNScene(named: "Scene3.scn") else {
+            print("Warning: House scene 'Scene3.scn' not found")
             return
         }
         
@@ -105,7 +105,7 @@ class Scene3: SCNScene {
         guard let doorNode = doorNode else { return }
         
         // Animate the door opening (rotating around the Y-axis)
-        let openDoorAction = SCNAction.rotateBy(x: 0, y: -.pi / 2, z: 0, duration: 2.0)
+        let openDoorAction = SCNAction.rotateBy(x: 0, y: 0, z: .pi / 2, duration: 2.0)
         doorNode.runAction(openDoorAction)
         isDoorOpen = true
     }
