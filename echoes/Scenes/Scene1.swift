@@ -6,6 +6,8 @@ class Scene1: SCNScene {
     var cameraNode: SCNNode!
     var cameraComponent: CameraComponent!
     var lightNode: SCNNode!
+    var combinedPieces: [UIView: [UIView]] = [:]  // Dictionary that tracks combined pieces
+    var completedCombinations: [[UIView]] = []  // Track completed combinations
 
     weak var scnView: SCNView?
 
@@ -67,9 +69,17 @@ class Scene1: SCNScene {
         lightNode.position = playerNode.position
     }
 
+    //         let pieceImages = ["puzzle_piece_1.png", "puzzle_piece_2.png", "puzzle_piece_3.png", "puzzle_piece_4.png", "puzzle_piece_5.png", "puzzle_piece_6.png", "puzzle_piece_7.png", "puzzle_piece_8.png", "puzzle_piece_9.png", "puzzle_piece_10.png", "puzzle_piece_11.png", "puzzle_piece_12.png", "puzzle_piece_13.png", "puzzle_piece_14.png","puzzle_piece_15.png", "puzzle_piece_16.png", "puzzle_piece_17.png"]
+
     func displayPuzzlePieces(on view: UIView) {
-        let maxSize = CGSize(width: 100, height: 100)
-        let pieceImages = ["puzzle_piece_1.png", "puzzle_piece_2.png", "puzzle_piece_3.png", "puzzle_piece_4.png", "puzzle_piece_5.png", "puzzle_piece_6.png", "puzzle_piece_7.png", "puzzle_piece_8.png", "puzzle_piece_9.png", "puzzle_piece_10.png", "puzzle_piece_11.png", "puzzle_piece_12.png", "puzzle_piece_13.png", "puzzle_piece_14.png","puzzle_piece_15.png", "puzzle_piece_16.png", "puzzle_piece_17.png"]
+        let pieceImages = [
+            "puzzle_piece_1.png", "puzzle_piece_2.png", "puzzle_piece_3.png",
+            "puzzle_piece_4.png", "puzzle_piece_5.png", "puzzle_piece_6.png",
+            "puzzle_piece_7.png", "puzzle_piece_8.png", "puzzle_piece_9.png",
+            "puzzle_piece_10.png", "puzzle_piece_11.png", "puzzle_piece_12.png",
+            "puzzle_piece_13.png", "puzzle_piece_14.png", "puzzle_piece_15.png",
+            "puzzle_piece_16.png", "puzzle_piece_17.png"
+        ]
 
         let puzzleBackground = UIView()
         puzzleBackground.backgroundColor = UIColor.white.withAlphaComponent(0.8)
@@ -90,25 +100,32 @@ class Scene1: SCNScene {
         for pieceImage in pieceImages {
             guard let image = UIImage(named: pieceImage) else { continue }
 
-            let aspectRatio = image.size.width / image.size.height
             var pieceSize: CGSize
 
-            if aspectRatio > 1 {
-                pieceSize = CGSize(width: maxSize.width, height: maxSize.width / aspectRatio)
-            } else {
-                pieceSize = CGSize(width: maxSize.height * aspectRatio, height: maxSize.height)
-            }
+            // Scale width and height by 0.4 for all pieces except 4, 5, and 15
+            pieceSize = CGSize(width: image.size.width * 0.05, height: image.size.height * 0.05)
+
+            // Ensure pieceSize does not exceed backgroundSize
+            pieceSize.width = min(pieceSize.width, backgroundSize.width)
+            pieceSize.height = min(pieceSize.height, backgroundSize.height)
 
             let imageView = UIImageView(image: image)
             imageView.frame = CGRect(
-                x: CGFloat(arc4random_uniform(UInt32(backgroundSize.width - pieceSize.width))),
-                y: CGFloat(arc4random_uniform(UInt32(backgroundSize.height - pieceSize.height))),
+                x: CGFloat(arc4random_uniform(UInt32(max(0, backgroundSize.width - pieceSize.width)))),
+                y: CGFloat(arc4random_uniform(UInt32(max(0, backgroundSize.height - pieceSize.height)))),
                 width: pieceSize.width,
                 height: pieceSize.height
             )
             imageView.contentMode = .scaleAspectFit
             imageView.isUserInteractionEnabled = true
             imageView.accessibilityIdentifier = pieceImage
+
+            // Add shadow to the puzzle piece
+            imageView.layer.shadowColor = UIColor.black.cgColor
+            imageView.layer.shadowOpacity = 0.5
+            imageView.layer.shadowOffset = CGSize(width: 3, height: 3)
+            imageView.layer.shadowRadius = 4
+            imageView.layer.masksToBounds = false
 
             let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
             imageView.addGestureRecognizer(panGesture)
@@ -118,84 +135,175 @@ class Scene1: SCNScene {
     }
 
     let neighbors: [String: [String: CGPoint]] = [
-        "puzzle_piece_1.png": ["puzzle_piece_2.png": CGPoint(x: 30, y: -20)],  // Right neighbor
-        "puzzle_piece_2.png": ["puzzle_piece_1.png": CGPoint(x: -30, y: 20), "puzzle_piece_3.png": CGPoint(x: 30, y: -20)],
-        "puzzle_piece_3.png": ["puzzle_piece_1.png": CGPoint(x: -50, y: 10), "puzzle_piece_2.png": CGPoint(x: -30, y: 20), "puzzle_piece_4.png": CGPoint(x: 30, y: -20), "puzzle_piece_9.png": CGPoint(x: -30, y: 50), "puzzle_piece_10.png": CGPoint(x: 20, y: 70)]
+        "puzzle_piece_1.png": ["puzzle_piece_2.png": CGPoint(x: 30, y: -20), "puzzle_piece_9.png": CGPoint(x: 20, y: 45)],
+        "puzzle_piece_2.png": ["puzzle_piece_1.png": CGPoint(x: -30, y: 20), "puzzle_piece_3.png": CGPoint(x: 20, y: 20)],
+        "puzzle_piece_3.png": ["puzzle_piece_2.png": CGPoint(x: -20, y: -20), "puzzle_piece_4.png": CGPoint(x: 35, y: -10), "puzzle_piece_9.png": CGPoint(x: -40, y: 40)],
+        "puzzle_piece_4.png": ["puzzle_piece_3.png": CGPoint(x: -35, y: 10), "puzzle_piece_5.png": CGPoint(x: 40, y: 5), "puzzle_piece_10.png": CGPoint(x: -15, y: 55)],
+        "puzzle_piece_5.png": ["puzzle_piece_4.png": CGPoint(x: -40, y: -5), "puzzle_piece_6.png": CGPoint(x: 21, y: -10), "puzzle_piece_7.png": CGPoint(x: 40, y: 40)],
+        "puzzle_piece_6.png": ["puzzle_piece_5.png": CGPoint(x: -21, y: 10), "puzzle_piece_7.png": CGPoint(x: 25, y: 42), "puzzle_piece_8.png": CGPoint(x: 53, y: 5)],
+        "puzzle_piece_7.png": ["puzzle_piece_5.png": CGPoint(x: -40, y: -40), "puzzle_piece_6.png": CGPoint(x: -25, y: -42)],
+        "puzzle_piece_8.png": ["puzzle_piece_6.png": CGPoint(x: -53, y: -5), "puzzle_piece_12.png": CGPoint(x: 5, y: 70)],
+        "puzzle_piece_9.png": ["puzzle_piece_1.png": CGPoint(x: -20, y: -45), "puzzle_piece_3.png": CGPoint(x: 40, y: -40), "puzzle_piece_13.png": CGPoint(x: 0, y: 30)],
+        "puzzle_piece_10.png": ["puzzle_piece_4.png": CGPoint(x: 15, y: -55), "puzzle_piece_11.png": CGPoint(x: 60, y: 0), "puzzle_piece_14.png": CGPoint(x: 0, y: 50), "puzzle_piece_15.png": CGPoint(x: 35, y: 50)],
+        "puzzle_piece_11.png": ["puzzle_piece_10.png": CGPoint(x: -60, y: 0), "puzzle_piece_15.png": CGPoint(x: -15, y: 40), "puzzle_piece_16.png": CGPoint(x: 45, y: 40)],
+        "puzzle_piece_12.png": ["puzzle_piece_8.png": CGPoint(x: -5, y: -70), "puzzle_piece_16.png": CGPoint(x: -20, y: 20)],
+        "puzzle_piece_13.png": ["puzzle_piece_9.png": CGPoint(x: -0, y: -30), "puzzle_piece_14.png": CGPoint(x: 45, y: 20), "puzzle_piece_17.png": CGPoint(x: 75, y: 30)],
+        "puzzle_piece_14.png": ["puzzle_piece_10.png": CGPoint(x: 0, y: -50), "puzzle_piece_13.png": CGPoint(x: -45, y: -20), "puzzle_piece_15.png": CGPoint(x: 45, y: 0), "puzzle_piece_17.png": CGPoint(x: 30, y: 25)],
+        "puzzle_piece_15.png": ["puzzle_piece_14.png": CGPoint(x: -45, y: 0), "puzzle_piece_10.png": CGPoint(x: -35, y: -50), "puzzle_piece_11.png": CGPoint(x: 15, y: -40)],
+        "puzzle_piece_16.png": ["puzzle_piece_11.png": CGPoint(x: -45, y: -40), "puzzle_piece_12.png": CGPoint(x: 20, y: -20)],
+        "puzzle_piece_17.png": ["puzzle_piece_13.png": CGPoint(x: -75, y: -30), "puzzle_piece_14.png": CGPoint(x: -30, y: -25)]
     ]
 
-    let snapDistance: CGFloat = 20.0
+    let snapDistance: CGFloat = 50.0
 
     @objc func handlePanGesture(_ sender: UIPanGestureRecognizer) {
         guard let piece = sender.view else { return }
         let translation = sender.translation(in: piece.superview)
 
-        piece.center = CGPoint(x: piece.center.x + translation.x, y: piece.center.y + translation.y)
+        let group = combinedPieces[piece] ?? [piece]
+
+        // Move all pieces in the group together
+        for pieceInGroup in group {
+            pieceInGroup.center = CGPoint(x: pieceInGroup.center.x + translation.x, y: pieceInGroup.center.y + translation.y)
+        }
 
         sender.setTranslation(.zero, in: piece.superview)
 
-        if let puzzleBackground = piece.superview {
-            let pieceFrame = piece.frame
-
-            let minX = puzzleBackground.bounds.minX
-            let maxX = puzzleBackground.bounds.maxX - pieceFrame.width
-            let minY = puzzleBackground.bounds.minY
-            let maxY = puzzleBackground.bounds.maxY - pieceFrame.height
-
-            if pieceFrame.origin.x < minX {
-                piece.frame.origin.x = minX
-            }
-            if pieceFrame.origin.x > maxX {
-                piece.frame.origin.x = maxX
-            }
-            if pieceFrame.origin.y < minY {
-                piece.frame.origin.y = minY
-            }
-            if pieceFrame.origin.y > maxY {
-                piece.frame.origin.y = maxY
-            }
-        }
-
         if sender.state == .ended {
             print("\(piece.accessibilityIdentifier ?? "Piece") dropped at position: \(piece.center)")
-        }
 
-        checkForNearbyPieces(piece)
+            // Check for nearby pieces
+            checkForNearbyPieces(piece)
+        }
     }
 
     func checkForNearbyPieces(_ currentPiece: UIView) {
         guard let currentImageView = currentPiece as? UIImageView,
               let currentImageName = currentImageView.accessibilityIdentifier else { return }
 
+        let currentGroup = combinedPieces[currentPiece] ?? [currentPiece]
+
         if let currentNeighbors = neighbors[currentImageName] {
             for (neighborName, offset) in currentNeighbors {
                 if let neighborPiece = findPiece(byName: neighborName, in: currentPiece.superview) {
-                    // Calculate the expected position for the neighbor based on the current piece's position and the offset
-                    let expectedPosition = CGPoint(x: currentPiece.center.x + offset.x,
-                                                    y: currentPiece.center.y + offset.y)
+                    let neighborGroup = combinedPieces[neighborPiece] ?? [neighborPiece]
 
-                    // Calculate distance between the neighbor's frame and expected position
-                    let neighborFrame = neighborPiece.frame
+                    if let pieceInCurrentGroup = currentGroup.first {
+                        let expectedPosition = CGPoint(
+                            x: pieceInCurrentGroup.center.x + offset.x,
+                            y: pieceInCurrentGroup.center.y + offset.y
+                        )
 
-                    // Calculate the distance to the center of the neighbor's frame
-                    let distance = hypot(neighborFrame.midX - expectedPosition.x,
-                                         neighborFrame.midY - expectedPosition.y)
+                        let distance = hypot(neighborPiece.center.x - expectedPosition.x,
+                                             neighborPiece.center.y - expectedPosition.y)
 
-                    print("Checking distance for \(currentImageName) and \(neighborName): \(distance) (snapDistance: \(snapDistance))")
+                        if distance <= snapDistance {
+                            let offsetX = expectedPosition.x - neighborPiece.center.x
+                            let offsetY = expectedPosition.y - neighborPiece.center.y
 
-                    // If the neighbor is within the snap distance, snap it to the expected position
-                    if distance <= snapDistance {
-                        // Snap the neighbor to the expected position
-                        neighborPiece.center = expectedPosition
+                            for piece in neighborGroup {
+                                piece.center = CGPoint(x: piece.center.x + offsetX, y: piece.center.y + offsetY)
+                            }
 
-                        // Optionally disable interaction with the neighbor and current piece
-                        neighborPiece.isUserInteractionEnabled = false
-                        currentPiece.isUserInteractionEnabled = false
+                            let combinedGroup = Array(Set(currentGroup + neighborGroup))
 
-                        print("Pieces combined: \(currentImageName) and \(neighborName)")
+                            for piece in combinedGroup {
+                                combinedPieces[piece] = combinedGroup
+                            }
+
+                            if combinedGroup.count == 17 {
+                                // Add completed group to the completed combinations
+                                completedCombinations.append(combinedGroup)
+                                checkForPuzzleCompletion()
+                            }
+
+                            print("Pieces combined: \(currentImageName) and \(neighborName)")
+                            return
+                        }
                     }
                 }
             }
         }
+    }
+
+    func checkForPuzzleCompletion() {
+        // Check if there are either 1 complete combination with 17 pieces or 2 combinations
+        if completedCombinations.count == 1 && completedCombinations[0].count == 17 {
+            print("Puzzle completed with one combination!")
+            triggerPuzzleCompletionTransition()
+        } else if completedCombinations.count == 2 {
+            print("Puzzle completed with two combinations!")
+            triggerPuzzleCompletionTransition()
+        }
+    }
+
+    func triggerPuzzleCompletionTransition() {
+        guard let superview = combinedPieces.keys.first?.superview else { return }
+
+        // Get the center of the screen
+        let screenCenter = CGPoint(x: superview.bounds.midX, y: superview.bounds.midY)
+
+        // Create an imageView for the completed puzzle image
+        let fullPuzzleImageView = UIImageView(image: UIImage(named: "puzzle_full.png"))
+        fullPuzzleImageView.frame.size = CGSize(width: 300, height: 200)
+        fullPuzzleImageView.contentMode = .scaleAspectFit
+        fullPuzzleImageView.alpha = 0  // Start with hidden image
+        superview.addSubview(fullPuzzleImageView)
+
+        // Animate each piece to the center of the screen
+        UIView.animate(withDuration: 0.5, delay: 0, options: [.curveEaseInOut], animations: {
+            for (piece, _) in self.combinedPieces {
+                piece.center = screenCenter  // Move each piece to the center
+                piece.alpha = 0  // Fade out the pieces
+            }
+        }, completion: { _ in
+            // Remove all individual pieces from the view after animation
+            for (piece, _) in self.combinedPieces {
+                piece.removeFromSuperview()
+            }
+            self.combinedPieces.removeAll()
+            // Set initial properties for the fullPuzzleImageView
+            fullPuzzleImageView.alpha = 0  // Start with the image hidden
+            fullPuzzleImageView.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)  // Start small
+
+            // Center the image on the screen
+            fullPuzzleImageView.center = screenCenter
+            // Fade in the full puzzle image after the pieces are removed
+            fullPuzzleImageView.center = screenCenter  // Ensure it is centered
+            UIView.animate(withDuration: 2.0, delay: 0, usingSpringWithDamping: 0.5, initialSpringVelocity: 0.5, options: [.curveEaseInOut], animations: {
+                fullPuzzleImageView.alpha = 1
+                fullPuzzleImageView.transform = CGAffineTransform.identity
+            }, completion: { finished in
+                let tapGesture = UITapGestureRecognizer(target: self, action: #selector(self.handleFullPuzzleTap(_:)))
+                fullPuzzleImageView.isUserInteractionEnabled = true
+                fullPuzzleImageView.addGestureRecognizer(tapGesture)
+            })
+
+        })
+    }
+    
+    @objc func handleFullPuzzleTap(_ sender: UITapGestureRecognizer) {
+        guard let imageView = sender.view as? UIImageView else { return }
+
+        // Create a flip animation
+        UIView.transition(with: imageView, duration: 1, options: [.transitionFlipFromLeft], animations: {
+            // Change the image to a blank image or add a label with "The End"
+            imageView.image = nil  // Optionally set to a blank image
+            let endLabel = UILabel(frame: imageView.bounds)
+            endLabel.text = "The End"
+            endLabel.textColor = .white
+            // Load and apply the custom font for buttons
+            if let customFont = UIFont(name: "SpecialElite-Regular", size: 32) {
+                endLabel.font = customFont
+            } else {
+                print("Failed to load SpecialElite-Regular font.")
+            }
+            endLabel.textAlignment = .center
+            endLabel.backgroundColor = UIColor.black.withAlphaComponent(1) // Optional background
+            endLabel.layer.cornerRadius = 10
+            endLabel.clipsToBounds = true
+            imageView.addSubview(endLabel)  // Add the label to the imageView
+        }, completion: nil)
     }
 
     func findPiece(byName name: String, in superview: UIView?) -> UIView? {
