@@ -42,6 +42,12 @@ class SceneManager {
         currentScene = scene2
     }
     
+    func loadScene3() {
+        let scene3 = Scene3()
+        scnView?.scene = scene3
+        currentScene = scene3
+    }
+    
     func loadScene4() {
            let scene4 = Scene4()
            scnView?.scene = scene4
