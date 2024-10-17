@@ -25,6 +25,14 @@ class GameViewController: UIViewController {
         // Set up the PlayerEntity
         if let gameScene = scnView.scene as? Scene1 {
             playerEntity = PlayerEntity(in: gameScene.rootNode, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode)
+            
+            // Set up fog properties for the scene
+            gameScene.fogStartDistance = 50.0   // Increase the start distance
+            gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
+            gameScene.fogDensityExponent = 0.2  // Reduce density to make the fog less thick
+            gameScene.fogColor = UIColor.black
+            
+            gameScene.setupGestureRecognizers(for: scnView)
         }
 
         // Set up joystick component
@@ -41,11 +49,6 @@ class GameViewController: UIViewController {
         scnView.showsStatistics = true
         scnView.backgroundColor = UIColor.black
 
-        // Set up the camera gesture recognizers
-        if let gameScene = scnView.scene as? Scene1 {
-            gameScene.setupGestureRecognizers(for: scnView)
-        }
-
         // Start the update loop
         let displayLink = CADisplayLink(target: self, selector: #selector(updateScene))
         displayLink.add(to: .main, forMode: .default)
@@ -53,11 +56,6 @@ class GameViewController: UIViewController {
 
     @objc func updateScene() {
         playerEntity?.movementComponent?.update(deltaTime: 0.016)
-        
-        // Update light position to follow player
-        if let gameScene = scnView.scene as? Scene1 {
-            gameScene.updateLightPosition()
-        }
     }
 
     override func viewDidLayoutSubviews() {
