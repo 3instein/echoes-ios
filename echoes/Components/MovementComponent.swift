@@ -48,8 +48,9 @@ class MovementComponent: GKComponent {
 
         // Calculate the camera's forward and right direction vectors
         let cameraTransform = cameraNode.transform
-        let forwardVector = SCNVector3(cameraTransform.m31, cameraTransform.m32, cameraTransform.m33)
-        let rightVector = SCNVector3(cameraTransform.m11, cameraTransform.m12, -cameraTransform.m13)
+        // Calculate the camera's forward and right direction vectors
+        let forwardVector = normalizeVector(SCNVector3(cameraTransform.m31, 0, cameraTransform.m33))
+        let rightVector = normalizeVector(SCNVector3(cameraTransform.m11, 0, cameraTransform.m13))
 
         // Scale direction by joystick input
         let forwardMovement = forwardVector * Float(direction.y) * movementSpeed * deltaTime
@@ -60,6 +61,7 @@ class MovementComponent: GKComponent {
 
         // Translate the player node based on the movement vector
         playerNode.localTranslate(by: movementVector)
+
 
         // Update light position to follow player
         updateLightPosition()
@@ -164,4 +166,10 @@ func +(left: SCNVector3, right: SCNVector3) -> SCNVector3 {
 
 func *(vector: SCNVector3, scalar: Float) -> SCNVector3 {
     return SCNVector3(vector.x * scalar, vector.y * scalar, vector.z * scalar)
+}
+
+func normalizeVector(_ vector: SCNVector3) -> SCNVector3 {
+    let length = sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z)
+    guard length != 0 else { return SCNVector3Zero }
+    return SCNVector3(vector.x / length, vector.y / length, vector.z / length)
 }
