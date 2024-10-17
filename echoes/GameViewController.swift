@@ -23,8 +23,16 @@ class GameViewController: UIViewController {
         SceneManager.shared.loadScene2()
 
         // Set up the PlayerEntity
-        if let gameScene = scnView.scene as? Scene2 {
-            playerEntity = PlayerEntity(in: gameScene.rootNode, cameraNode: gameScene.cameraNode)
+        if let gameScene = scnView.scene as? Scene1 {
+            playerEntity = PlayerEntity(in: gameScene.rootNode, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode)
+            
+            // Set up fog properties for the scene
+            gameScene.fogStartDistance = 50.0   // Increase the start distance
+            gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
+            gameScene.fogDensityExponent = 0.2  // Reduce density to make the fog less thick
+            gameScene.fogColor = UIColor.black
+            
+            gameScene.setupGestureRecognizers(for: scnView)
         }
 
         // Set up joystick component
@@ -40,11 +48,6 @@ class GameViewController: UIViewController {
         scnView.allowsCameraControl = false
         scnView.showsStatistics = true
         scnView.backgroundColor = UIColor.black
-
-        // Set up the camera gesture recognizers
-        if let gameScene = scnView.scene as? Scene2 {
-            gameScene.setupGestureRecognizers(for: scnView)
-        }
 
         // Start the update loop
         let displayLink = CADisplayLink(target: self, selector: #selector(updateScene))
