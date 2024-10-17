@@ -4,7 +4,7 @@ import AVFoundation
 
 class MovementComponent: GKComponent {
     let playerNode: SCNNode
-    let movementSpeed: Float = 60
+    let movementSpeed: Float = 5
     var joystickComponent: VirtualJoystickComponent?
     var cameraNode: SCNNode?
 
