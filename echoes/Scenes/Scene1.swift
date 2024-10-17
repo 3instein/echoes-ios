@@ -76,12 +76,9 @@ class Scene1: SCNScene {
         guard let playerNode = playerEntity.playerNode else { return }
         lightNode.position = playerNode.position
     }
-
-    func setupGestureRecognizers(for view: UIView) {
-        cameraComponent.setupGestureRecognizers(for: view)
-    }
-
+    
     required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        super.init(coder: aDecoder)
+        // Add any additional setup for the scene here
     }
 }
