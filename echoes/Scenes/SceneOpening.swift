@@ -34,6 +34,11 @@ class SceneOpening: UIViewController {
 
             // Add observer for when the video finishes playing
             NotificationCenter.default.addObserver(self, selector: #selector(videoDidFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem)
+            
+            // Add tap gesture to skip video
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(skipVideo))
+            self.view.addGestureRecognizer(tapGesture)
+
         } else {
             print("Video file not found.")
         }
@@ -51,5 +56,16 @@ class SceneOpening: UIViewController {
         self.present(gameVC, animated: false) {
             print("GameViewController (Scene 1) presented")
         }
+    }
+    
+    @objc func skipVideo() {
+        print("Video skipped by user")
+        
+        // Pause and clean up the player
+        player?.pause()
+        player = nil // Optionally release the player
+
+        // Call the same function when the video finishes
+        videoDidFinishPlaying()
     }
 }
