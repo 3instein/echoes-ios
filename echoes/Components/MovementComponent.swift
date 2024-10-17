@@ -10,12 +10,12 @@ class MovementComponent: GKComponent {
 
     // Light node reference
     var lightNode: SCNNode?
-    var originalLightIntensity: CGFloat = 100 // Default intensity
+    var originalLightIntensity: CGFloat = 25 // Default intensity
     var isLightActive = false // Track if light is active
-    private var lightIncreaseDuration: TimeInterval = 1.0 // Duration for increasing intensity
-    private var lightDecreaseDuration: TimeInterval = 1.0 // Duration for decreasing intensity
-    private var lightDecreaseDelay: TimeInterval = 3.0 // Delay before decreasing intensity
+    private var lightIncreaseDuration: TimeInterval = 0.5 // Reduced duration for increasing intensity
+    private var lightDecreaseDuration: TimeInterval = 0.3 // Reduced duration for decreasing intensity
     private var lightTimer: Timer?
+    private var lightTimerDelay: TimeInterval = 1.0 // Reduced delay before light starts dimming
     
     // Sound properties
     var audioPlayer: AVAudioPlayer?
@@ -26,7 +26,7 @@ class MovementComponent: GKComponent {
         self.playerNode = playerNode
         self.cameraNode = cameraNode
         self.lightNode = lightNode
-        self.originalLightIntensity = lightNode?.light?.intensity ?? 100 // Set original intensity
+        self.originalLightIntensity = lightNode?.light?.intensity ?? 25 // Set original intensity
 
         super.init()
         
@@ -49,7 +49,7 @@ class MovementComponent: GKComponent {
         // Calculate the camera's forward and right direction vectors
         let cameraTransform = cameraNode.transform
         let forwardVector = SCNVector3(cameraTransform.m31, cameraTransform.m32, cameraTransform.m33)
-        let rightVector = SCNVector3(-cameraTransform.m11, -cameraTransform.m12, cameraTransform.m13)
+        let rightVector = SCNVector3(cameraTransform.m11, cameraTransform.m12, -cameraTransform.m13)
 
         // Scale direction by joystick input
         let forwardMovement = forwardVector * Float(direction.y) * movementSpeed * deltaTime
@@ -131,9 +131,9 @@ class MovementComponent: GKComponent {
 
         lightNode.runAction(increaseAction)
 
-        // Schedule a timer to decrease intensity after a delay
+        // Schedule a timer to decrease intensity after a shorter delay
         lightTimer?.invalidate() // Invalidate any existing timer
-        lightTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
+        lightTimer = Timer.scheduledTimer(withTimeInterval: lightTimerDelay, repeats: false) { [weak self] _ in
             self?.decreaseLightIntensity()
         }
     }
