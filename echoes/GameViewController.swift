@@ -9,6 +9,9 @@ class GameViewController: UIViewController {
     var playerEntity: PlayerEntity!
     var joystickComponent: VirtualJoystickComponent!
     var scene1: Scene1!
+    var scene6: Scene6!
+    
+    var interactButton: UIButton!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -21,19 +24,19 @@ class GameViewController: UIViewController {
         SceneManager.shared.configure(with: scnView)
 
         // Load the initial game scene
-        SceneManager.shared.loadScene1()
+        SceneManager.shared.loadScene6()
 
         // Now check if the loaded scene is Scene1 and assign it to the scene1 variable
-        if let loadedScene = scnView.scene as? Scene1 {
-            scene1 = loadedScene
+        if let loadedScene = scnView.scene as? Scene6 {
+            scene6 = loadedScene
             // Call displayPuzzlePieces after ensuring scene1 is not nil
-            scene1.displayPuzzlePieces(on: self.view)
+            scene6.displayPuzzlePieces(on: self.view)
         } else {
             print("Error: Scene1 not loaded correctly")
         }
 
         // Set up the PlayerEntity
-        if let gameScene = scnView.scene as? Scene1 {
+        if let gameScene = scnView.scene as? Scene6 {
             playerEntity = PlayerEntity(in: gameScene.rootNode, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode)
             
             // Set up fog properties for the scene
@@ -53,11 +56,23 @@ class GameViewController: UIViewController {
         if let movementComponent = playerEntity?.movementComponent {
             movementComponent.joystickComponent = joystickComponent
         }
-
+        
         // Configure the SCNView
         scnView.allowsCameraControl = false
         scnView.showsStatistics = true
         scnView.backgroundColor = UIColor.black
+        
+        // Create and configure the interaction button
+                interactButton = UIButton(type: .system)
+                interactButton.setTitle("Play", for: .normal)
+                interactButton.backgroundColor = UIColor.blue.withAlphaComponent(0.7)
+                interactButton.setTitleColor(.white, for: .normal)
+                interactButton.layer.cornerRadius = 5
+                interactButton.frame = CGRect(x: 100, y: 100, width: 150, height: 50) // Adjust position and size
+                interactButton.isHidden = true // Hide button initially
+                interactButton.addTarget(self, action: #selector(interactWithCake), for: .touchUpInside)
+                self.view.addSubview(interactButton)
+        
 
         // Start the update loop
         let displayLink = CADisplayLink(target: self, selector: #selector(updateScene))
@@ -68,8 +83,18 @@ class GameViewController: UIViewController {
 
     @objc func updateScene() {
         playerEntity?.movementComponent?.update(deltaTime: 0.016)
+        
+        // Check proximity to the cake
+                if let gameScene = scnView.scene as? Scene6 {
+                    gameScene.checkProximityToCake(interactButton: interactButton)  // Pass the button to the check
+                }
     }
 
+    @objc func interactWithCake() {
+            print("Interacted with Obj_Cake_003!")
+            // Add further actions for interaction here
+        }
+    
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
 
