@@ -3,8 +3,9 @@ import UIKit
 
 class Scene6: SCNScene {
     var playerEntity: PlayerEntity!
-    var cameraNode: SCNNode!
     var cameraComponent: CameraComponent!
+    var joystickComponent: VirtualJoystickComponent!
+    var cameraNode: SCNNode!
     var lightNode: SCNNode!
     var combinedPieces: [UIView: [UIView]] = [:]  // Dictionary that tracks combined pieces
     var completedCombinations: [[UIView]] = []  // Track completed combinations
@@ -13,6 +14,11 @@ class Scene6: SCNScene {
     let proximityDistance: Float = 150.0  // Define a proximity distance
     
     weak var scnView: SCNView?
+    var puzzleBackground: UIView?
+    var playButton: UIButton?  // Store a reference to the play button
+    
+    var isPuzzleDisplayed: Bool = false
+    var isGameCompleted: Bool = false  // Track if the game is completed
 
     override init() {
         super.init()
@@ -78,43 +84,8 @@ class Scene6: SCNScene {
         playerEntity.addComponent(movementComponent)
         
         // Find Obj_Cake_003 node in the scene
-                objCakeNode = rootNode.childNode(withName: "Puzzle_Object", recursively: true)
+        objCakeNode = rootNode.childNode(withName: "Puzzle_Object", recursively: true)
     }
-
-    // Function to update the light position to follow the player
-    func updateLightPosition() {
-        guard let playerNode = playerEntity.playerNode else { return }
-        lightNode.position = playerNode.position
-    }
-    
-    // Proximity check to Obj_Cake_003
-        func checkProximityToCake(interactButton: UIButton) {
-            guard let playerNode = playerEntity.playerNode, let objCakeNode = objCakeNode else {
-                print("Error: Player node or Cake node not found")
-                return
-            }
-
-            // Calculate the distance between the player and the cake
-            let distance = playerNode.position.distance(to: objCakeNode.position)
-
-            // Print the distance for debugging purposes
-            print("Distance to Obj_Cake_003: \(distance)")
-
-            // If the player is within the proximity distance, show the button; otherwise, hide it
-            if distance < proximityDistance {
-                interactButton.isHidden = false // Show the button
-                triggerProximityEvent()
-            } else {
-                interactButton.isHidden = true // Hide the button
-            }
-        }
-
-
-        // Function to trigger an event when proximity is detected
-        func triggerProximityEvent() {
-            print("Player is close to Obj_Cake_003!")
-            // Add any further actions you want to take when proximity is detected
-        }
     
     func displayPuzzlePieces(on view: UIView) {
         let pieceImages = [
@@ -126,33 +97,25 @@ class Scene6: SCNScene {
             "puzzle_piece_16.png", "puzzle_piece_17.png"
         ]
 
-        let puzzleBackground = UIView()
-        puzzleBackground.backgroundColor = UIColor.white.withAlphaComponent(0.8)
+        puzzleBackground = UIView()
+        puzzleBackground?.backgroundColor = UIColor.white.withAlphaComponent(0.8)
         let backgroundSize = CGSize(width: view.bounds.width * 0.6, height: view.bounds.height * 0.7)
-        puzzleBackground.frame = CGRect(
+        puzzleBackground?.frame = CGRect(
             x: (view.bounds.width - backgroundSize.width) / 2,
             y: (view.bounds.height - backgroundSize.height) / 2,
             width: backgroundSize.width,
             height: backgroundSize.height
         )
-        puzzleBackground.layer.cornerRadius = 20
-        puzzleBackground.layer.borderWidth = 2
-        puzzleBackground.layer.borderColor = UIColor.white.cgColor
-        puzzleBackground.clipsToBounds = true
+        puzzleBackground?.layer.cornerRadius = 20
+        puzzleBackground?.layer.borderWidth = 0
+        puzzleBackground?.clipsToBounds = true
 
-        view.addSubview(puzzleBackground)
+        view.addSubview(puzzleBackground!)
 
         for pieceImage in pieceImages {
             guard let image = UIImage(named: pieceImage) else { continue }
 
-            var pieceSize: CGSize
-
-            // Scale width and height by 0.4 for all pieces except 4, 5, and 15
-            pieceSize = CGSize(width: image.size.width * 0.05, height: image.size.height * 0.05)
-
-            // Ensure pieceSize does not exceed backgroundSize
-            pieceSize.width = min(pieceSize.width, backgroundSize.width)
-            pieceSize.height = min(pieceSize.height, backgroundSize.height)
+            let pieceSize = CGSize(width: image.size.width * 0.05, height: image.size.height * 0.05)
 
             let imageView = UIImageView(image: image)
             imageView.frame = CGRect(
@@ -175,7 +138,24 @@ class Scene6: SCNScene {
             let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
             imageView.addGestureRecognizer(panGesture)
 
-            puzzleBackground.addSubview(imageView)
+            puzzleBackground?.addSubview(imageView)
+        }
+        
+        isPuzzleDisplayed = true
+        
+        // Dismiss puzzle when clicking outside the white rectangle
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissPuzzle(_:)))
+        view.addGestureRecognizer(tapGesture)
+    }
+    
+    @objc func dismissPuzzle(_ sender: UITapGestureRecognizer) {
+        let tapLocation = sender.location(in: puzzleBackground?.superview)
+        if let puzzleFrame = puzzleBackground?.frame, !puzzleFrame.contains(tapLocation) {
+            // Check if the game is completed before dismissing
+            if !isGameCompleted {
+                puzzleBackground?.removeFromSuperview()
+                isPuzzleDisplayed = false
+            }
         }
     }
 
@@ -283,6 +263,9 @@ class Scene6: SCNScene {
     }
 
     func triggerPuzzleCompletionTransition() {
+        isGameCompleted = true
+        puzzleBackground?.backgroundColor = UIColor.white.withAlphaComponent(0)
+
         guard let superview = combinedPieces.keys.first?.superview else { return }
 
         // Get the center of the screen
@@ -335,10 +318,10 @@ class Scene6: SCNScene {
             // Change the image to a blank image or add a label with "The End"
             imageView.image = nil  // Optionally set to a blank image
             let endLabel = UILabel(frame: imageView.bounds)
-            endLabel.text = "The End"
+            endLabel.text = "Bravo! You’ve done it! \nBut the truth is just beginning to unfold. Stay tuned for the next part of the story."
             endLabel.textColor = .white
             // Load and apply the custom font for buttons
-            if let customFont = UIFont(name: "SpecialElite-Regular", size: 32) {
+            if let customFont = UIFont(name: "SpecialElite-Regular", size: 18) {
                 endLabel.font = customFont
             } else {
                 print("Failed to load SpecialElite-Regular font.")
@@ -347,6 +330,9 @@ class Scene6: SCNScene {
             endLabel.backgroundColor = UIColor.black.withAlphaComponent(1) // Optional background
             endLabel.layer.cornerRadius = 10
             endLabel.clipsToBounds = true
+            endLabel.numberOfLines = 0  // Allows unlimited lines
+            endLabel.preferredMaxLayoutWidth = 200
+            endLabel.lineBreakMode = .byWordWrapping  // Wraps text by words
             imageView.addSubview(endLabel)  // Add the label to the imageView
         }, completion: nil)
     }
@@ -362,6 +348,25 @@ class Scene6: SCNScene {
             }
         }
         return nil
+    }
+    
+    // Proximity check to Obj_Cake_003
+    func checkProximityToCake(interactButton: UIButton) {
+        guard let playerNode = playerEntity.playerNode, let objCakeNode = objCakeNode else {
+            print("Error: Player node or Cake node not found")
+            return
+        }
+
+        // Calculate the distance between the player and the cake
+        let distance = playerNode.position.distance(to: objCakeNode.position)
+
+        // If the player is within the proximity distance, show the button; otherwise, hide it
+        if isPuzzleDisplayed == true || distance > proximityDistance {
+            interactButton.isHidden = true // Hide the button
+        } else {
+            interactButton.isHidden = false // Show the button
+            isPuzzleDisplayed = false
+        }
     }
     
     func setupGestureRecognizers(for view: UIView) {
