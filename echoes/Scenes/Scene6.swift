@@ -63,7 +63,7 @@ class Scene6: SCNScene {
         // Add a default light to the scene
         let light = SCNLight()
         light.type = .omni
-        light.intensity = 5
+        light.intensity = 10
         lightNode.light = light
 
         // Set the initial position of the lightNode to match the playerNode's position
@@ -74,7 +74,7 @@ class Scene6: SCNScene {
         let ambientLightNode = SCNNode()
         let ambientLight = SCNLight()
         ambientLight.type = .ambient
-        ambientLight.intensity = 50
+        ambientLight.intensity = 20
         ambientLight.color = UIColor.blue
         ambientLightNode.light = ambientLight
         rootNode.addChildNode(ambientLightNode)
