@@ -29,8 +29,8 @@ class GameViewController: UIViewController {
         // Now check if the loaded scene is Scene1 and assign it to the scene1 variable
         if let loadedScene = scnView.scene as? Scene6 {
             scene6 = loadedScene
-            // Call displayPuzzlePieces after ensuring scene1 is not nil
-            scene6.displayPuzzlePieces(on: self.view)
+//            // Call displayPuzzlePieces after ensuring scene1 is not nil
+
         } else {
             print("Error: Scene1 not loaded correctly")
         }
@@ -63,37 +63,44 @@ class GameViewController: UIViewController {
         scnView.backgroundColor = UIColor.black
         
         // Create and configure the interaction button
-                interactButton = UIButton(type: .system)
-                interactButton.setTitle("Play", for: .normal)
-                interactButton.backgroundColor = UIColor.blue.withAlphaComponent(0.7)
-                interactButton.setTitleColor(.white, for: .normal)
-                interactButton.layer.cornerRadius = 5
-                interactButton.frame = CGRect(x: 100, y: 100, width: 150, height: 50) // Adjust position and size
-                interactButton.isHidden = true // Hide button initially
-                interactButton.addTarget(self, action: #selector(interactWithCake), for: .touchUpInside)
-                self.view.addSubview(interactButton)
+        interactButton = UIButton(type: .system)
+        interactButton.setTitle("Play", for: .normal)
+        // Load and apply the custom font for buttons
+        if let customFont = UIFont(name: "SpecialElite-Regular", size: 16) {
+            interactButton.titleLabel?.font = customFont
+        } else {
+            print("Failed to load SpecialElite-Regular font.")
+        }
+        interactButton.backgroundColor = UIColor.white.withAlphaComponent(0.7)
+        interactButton.setTitleColor(.blue, for: .normal)
+        interactButton.layer.cornerRadius = 15
+        interactButton.frame = CGRect(x: 100, y: 100, width: 100, height: 30) // Adjust position and size
+        interactButton.isHidden = true // Hide button initially
+        interactButton.addTarget(self, action: #selector(interactWithCake), for: .touchUpInside)
+        self.view.addSubview(interactButton)
         
-
         // Start the update loop
         let displayLink = CADisplayLink(target: self, selector: #selector(updateScene))
         displayLink.add(to: .main, forMode: .default)
     }
 
-
-
     @objc func updateScene() {
         playerEntity?.movementComponent?.update(deltaTime: 0.016)
         
         // Check proximity to the cake
-                if let gameScene = scnView.scene as? Scene6 {
-                    gameScene.checkProximityToCake(interactButton: interactButton)  // Pass the button to the check
-                }
+        if let gameScene = scnView.scene as? Scene6 {
+            gameScene.checkProximityToCake(interactButton: interactButton)  // Pass the button to the check
+            if gameScene.isPuzzleDisplayed {
+                joystickComponent.joystickView.isHidden = true
+            } else {
+                joystickComponent.joystickView.isHidden = false
+            }
+        }
     }
 
     @objc func interactWithCake() {
-            print("Interacted with Obj_Cake_003!")
-            // Add further actions for interaction here
-        }
+        scene6.displayPuzzlePieces(on: self.view)
+    }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
