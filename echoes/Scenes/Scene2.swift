@@ -20,7 +20,7 @@ class Scene2: SCNScene {
 
 
         // Load the house scene from the Scenes folder
-        guard let houseScene = SCNScene(named: "Scene 2.scn") else {
+        guard let houseScene = SCNScene(named: "scene2.scn") else {
             print("Warning: House scene 'Scene 1.scn' not found")
             return
         }
@@ -57,12 +57,12 @@ class Scene2: SCNScene {
         cameraComponent.lockCamera()
         rootNode.addChildNode(lightNode)
 
-        guard let thunderNode = rootNode.childNode(withName: "wind", recursively: true) else {
+        guard let windNode = rootNode.childNode(withName: "wind", recursively: true) else {
             print("Warning: Thunder node named 'wind' not found in house model")
             return
         }
 
-        attachAudio(to: thunderNode, audioFileName: "wind.wav", volume: 0.5)
+        attachAudio(to: windNode, audioFileName: "wind.wav", volume: 0.5)
         
         guard let crowNode = rootNode.childNode(withName: "crow", recursively: true) else {
             print("Warning: Crow node named 'crow' not found in house model")
@@ -77,8 +77,6 @@ class Scene2: SCNScene {
         }
         
         attachAudio(to: lightRainNode, audioFileName: "lightRain.wav", volume: 0.5)
-    
-        playerEntity.movementComponent.joystickComponent?.joystickView.isHidden = true
     }
     
     func attachAudio(to node: SCNNode, audioFileName: String, volume: Float = 1.0) {
