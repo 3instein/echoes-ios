@@ -83,11 +83,22 @@ class MovementComponent: GKComponent {
         }
     }
     
+    private func setupWallPhysicsBodies() {
+        // Loop through your walls and apply physics bodies
+        for node in playerNode.parent?.childNodes ?? [] {
+            if node.name?.contains("wall") == true || node.name?.contains("floor")  == true {
+                node.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
+                node.physicsBody?.categoryBitMask = 2  // Wall category
+                node.physicsBody?.collisionBitMask = 1  // Collides with player
+            }
+        }
+    }
+
     private func addPlayerPhysicsBody() {
         if playerNode.physicsBody == nil {
             // Ensure the player node has a physics body initialized correctly
             playerNode.physicsBody = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(node: playerNode, options: nil))
-            
+
             guard let playerPhysicsBody = playerNode.physicsBody else {
                 print("Error: Player physics body is nil after initialization")
                 return
@@ -103,8 +114,12 @@ class MovementComponent: GKComponent {
             playerPhysicsBody.categoryBitMask = 1  // Define a bitmask for the player
             playerPhysicsBody.collisionBitMask = 2 // Collides with walls/floor
             playerPhysicsBody.contactTestBitMask = 2 // Test for contact with walls
+            
+            // Now call the method to setup walls physics
+            setupWallPhysicsBodies()
         }
     }
+
 
     private func loadSound() {
         if let soundURL = Bundle.main.url(forResource: "EcholocationSound", withExtension: "mp3") {

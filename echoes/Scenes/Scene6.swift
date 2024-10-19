@@ -130,26 +130,26 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
         let nodeA = contact.nodeA
         let nodeB = contact.nodeB
-        let currentPosition = nodeA.position
-        
-        if (nodeA.physicsBody?.categoryBitMask == 1) {
-            let currentPosition = nodeA.position
-        } else {
-            let currentPosition = nodeB.position
-        }
 
         // Check for collision between player and walls/floor
         if (nodeA.physicsBody?.categoryBitMask == 1 && nodeB.physicsBody?.categoryBitMask == 2) ||
            (nodeB.physicsBody?.categoryBitMask == 1 && nodeA.physicsBody?.categoryBitMask == 2) {
             print("Player collided with wall or floor")
-            // Stop player movement by setting velocity to zero
-              if let playerPhysicsBody = (nodeA.physicsBody?.categoryBitMask == 1) ? nodeA.physicsBody : nodeB.physicsBody {
-                  playerPhysicsBody.velocity = SCNVector3(0, 0, 0) // Stop all movement
-//                  playerPhysicsBody.angularVelocity = SCNVector4(0, 0, 0, 0) // Reset any rotation
-                  nodeA.position = currentPosition
-              }
+            
+            // Stop player movement by applying a zero velocity
+            let playerNode = (nodeA.physicsBody?.categoryBitMask == 1) ? nodeA : nodeB
+            if let playerPhysicsBody = playerNode.physicsBody {
+                // Dampen the velocity to stop movement smoothly instead of setting it directly to zero
+                playerPhysicsBody.velocity = SCNVector3(0, 0, 0)
+                playerPhysicsBody.angularVelocity = SCNVector4(0, 0, 0, 0) // Prevent unwanted rotation
+                
+                // Apply some friction or resistance to avoid jittering
+                playerPhysicsBody.friction = 1.0
+                playerPhysicsBody.damping = 0.8
+            }
         }
     }
+
 
     func displayPuzzlePieces(on view: UIView) {
         let pieceImages = [
