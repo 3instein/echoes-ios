@@ -95,7 +95,7 @@ class Scene2: SCNScene {
             print("Warning: lightRain node not found.")
         }
         
-        playerEntity.movementComponent.movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 20.0, lightNode: self.lightNode)
+        //playerEntity.movementComponent.movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 20.0)
         
         self.background.contents = UIColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0)
     
