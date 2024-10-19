@@ -74,18 +74,31 @@ class Scene5: SCNScene {
         ambientLightNode.light = ambientLight
         rootNode.addChildNode(ambientLightNode)
         
-        if let boxNode = rootNode.childNode(withName: "box", recursively: true) {
-            attachAudio(to: boxNode, audioFileName: "swanlake.wav")
-            addBoxVisualization(to: boxNode)
-        } else {
-            print("Warning: Node named 'box' not found in the scene")
+//        if let boxNode = rootNode.childNode(withName: "box", recursively: true) {
+//            attachAudio(to: boxNode, audioFileName: "swanlake.wav")
+//            addBoxVisualization(to: boxNode)
+//        } else {
+//            print("Warning: Node named 'box' not found in the scene")
+//        }
+        
+        if let woodNode = rootNode.childNode(withName: "woodenFloor", recursively: false) {
+            attachAudio(to: woodNode, audioFileName: "woodenFloor.wav", volume: 0.2, delay: 0)
         }
         
-        if let thunderNode = rootNode.childNode(withName: "thunder", recursively: true) {
-            attachAudio(to: thunderNode, audioFileName: "thunder.wav")
-            addBoxVisualization(to: thunderNode)
-        } else {
-            print("Warning: Node named 'thunder' not found in the scene")
+        if let clockNode = rootNode.childNode(withName: "clockTicking", recursively: true) {
+            attachAudio(to: clockNode, audioFileName: "clockTicking.wav", volume: 0.2, delay: 0)
+        }
+        
+        if let muffledNode = rootNode.childNode(withName: "muffledRain", recursively: true) {
+            attachAudio(to: muffledNode, audioFileName: "muffledRain.wav", volume: 0.2, delay: 0)
+        }
+        
+        if let andraNode = rootNode.childNode(withName: "s5-andra", recursively: false) {
+            attachAudio(to: andraNode, audioFileName: "s5-andra.wav", volume: 80, delay: 15)
+        }
+        
+        if let grandmaNode = rootNode.childNode(withName: "s5-grandma", recursively: false) {
+            attachAudio(to: grandmaNode, audioFileName: "s5-grandma.wav", volume: 100, delay: 5)
         }
         
         // Add the flashlight to the player node
@@ -139,25 +152,21 @@ class Scene5: SCNScene {
         }
     }
     
-    func attachAudio(to node: SCNNode, audioFileName: String) {
-        // Load the audio file as an SCNAudioSource
+    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
         guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
             print("Warning: Audio file '\(audioFileName)' not found")
             return
         }
 
-        // Preload the audio for smooth playback
-        audioSource.loops = true
         audioSource.isPositional = true
         audioSource.shouldStream = false
         audioSource.load()
-        audioSource.volume = 100.0
+        audioSource.volume = volume
 
-        // Create an SCNAction to play the audio source
         let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: false)
-        
-        // Run the action on the node
-        node.runAction(playAudioAction)
+        let waitAction = SCNAction.wait(duration: delay)
+        let sequenceAction = SCNAction.sequence([waitAction, playAudioAction])
+        node.runAction(sequenceAction)
     }
     
     func addBoxVisualization(to node: SCNNode) {

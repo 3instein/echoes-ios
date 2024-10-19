@@ -88,11 +88,8 @@ class Scene2: SCNScene {
             attachAudio(to: crowNode, audioFileName: "crow.wav", volume: 0.5)
         }
         
-        if let lightRainNode = rootNode.childNode(withName: "lightRain", recursively: true) {
-            print("Attaching audio to lightRain node.")
-            attachAudio(to: lightRainNode, audioFileName: "lightRain.wav", volume: 0.5)
-        } else {
-            print("Warning: lightRain node not found.")
+        if let lightRainNode = rootNode.childNode(withName: "outsideRain", recursively: true) {
+            attachAudio(to: lightRainNode, audioFileName: "outsideRain.wav", volume: 1.0)
         }
         
         //playerEntity.movementComponent.movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 20.0)
