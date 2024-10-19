@@ -20,11 +20,24 @@ class GameViewController: UIViewController {
         SceneManager.shared.configure(with: scnView)
 
         // Load the initial game scene
-        SceneManager.shared.loadScene5()
+        SceneManager.shared.loadScene2()
+        
+        // Set up joystick component
+        joystickComponent = VirtualJoystickComponent()
+        joystickComponent.attachToView(self.view)
 
         // Set up the PlayerEntity
-        if let gameScene = scnView.scene as? Scene5 {
-            playerEntity = PlayerEntity(in: gameScene.rootNode, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode)
+        if let gameScene = scnView.scene as? Scene2 {
+            playerEntity = gameScene.playerEntity
+            
+            // Create a movement component to handle player movement, including the light node
+            let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
+            playerEntity.movementComponent = movementComponent
+            
+            // Link the joystick with the movement component
+            if let movementComponent = gameScene.playerEntity.movementComponent {
+                movementComponent.joystickComponent = joystickComponent
+            }
             
             // Set up fog properties for the scene
             gameScene.fogStartDistance = 50.0   // Increase the start distance
@@ -33,15 +46,6 @@ class GameViewController: UIViewController {
             gameScene.fogColor = UIColor.black
             
             gameScene.setupGestureRecognizers(for: scnView)
-        }
-
-        // Set up joystick component
-        joystickComponent = VirtualJoystickComponent()
-        joystickComponent.attachToView(self.view)
-
-        // Link the joystick with the movement component
-        if let movementComponent = playerEntity?.movementComponent {
-            movementComponent.joystickComponent = joystickComponent
         }
 
         // Configure the SCNView
