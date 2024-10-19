@@ -12,9 +12,12 @@ class Scene2: SCNScene {
     var playerEntity: PlayerEntity!
     var cameraNode: SCNNode!
     var cameraComponent: CameraComponent!
+    var lightNode: SCNNode!
 
-    override init() {
+    init(lightNode: SCNNode) {
         super.init()
+        self.lightNode = lightNode
+
 
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "Scene2.scn") else {
@@ -28,7 +31,7 @@ class Scene2: SCNScene {
         }
 
         // Create a new player entity and initialize it using the house scene's root node
-        playerEntity = PlayerEntity(in: rootNode, cameraNode: cameraNode)
+        playerEntity = PlayerEntity(in: rootNode, cameraNode: cameraNode, lightNode: lightNode)
 
         guard let playerNode = playerEntity.playerNode else {
             print("Warning: Player node named 'Player' not found in house model")
@@ -52,23 +55,25 @@ class Scene2: SCNScene {
         // Add the camera component to handle the camera logic
         cameraComponent = CameraComponent(cameraNode: cameraNode)
 
-        // Add a default light to the scene
-        let lightNode = SCNNode()
-        let light = SCNLight()
-        light.type = .omni
-        light.intensity = 1000
-        lightNode.light = light
-        lightNode.position = SCNVector3(x: 0, y: 20, z: 20)
+//        // Add a default light to the scene
+//        let lightNode = SCNNode()
+//        let light = SCNLight()
+//        light.type = .omni
+//        light.intensity = 1000
+//        lightNode.light = light
+//        lightNode.position = SCNVector3(x: 0, y: 20, z: 20)
+//        rootNode.addChildNode(lightNode)
+//
+//        // Add an ambient light to the scene
+//        let ambientLightNode = SCNNode()
+//        let ambientLight = SCNLight()
+//        ambientLight.type = .ambient
+//        ambientLight.intensity = 500
+//        ambientLight.color = UIColor.white
+//        ambientLightNode.light = ambientLight
+//        rootNode.addChildNode(ambientLightNode)
+        
         rootNode.addChildNode(lightNode)
-
-        // Add an ambient light to the scene
-        let ambientLightNode = SCNNode()
-        let ambientLight = SCNLight()
-        ambientLight.type = .ambient
-        ambientLight.intensity = 500
-        ambientLight.color = UIColor.white
-        ambientLightNode.light = ambientLight
-        rootNode.addChildNode(ambientLightNode)
         
 //        if let boxNode = rootNode.childNode(withName: "box", recursively: true) {
 //            attachAudio(to: boxNode, audioFileName: "swanlake.wav", volume: 0.5)
@@ -77,24 +82,23 @@ class Scene2: SCNScene {
 
         if let thunderNode = rootNode.childNode(withName: "wind", recursively: true) {
             attachAudio(to: thunderNode, audioFileName: "wind.wav", volume: 0.5)
-            addBoxVisualization(to: thunderNode)
         }
         
-        if let thunderNode = rootNode.childNode(withName: "crow", recursively: true) {
-            attachAudio(to: thunderNode, audioFileName: "crow.wav", volume: 0.5)
-            addBoxVisualization(to: thunderNode)
+        if let crowNode = rootNode.childNode(withName: "crow", recursively: true) {
+            attachAudio(to: crowNode, audioFileName: "crow.wav", volume: 0.5)
         }
-
-        movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 20.0)
         
-        self.background.contents = UIColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0) 
-    }
+        if let lightRainNode = rootNode.childNode(withName: "lightRain", recursively: true) {
+            print("Attaching audio to lightRain node.")
+            attachAudio(to: lightRainNode, audioFileName: "lightRain.wav", volume: 0.5)
+        } else {
+            print("Warning: lightRain node not found.")
+        }
+        
+        playerEntity.movementComponent.movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 20.0, lightNode: self.lightNode)
+        
+        self.background.contents = UIColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0)
     
-    func movePlayer(to position: SCNVector3, duration: TimeInterval) {
-        guard let playerNode = playerEntity?.playerNode else { return }
-        let moveAction = SCNAction.move(to: position, duration: duration)
-        moveAction.timingMode = .easeInEaseOut
-        playerNode.runAction(moveAction)
     }
     
     func attachAudio(to node: SCNNode, audioFileName: String, volume: Float = 1.0) {
