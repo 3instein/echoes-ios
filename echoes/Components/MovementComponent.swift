@@ -4,7 +4,7 @@ import AVFoundation
 
 class MovementComponent: GKComponent {
     let playerNode: SCNNode
-    let movementSpeed: Float = 60
+    let movementSpeed: Float = 1
     var joystickComponent: VirtualJoystickComponent?
     var cameraNode: SCNNode?
 
@@ -156,6 +156,55 @@ class MovementComponent: GKComponent {
             self?.isLightActive = false // Mark light as inactive after fading out
             lightNode.light?.intensity = self?.originalLightIntensity ?? 100 // Ensure it resets to original
         }
+    }
+    
+    func movePlayer(to position: SCNVector3, duration: TimeInterval, lightNode: SCNNode) {
+        playerNode.addChildNode(lightNode)
+        
+        // Ensure the light is set up
+        if lightNode.light == nil {
+            let light = SCNLight()
+            light.type = .spot
+            light.intensity = 2000
+            light.spotInnerAngle = 20
+            light.spotOuterAngle = 30
+            light.attenuationStartDistance = 1
+            light.attenuationEndDistance = 50
+            light.castsShadow = true
+            lightNode.light = light
+            lightNode.position = SCNVector3(x: 0, y: 20, z: 0)
+        }
+        
+        // Define blink actions
+        let blinkOnAction = SCNAction.run { _ in
+            lightNode.light?.intensity = 3000
+        }
+        let blinkOffAction = SCNAction.run { _ in
+            lightNode.light?.intensity = 0
+        }
+        
+        // Sequence for blinking
+        let blinkSequence = SCNAction.sequence([blinkOnAction, SCNAction.wait(duration: 1.0), blinkOffAction, SCNAction.wait(duration: 1.0)])
+        let repeatBlink = SCNAction.repeatForever(blinkSequence)
+        
+        // Run the blinking action
+        lightNode.runAction(repeatBlink)
+        
+        // Define the movement action
+        let moveAction = SCNAction.move(to: position, duration: duration)
+        moveAction.timingMode = .easeInEaseOut
+        
+        // Completion action to turn off the light and stop all actions
+        let completionAction = SCNAction.run { _ in
+            lightNode.removeAllActions() // Stop blinking
+            lightNode.light?.intensity = 0 // Turn off the light
+        }
+        
+        // Sequence to move and then stop the light blinking
+        let moveWithCompletion = SCNAction.sequence([moveAction, completionAction])
+        
+        // Run the movement action
+        playerNode.runAction(moveWithCompletion)
     }
 }
 

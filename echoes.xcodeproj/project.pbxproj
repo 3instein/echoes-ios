@@ -30,7 +30,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		C96865842CBF5C9100016CD7 /* Exceptions for "echoes" folder in "echoes" target */ = {
+		FD1557702CC1F6B2002CE47B /* Exceptions for "echoes" folder in "echoes" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -43,7 +43,7 @@
 		C95733EF2CB4C64C00E35F32 /* echoes */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				C96865842CBF5C9100016CD7 /* Exceptions for "echoes" folder in "echoes" target */,
+				FD1557702CC1F6B2002CE47B /* Exceptions for "echoes" folder in "echoes" target */,
 			);
 			path = echoes;
 			sourceTree = "<group>";

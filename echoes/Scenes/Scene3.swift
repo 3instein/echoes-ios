@@ -10,9 +10,11 @@ class Scene3: SCNScene {
     var doorNode: SCNNode?
     var scnView: SCNView?
     var isDoorOpen = false
+    var lightNode: SCNNode!
     
-    override init() {
+    init(lightNode: SCNNode) {
         super.init()
+        self.lightNode = lightNode
         
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "Scene3.scn") else {
@@ -29,8 +31,8 @@ class Scene3: SCNScene {
         doorNode = rootNode.childNode(withName: "door", recursively: true)
         
         // Create a new player entity and initialize it using the house scene's root node
-        playerEntity = PlayerEntity(in: rootNode, cameraNode: cameraNode)
-        
+        playerEntity = PlayerEntity(in: rootNode, cameraNode: cameraNode, lightNode: lightNode)
+
         guard let playerNode = playerEntity.playerNode else {
             print("Warning: Player node named 'Player' not found in house model")
             return

@@ -20,10 +20,10 @@ class GameViewController: UIViewController {
         SceneManager.shared.configure(with: scnView)
 
         // Load the initial game scene
-        SceneManager.shared.loadScene2()
+        SceneManager.shared.loadScene5()
 
         // Set up the PlayerEntity
-        if let gameScene = scnView.scene as? Scene1 {
+        if let gameScene = scnView.scene as? Scene5 {
             playerEntity = PlayerEntity(in: gameScene.rootNode, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode)
             
             // Set up fog properties for the scene
