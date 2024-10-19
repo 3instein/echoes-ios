@@ -81,6 +81,12 @@ class ViewController: UIViewController {
             creditsButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             creditsButton.topAnchor.constraint(equalTo: settingsButton.bottomAnchor, constant: 10) // Reduce this constant for a smaller gap
         ])
+        
+        for family in UIFont.familyNames {
+            print("Family: \(family)")
+            let fontNames = UIFont.fontNames(forFamilyName: family)
+            print("Fonts: \(fontNames)")
+        }
 
     }
     
