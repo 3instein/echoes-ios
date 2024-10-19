@@ -4,9 +4,10 @@ import AVFoundation
 
 class MovementComponent: GKComponent {
     let playerNode: SCNNode
-    let movementSpeed: Float = 60
+    let movementSpeed: Float = 2
     var joystickComponent: VirtualJoystickComponent?
     var cameraNode: SCNNode?
+    var movingProgramatically: Bool = false
 
     // Light node reference
     var lightNode: SCNNode?
@@ -39,43 +40,59 @@ class MovementComponent: GKComponent {
     }
 
     override func update(deltaTime seconds: TimeInterval) {
-        guard let joystick = joystickComponent, joystick.isTouching, let cameraNode = cameraNode else {
-            return
-        }
+        if(!movingProgramatically){
+            guard let joystick = joystickComponent, joystick.isTouching, let cameraNode = cameraNode else {
+                return
+            }
 
-        let direction = joystick.direction
-        let deltaTime = Float(seconds)
+            let direction = joystick.direction
+            let deltaTime = Float(seconds)
 
-        // Calculate the camera's forward and right direction vectors
-        let cameraTransform = cameraNode.transform
-        // Calculate the camera's forward and right direction vectors
-        let forwardVector = normalizeVector(SCNVector3(cameraTransform.m31, 0, cameraTransform.m33))
-        let rightVector = normalizeVector(SCNVector3(cameraTransform.m11, 0, cameraTransform.m13))
+            // Calculate the camera's forward and right direction vectors
+            let cameraTransform = cameraNode.transform
+            // Calculate the camera's forward and right direction vectors
+            let forwardVector = normalizeVector(SCNVector3(cameraTransform.m31, 0, cameraTransform.m33))
+            let rightVector = normalizeVector(SCNVector3(cameraTransform.m11, 0, cameraTransform.m13))
 
-        // Scale direction by joystick input
-        let forwardMovement = forwardVector * Float(direction.y) * movementSpeed * deltaTime
-        let rightMovement = rightVector * Float(direction.x) * movementSpeed * deltaTime
+            // Scale direction by joystick input
+            let forwardMovement = forwardVector * Float(direction.y) * movementSpeed * deltaTime
+            let rightMovement = rightVector * Float(direction.x) * movementSpeed * deltaTime
 
-        // Combine forward and right movement
-        let movementVector = forwardMovement + rightMovement
+            // Combine forward and right movement
+            let movementVector = forwardMovement + rightMovement
 
-        // Translate the player node based on the movement vector
-        playerNode.localTranslate(by: movementVector)
+            // Translate the player node based on the movement vector
+            playerNode.localTranslate(by: movementVector)
+            
+            // Update light position to follow player
+            updateLightPosition()
 
+            // Check time since last step to play sound
+            let currentTime = Date()
+            if lastStepTime == nil || currentTime.timeIntervalSince(lastStepTime!) >= stepDelay {
+                playSound() // Play sound if the delay has passed
+                lastStepTime = currentTime // Update the last step time
+            }
 
-        // Update light position to follow player
-        updateLightPosition()
+            // User is moving
+            if !isLightActive {
+                activateLightPulsing() // Activate light pulsing if not already active
+            }
+        } else if(movingProgramatically){
+            // Update light position to follow player
+            updateLightPosition()
 
-        // Check time since last step to play sound
-        let currentTime = Date()
-        if lastStepTime == nil || currentTime.timeIntervalSince(lastStepTime!) >= stepDelay {
-            playSound() // Play sound if the delay has passed
-            lastStepTime = currentTime // Update the last step time
-        }
+            // Check time since last step to play sound
+            let currentTime = Date()
+            if lastStepTime == nil || currentTime.timeIntervalSince(lastStepTime!) >= stepDelay {
+                playSound() // Play sound if the delay has passed
+                lastStepTime = currentTime // Update the last step time
+            }
 
-        // User is moving
-        if !isLightActive {
-            activateLightPulsing() // Activate light pulsing if not already active
+            // User is moving
+            if !isLightActive {
+                activateLightPulsing() // Activate light pulsing if not already active
+            }
         }
     }
 
@@ -155,6 +172,16 @@ class MovementComponent: GKComponent {
         lightNode.runAction(decreaseAction) { [weak self] in
             self?.isLightActive = false // Mark light as inactive after fading out
             lightNode.light?.intensity = self?.originalLightIntensity ?? 100 // Ensure it resets to original
+        }
+    }
+    
+    func movePlayer(to position: SCNVector3, duration: TimeInterval) {
+        movingProgramatically = true
+        let playerNode = playerNode
+        let moveAction = SCNAction.move(to: position, duration: duration)
+        moveAction.timingMode = .easeInEaseOut
+        playerNode.runAction(moveAction) {
+            self.movingProgramatically = false
         }
     }
 }
