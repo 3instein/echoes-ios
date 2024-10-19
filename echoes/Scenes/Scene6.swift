@@ -1,7 +1,7 @@
 import SceneKit
 import UIKit
 
-class Scene6: SCNScene {
+class Scene6: SCNScene, SCNPhysicsContactDelegate {
     var playerEntity: PlayerEntity!
     var cameraComponent: CameraComponent!
     var joystickComponent: VirtualJoystickComponent!
@@ -19,74 +19,138 @@ class Scene6: SCNScene {
     
     var isPuzzleDisplayed: Bool = false
     var isGameCompleted: Bool = false  // Track if the game is completed
+    let snapDistance: CGFloat = 50.0
 
+    let neighbors: [String: [String: CGPoint]] = [
+        "puzzle_piece_1.png": ["puzzle_piece_2.png": CGPoint(x: 30, y: -20), "puzzle_piece_9.png": CGPoint(x: 20, y: 45)],
+        "puzzle_piece_2.png": ["puzzle_piece_1.png": CGPoint(x: -30, y: 20), "puzzle_piece_3.png": CGPoint(x: 20, y: 20)],
+        "puzzle_piece_3.png": ["puzzle_piece_2.png": CGPoint(x: -20, y: -20), "puzzle_piece_4.png": CGPoint(x: 35, y: -10), "puzzle_piece_9.png": CGPoint(x: -40, y: 40)],
+        "puzzle_piece_4.png": ["puzzle_piece_3.png": CGPoint(x: -35, y: 10), "puzzle_piece_5.png": CGPoint(x: 40, y: 5), "puzzle_piece_10.png": CGPoint(x: -15, y: 55)],
+        "puzzle_piece_5.png": ["puzzle_piece_4.png": CGPoint(x: -40, y: -5), "puzzle_piece_6.png": CGPoint(x: 21, y: -10), "puzzle_piece_7.png": CGPoint(x: 40, y: 40)],
+        "puzzle_piece_6.png": ["puzzle_piece_5.png": CGPoint(x: -21, y: 10), "puzzle_piece_7.png": CGPoint(x: 25, y: 42), "puzzle_piece_8.png": CGPoint(x: 53, y: 5)],
+        "puzzle_piece_7.png": ["puzzle_piece_5.png": CGPoint(x: -40, y: -40), "puzzle_piece_6.png": CGPoint(x: -25, y: -42)],
+        "puzzle_piece_8.png": ["puzzle_piece_6.png": CGPoint(x: -53, y: -5), "puzzle_piece_12.png": CGPoint(x: 5, y: 70)],
+        "puzzle_piece_9.png": ["puzzle_piece_1.png": CGPoint(x: -20, y: -45), "puzzle_piece_3.png": CGPoint(x: 40, y: -40), "puzzle_piece_13.png": CGPoint(x: 0, y: 30)],
+        "puzzle_piece_10.png": ["puzzle_piece_4.png": CGPoint(x: 15, y: -55), "puzzle_piece_11.png": CGPoint(x: 60, y: 0), "puzzle_piece_14.png": CGPoint(x: 0, y: 50), "puzzle_piece_15.png": CGPoint(x: 35, y: 50)],
+        "puzzle_piece_11.png": ["puzzle_piece_10.png": CGPoint(x: -60, y: 0), "puzzle_piece_15.png": CGPoint(x: -15, y: 40), "puzzle_piece_16.png": CGPoint(x: 45, y: 40)],
+        "puzzle_piece_12.png": ["puzzle_piece_8.png": CGPoint(x: -5, y: -70), "puzzle_piece_16.png": CGPoint(x: -20, y: 20)],
+        "puzzle_piece_13.png": ["puzzle_piece_9.png": CGPoint(x: -0, y: -30), "puzzle_piece_14.png": CGPoint(x: 45, y: 20), "puzzle_piece_17.png": CGPoint(x: 75, y: 30)],
+        "puzzle_piece_14.png": ["puzzle_piece_10.png": CGPoint(x: 0, y: -50), "puzzle_piece_13.png": CGPoint(x: -45, y: -20), "puzzle_piece_15.png": CGPoint(x: 45, y: 0), "puzzle_piece_17.png": CGPoint(x: 30, y: 25)],
+        "puzzle_piece_15.png": ["puzzle_piece_14.png": CGPoint(x: -45, y: 0), "puzzle_piece_10.png": CGPoint(x: -35, y: -50), "puzzle_piece_11.png": CGPoint(x: 15, y: -40)],
+        "puzzle_piece_16.png": ["puzzle_piece_11.png": CGPoint(x: -45, y: -40), "puzzle_piece_12.png": CGPoint(x: 20, y: -20)],
+        "puzzle_piece_17.png": ["puzzle_piece_13.png": CGPoint(x: -75, y: -30), "puzzle_piece_14.png": CGPoint(x: -30, y: -25)]
+    ]
+    
     override init() {
         super.init()
         lightNode = SCNNode()
-
+        
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "scene6.scn") else {
             print("Warning: House scene 'Scene 6.scn' not found")
             return
         }
-
+        
         // Add the house's nodes to the root node of the GameScene
         for childNode in houseScene.rootNode.childNodes {
             rootNode.addChildNode(childNode)
         }
-
+        
         // Create a new player entity and initialize it using the house scene's root node
         playerEntity = PlayerEntity(in: rootNode, cameraNode: cameraNode, lightNode: lightNode)
-
+        
         guard let playerNode = playerEntity.playerNode else {
             print("Warning: Player node named 'Player' not found in house model")
             return
         }
-
+        
         // Add player node to the GameScene's rootNode
         rootNode.addChildNode(playerNode)
-
+        
         // Attach the existing camera node from the player model to the scene
         cameraNode = playerNode.childNode(withName: "Camera", recursively: true)
         guard let cameraNode = cameraNode else {
             print("Warning: Camera node named 'Camera' not found in Player model")
             return
         }
-
+        
         // Make optional adjustments to the camera if needed
         cameraNode.camera?.fieldOfView = 75
         cameraNode.camera?.automaticallyAdjustsZRange = true
-
+        
         // Add the camera component to handle the camera logic
         cameraComponent = CameraComponent(cameraNode: cameraNode)
-
+        
         // Add a default light to the scene
         let light = SCNLight()
         light.type = .omni
-        light.intensity = 10
+        light.intensity = 1000
         lightNode.light = light
-
+        
         // Set the initial position of the lightNode to match the playerNode's position
         lightNode.position = playerNode.position
         rootNode.addChildNode(lightNode)
-
+        
         // Add an ambient light to the scene
         let ambientLightNode = SCNNode()
         let ambientLight = SCNLight()
         ambientLight.type = .ambient
-        ambientLight.intensity = 20
+        ambientLight.intensity = 2000
         ambientLight.color = UIColor.blue
         ambientLightNode.light = ambientLight
         rootNode.addChildNode(ambientLightNode)
-
+        
         // Initialize MovementComponent with lightNode reference
         let movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode)
         playerEntity.addComponent(movementComponent)
         
         // Find Obj_Cake_003 node in the scene
         objCakeNode = rootNode.childNode(withName: "Puzzle_Object", recursively: true)
+        
+        self.physicsWorld.contactDelegate = self
+
+        // Add all child nodes from the house scene to the root node
+        for childNode in houseScene.rootNode.childNodes {
+            rootNode.addChildNode(childNode)
+        
+            // Check if the node is a wall or floor
+            if childNode.name == "wall" || childNode.name == "floor" {
+                // Add static physics body for walls and floor
+                let childNodeGeometry = childNode.geometry!
+                let childNodeShape = SCNPhysicsShape(geometry: childNode.geometry!, options: nil)
+                childNode.physicsBody = SCNPhysicsBody(type: .static, shape: childNodeShape)
+                
+                childNode.physicsBody?.categoryBitMask = 2  // Assign a different bitmask for walls and floor
+                childNode.physicsBody?.collisionBitMask = 1 // Collides with the player
+                childNode.physicsBody?.contactTestBitMask = 1
+            }
+        }
     }
     
+    func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
+        let nodeA = contact.nodeA
+        let nodeB = contact.nodeB
+        let currentPosition = nodeA.position
+        
+        if (nodeA.physicsBody?.categoryBitMask == 1) {
+            let currentPosition = nodeA.position
+        } else {
+            let currentPosition = nodeB.position
+        }
+
+        // Check for collision between player and walls/floor
+        if (nodeA.physicsBody?.categoryBitMask == 1 && nodeB.physicsBody?.categoryBitMask == 2) ||
+           (nodeB.physicsBody?.categoryBitMask == 1 && nodeA.physicsBody?.categoryBitMask == 2) {
+            print("Player collided with wall or floor")
+            // Stop player movement by setting velocity to zero
+              if let playerPhysicsBody = (nodeA.physicsBody?.categoryBitMask == 1) ? nodeA.physicsBody : nodeB.physicsBody {
+                  playerPhysicsBody.velocity = SCNVector3(0, 0, 0) // Stop all movement
+//                  playerPhysicsBody.angularVelocity = SCNVector4(0, 0, 0, 0) // Reset any rotation
+                  nodeA.position = currentPosition
+              }
+        }
+    }
+
     func displayPuzzlePieces(on view: UIView) {
         let pieceImages = [
             "puzzle_piece_1.png", "puzzle_piece_2.png", "puzzle_piece_3.png",
@@ -158,28 +222,6 @@ class Scene6: SCNScene {
             }
         }
     }
-
-    let neighbors: [String: [String: CGPoint]] = [
-        "puzzle_piece_1.png": ["puzzle_piece_2.png": CGPoint(x: 30, y: -20), "puzzle_piece_9.png": CGPoint(x: 20, y: 45)],
-        "puzzle_piece_2.png": ["puzzle_piece_1.png": CGPoint(x: -30, y: 20), "puzzle_piece_3.png": CGPoint(x: 20, y: 20)],
-        "puzzle_piece_3.png": ["puzzle_piece_2.png": CGPoint(x: -20, y: -20), "puzzle_piece_4.png": CGPoint(x: 35, y: -10), "puzzle_piece_9.png": CGPoint(x: -40, y: 40)],
-        "puzzle_piece_4.png": ["puzzle_piece_3.png": CGPoint(x: -35, y: 10), "puzzle_piece_5.png": CGPoint(x: 40, y: 5), "puzzle_piece_10.png": CGPoint(x: -15, y: 55)],
-        "puzzle_piece_5.png": ["puzzle_piece_4.png": CGPoint(x: -40, y: -5), "puzzle_piece_6.png": CGPoint(x: 21, y: -10), "puzzle_piece_7.png": CGPoint(x: 40, y: 40)],
-        "puzzle_piece_6.png": ["puzzle_piece_5.png": CGPoint(x: -21, y: 10), "puzzle_piece_7.png": CGPoint(x: 25, y: 42), "puzzle_piece_8.png": CGPoint(x: 53, y: 5)],
-        "puzzle_piece_7.png": ["puzzle_piece_5.png": CGPoint(x: -40, y: -40), "puzzle_piece_6.png": CGPoint(x: -25, y: -42)],
-        "puzzle_piece_8.png": ["puzzle_piece_6.png": CGPoint(x: -53, y: -5), "puzzle_piece_12.png": CGPoint(x: 5, y: 70)],
-        "puzzle_piece_9.png": ["puzzle_piece_1.png": CGPoint(x: -20, y: -45), "puzzle_piece_3.png": CGPoint(x: 40, y: -40), "puzzle_piece_13.png": CGPoint(x: 0, y: 30)],
-        "puzzle_piece_10.png": ["puzzle_piece_4.png": CGPoint(x: 15, y: -55), "puzzle_piece_11.png": CGPoint(x: 60, y: 0), "puzzle_piece_14.png": CGPoint(x: 0, y: 50), "puzzle_piece_15.png": CGPoint(x: 35, y: 50)],
-        "puzzle_piece_11.png": ["puzzle_piece_10.png": CGPoint(x: -60, y: 0), "puzzle_piece_15.png": CGPoint(x: -15, y: 40), "puzzle_piece_16.png": CGPoint(x: 45, y: 40)],
-        "puzzle_piece_12.png": ["puzzle_piece_8.png": CGPoint(x: -5, y: -70), "puzzle_piece_16.png": CGPoint(x: -20, y: 20)],
-        "puzzle_piece_13.png": ["puzzle_piece_9.png": CGPoint(x: -0, y: -30), "puzzle_piece_14.png": CGPoint(x: 45, y: 20), "puzzle_piece_17.png": CGPoint(x: 75, y: 30)],
-        "puzzle_piece_14.png": ["puzzle_piece_10.png": CGPoint(x: 0, y: -50), "puzzle_piece_13.png": CGPoint(x: -45, y: -20), "puzzle_piece_15.png": CGPoint(x: 45, y: 0), "puzzle_piece_17.png": CGPoint(x: 30, y: 25)],
-        "puzzle_piece_15.png": ["puzzle_piece_14.png": CGPoint(x: -45, y: 0), "puzzle_piece_10.png": CGPoint(x: -35, y: -50), "puzzle_piece_11.png": CGPoint(x: 15, y: -40)],
-        "puzzle_piece_16.png": ["puzzle_piece_11.png": CGPoint(x: -45, y: -40), "puzzle_piece_12.png": CGPoint(x: 20, y: -20)],
-        "puzzle_piece_17.png": ["puzzle_piece_13.png": CGPoint(x: -75, y: -30), "puzzle_piece_14.png": CGPoint(x: -30, y: -25)]
-    ]
-
-    let snapDistance: CGFloat = 50.0
 
     @objc func handlePanGesture(_ sender: UIPanGestureRecognizer) {
         guard let piece = sender.view else { return }

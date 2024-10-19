@@ -58,7 +58,11 @@ class MovementComponent: GKComponent {
         // Combine forward and right movement
         let movementVector = forwardMovement + rightMovement
 
-        // Translate the player node based on the movement vector
+        // Use a temporary node to check for collisions
+        let tempNode = SCNNode()
+        tempNode.position = playerNode.position + movementVector
+
+//        // Translate the player node based on the movement vector
         playerNode.localTranslate(by: movementVector)
 
         // Update light position to follow player
@@ -71,9 +75,34 @@ class MovementComponent: GKComponent {
             lastStepTime = currentTime // Update the last step time
         }
 
+        addPlayerPhysicsBody()
+
         // User is moving
         if !isLightActive {
             activateLightPulsing() // Activate light pulsing if not already active
+        }
+    }
+    
+    private func addPlayerPhysicsBody() {
+        if playerNode.physicsBody == nil {
+            // Ensure the player node has a physics body initialized correctly
+            playerNode.physicsBody = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(node: playerNode, options: nil))
+            
+            guard let playerPhysicsBody = playerNode.physicsBody else {
+                print("Error: Player physics body is nil after initialization")
+                return
+            }
+
+            // Set mass, category, collision, and contact test bit masks
+            playerPhysicsBody.mass = 1.0 // Set a lower mass for better movement control
+            playerPhysicsBody.friction = 0.5 // Adjust friction as needed
+            playerPhysicsBody.restitution = 0.0 // No bounciness
+
+            playerPhysicsBody.isAffectedByGravity = true
+            // Set up collision and contact masks
+            playerPhysicsBody.categoryBitMask = 1  // Define a bitmask for the player
+            playerPhysicsBody.collisionBitMask = 2 // Collides with walls/floor
+            playerPhysicsBody.contactTestBitMask = 2 // Test for contact with walls
         }
     }
 
