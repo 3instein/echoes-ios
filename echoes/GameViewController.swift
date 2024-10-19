@@ -50,7 +50,7 @@ class GameViewController: UIViewController {
             gameScene.setupGestureRecognizers(for: scnView)
         }
         
-        playerEntity.movementComponent.movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 30.0)
+        playerEntity.movementComponent.movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 25)
 
         // Configure the SCNView
         scnView.allowsCameraControl = false
