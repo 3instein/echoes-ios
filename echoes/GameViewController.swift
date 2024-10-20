@@ -29,7 +29,6 @@ class GameViewController: UIViewController {
         // Now check if the loaded scene is Scene1 and assign it to the scene1 variable
         if let loadedScene = scnView.scene as? Scene6 {
             scene6 = loadedScene
-//            // Call displayPuzzlePieces after ensuring scene1 is not nil
 
         } else {
             print("Error: Scene1 not loaded correctly")
@@ -55,6 +54,7 @@ class GameViewController: UIViewController {
         // Link the joystick with the movement component
         if let movementComponent = playerEntity?.movementComponent {
             movementComponent.joystickComponent = joystickComponent
+            scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
         }
         
         // Configure the SCNView

@@ -54,11 +54,15 @@ class VirtualJoystickComponent: GKComponent {
             let yPosition = limitedDistance * sin(angle) + joystickView.bounds.midY - knobSize / 2
             joystickKnob.frame.origin = CGPoint(x: xPosition, y: yPosition)
         case .ended, .cancelled:
-            isTouching = false
-            direction = .zero
-            joystickKnob.frame.origin = CGPoint(x: (joystickSize - knobSize) / 2, y: (joystickSize - knobSize) / 2)
+            resetJoystick()
         default:
             break
         }
+    }
+    
+    func resetJoystick() {
+        isTouching = false
+        direction = .zero
+        joystickKnob.frame.origin = CGPoint(x: (joystickSize - knobSize) / 2, y: (joystickSize - knobSize) / 2)
     }
 }
