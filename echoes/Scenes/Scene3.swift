@@ -81,10 +81,12 @@ class Scene3: SCNScene {
         
         let delayAction = SCNAction.wait(duration: 0.5)
         
-        // Sequence of actions: delay, open door, then move grandma
+        // Sequence of actions: delay, open door with sound, then move grandma, followed by dialogues and door closing
         let sequence = SCNAction.sequence([delayAction, SCNAction.run { [weak self] _ in
             self?.openDoor {
-                self?.moveGrandma()
+                self?.moveGrandma {
+                    self?.playDialogues()
+                }
             }
         }])
         
@@ -101,14 +103,24 @@ class Scene3: SCNScene {
     
     func openDoor(completion: @escaping () -> Void) {
         guard let doorNode = doorNode else { return }
+        
+        // Load and play the door opening sound
+        let doorOpenSound = SCNAudioSource(named: "door_open.MP3")!
+        doorOpenSound.load()
+        
         let openDoorAction = SCNAction.rotateBy(x: 0, y: 0, z: .pi / 2, duration: 2.0)
-        doorNode.runAction(openDoorAction) {
+        let playSoundAction = SCNAction.playAudio(doorOpenSound, waitForCompletion: false)
+        
+        // Sequence to open the door and play the sound
+        let doorSequence = SCNAction.group([openDoorAction, playSoundAction])
+        
+        doorNode.runAction(doorSequence) {
             completion()
         }
         isDoorOpen = true
     }
     
-    func moveGrandma() {
+    func moveGrandma(completion: @escaping () -> Void) {
         guard let grandmaNode = grandmaNode else { return }
         let targetPosition = SCNVector3(x: 0, y: -10, z: 0)
         let moveAction = SCNAction.move(to: targetPosition, duration: 2.5)
@@ -116,6 +128,48 @@ class Scene3: SCNScene {
         grandmaNode.runAction(moveAction) { [weak self] in
             self?.enablePlayerMovement()
             self?.isCutscenePlaying = false
+            completion()
+        }
+    }
+    
+    func playDialogues() {
+        // Player greets grandma
+        playAudio(named: "scene3_andra_greetings.mp3") {
+            // Grandma replies
+            self.playAudio(named: "scene3_grandma_greetings.mp3") {
+                // Player's thoughts
+                self.playAudio(named: "scene3_andra_thoughts.mp3") {
+                    // Close the door
+                    self.closeDoor()
+                }
+            }
+        }
+    }
+    
+    func closeDoor() {
+        guard let doorNode = doorNode else { return }
+        
+        // Load and play the door closing sound
+        let doorCloseSound = SCNAudioSource(named: "door_close.MP3")!
+        doorCloseSound.load()
+        
+        let closeDoorAction = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 2, duration: 2.0)
+        let playSoundAction = SCNAction.playAudio(doorCloseSound, waitForCompletion: false)
+        
+        // Sequence to close the door and play the sound
+        let doorSequence = SCNAction.group([closeDoorAction, playSoundAction])
+        doorNode.runAction(doorSequence)
+    }
+    
+    // Helper function to play audio files in sequence
+    func playAudio(named fileName: String, completion: @escaping () -> Void) {
+        let audioSource = SCNAudioSource(named: fileName)!
+        audioSource.load()
+        let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: true)
+        
+        // Run the sound action on the root node
+        rootNode.runAction(playAudioAction) {
+            completion()
         }
     }
     
