@@ -2,7 +2,7 @@ import GameplayKit
 import SceneKit
 import AVFoundation
 
-class MovementComponent: GKComponent {
+class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     let playerNode: SCNNode
     let movementSpeed: Float = 60
     var joystickComponent: VirtualJoystickComponent?
@@ -42,6 +42,8 @@ class MovementComponent: GKComponent {
         guard let joystick = joystickComponent, joystick.isTouching, let cameraNode = cameraNode else {
             return
         }
+        
+        addPlayerPhysicsBody()
 
         let direction = joystick.direction
         let deltaTime = Float(seconds)
@@ -62,7 +64,7 @@ class MovementComponent: GKComponent {
         let tempNode = SCNNode()
         tempNode.position = playerNode.position + movementVector
 
-//        // Translate the player node based on the movement vector
+        // Translate the player node based on the movement vector
         playerNode.localTranslate(by: movementVector)
 
         // Update light position to follow player
@@ -75,22 +77,9 @@ class MovementComponent: GKComponent {
             lastStepTime = currentTime // Update the last step time
         }
 
-        addPlayerPhysicsBody()
-
         // User is moving
         if !isLightActive {
             activateLightPulsing() // Activate light pulsing if not already active
-        }
-    }
-    
-    private func setupWallPhysicsBodies() {
-        // Loop through your walls and apply physics bodies
-        for node in playerNode.parent?.childNodes ?? [] {
-            if node.name?.contains("wall") == true || node.name?.contains("floor")  == true {
-                node.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
-                node.physicsBody?.categoryBitMask = 2  // Wall category
-                node.physicsBody?.collisionBitMask = 1  // Collides with player
-            }
         }
     }
 
@@ -106,10 +95,10 @@ class MovementComponent: GKComponent {
 
             // Set mass, category, collision, and contact test bit masks
             playerPhysicsBody.mass = 1.0 // Set a lower mass for better movement control
-            playerPhysicsBody.friction = 0.5 // Adjust friction as needed
-            playerPhysicsBody.restitution = 0.0 // No bounciness
+//            playerPhysicsBody.friction = 0.5 // Adjust friction as needed
+            playerPhysicsBody.restitution = 1.0 // No bounciness
 
-            playerPhysicsBody.isAffectedByGravity = true
+            playerPhysicsBody.isAffectedByGravity = false
             // Set up collision and contact masks
             playerPhysicsBody.categoryBitMask = 1  // Define a bitmask for the player
             playerPhysicsBody.collisionBitMask = 2 // Collides with walls/floor
@@ -120,7 +109,47 @@ class MovementComponent: GKComponent {
         }
     }
 
+    private func setupWallPhysicsBodies() {
+        // Loop through your walls and apply physics bodies
+        for node in playerNode.parent?.childNodes ?? [] {
+            if node.name?.contains("wall") == true /*|| node.name?.contains("floor")  == true */{
+                node.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
+                node.physicsBody?.categoryBitMask = 2  // Wall category
+                node.physicsBody?.collisionBitMask = 1  // Collides with player
+                node.physicsBody?.contactTestBitMask = 1
+            }
+        }
+    }
 
+    func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
+        let nodeA = contact.nodeA
+        let nodeB = contact.nodeB
+
+        // Check for collision between player and walls/floor
+        if (nodeA.physicsBody?.categoryBitMask == 1 && nodeB.physicsBody?.categoryBitMask == 2) ||
+           (nodeB.physicsBody?.categoryBitMask == 1 && nodeA.physicsBody?.categoryBitMask == 2) {
+            print("Player collided with wall or floor")
+            
+            // Stop player movement by applying a zero velocity
+            let playerNode = (nodeA.physicsBody?.categoryBitMask == 1) ? nodeA : nodeB
+            if let playerPhysicsBody = playerNode.physicsBody {
+                // Gradually dampen the velocity instead of setting it to zero
+                let currentVelocity = playerPhysicsBody.velocity
+                playerPhysicsBody.velocity = SCNVector3(currentVelocity.x * 0.5, 0, currentVelocity.z * 0.5) // Dampen velocity
+                
+                // Adjust friction temporarily
+                playerPhysicsBody.friction = 0.2 // Lower friction for easier movement post-collision
+                
+                // Reset joystick direction only if not touching the joystick
+                resetJoystickDirection()
+            }
+        }
+    }
+    
+    private func resetJoystickDirection() {
+        joystickComponent?.resetJoystick() // Implement this method in your VirtualJoystickComponent
+    }
+    
     private func loadSound() {
         if let soundURL = Bundle.main.url(forResource: "EcholocationSound", withExtension: "mp3") {
             do {

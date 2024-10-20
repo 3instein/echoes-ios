@@ -84,7 +84,8 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         // Add a default light to the scene
         let light = SCNLight()
         light.type = .omni
-        light.intensity = 1000
+        light.intensity = 500
+        light.color = UIColor.white
         lightNode.light = light
         
         // Set the initial position of the lightNode to match the playerNode's position
@@ -95,7 +96,7 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         let ambientLightNode = SCNNode()
         let ambientLight = SCNLight()
         ambientLight.type = .ambient
-        ambientLight.intensity = 2000
+        ambientLight.intensity = 500
         ambientLight.color = UIColor.blue
         ambientLightNode.light = ambientLight
         rootNode.addChildNode(ambientLightNode)
@@ -108,49 +109,8 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         objCakeNode = rootNode.childNode(withName: "Puzzle_Object", recursively: true)
         
         self.physicsWorld.contactDelegate = self
-
-        // Add all child nodes from the house scene to the root node
-        for childNode in houseScene.rootNode.childNodes {
-            rootNode.addChildNode(childNode)
-        
-            // Check if the node is a wall or floor
-            if childNode.name == "wall" || childNode.name == "floor" {
-                // Add static physics body for walls and floor
-                let childNodeGeometry = childNode.geometry!
-                let childNodeShape = SCNPhysicsShape(geometry: childNode.geometry!, options: nil)
-                childNode.physicsBody = SCNPhysicsBody(type: .static, shape: childNodeShape)
-                
-                childNode.physicsBody?.categoryBitMask = 2  // Assign a different bitmask for walls and floor
-                childNode.physicsBody?.collisionBitMask = 1 // Collides with the player
-                childNode.physicsBody?.contactTestBitMask = 1
-            }
-        }
     }
     
-    func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
-        let nodeA = contact.nodeA
-        let nodeB = contact.nodeB
-
-        // Check for collision between player and walls/floor
-        if (nodeA.physicsBody?.categoryBitMask == 1 && nodeB.physicsBody?.categoryBitMask == 2) ||
-           (nodeB.physicsBody?.categoryBitMask == 1 && nodeA.physicsBody?.categoryBitMask == 2) {
-            print("Player collided with wall or floor")
-            
-            // Stop player movement by applying a zero velocity
-            let playerNode = (nodeA.physicsBody?.categoryBitMask == 1) ? nodeA : nodeB
-            if let playerPhysicsBody = playerNode.physicsBody {
-                // Dampen the velocity to stop movement smoothly instead of setting it directly to zero
-                playerPhysicsBody.velocity = SCNVector3(0, 0, 0)
-                playerPhysicsBody.angularVelocity = SCNVector4(0, 0, 0, 0) // Prevent unwanted rotation
-                
-                // Apply some friction or resistance to avoid jittering
-                playerPhysicsBody.friction = 1.0
-                playerPhysicsBody.damping = 0.8
-            }
-        }
-    }
-
-
     func displayPuzzlePieces(on view: UIView) {
         let pieceImages = [
             "puzzle_piece_1.png", "puzzle_piece_2.png", "puzzle_piece_3.png",
