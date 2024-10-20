@@ -56,6 +56,15 @@ class Scene3: SCNScene {
         // Initialize cameraComponent with a valid cameraNode
         cameraComponent = CameraComponent(cameraNode: cameraNode)
         
+        // Temporarily illuminate the scene with ambient lighting
+        let ambientLightNode = SCNNode()
+        let ambientLight = SCNLight()
+        ambientLight.type = .ambient
+        ambientLight.intensity = 250
+        ambientLight.color = UIColor.white
+        ambientLightNode.light = ambientLight
+        rootNode.addChildNode(ambientLightNode)
+        
         // Add the external light node to the scene
         rootNode.addChildNode(lightNode)
         
@@ -63,15 +72,13 @@ class Scene3: SCNScene {
         let movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode)
         playerEntity.addComponent(movementComponent)
         
-        // Start the cutscene
         startCutscene()
     }
     
     func startCutscene() {
         isCutscenePlaying = true
-        disablePlayerMovement() // Disable movement during cutscene
+        disablePlayerMovement()
         
-        // Delay before starting the door opening animation
         let delayAction = SCNAction.wait(duration: 0.5)
         
         // Sequence of actions: delay, open door, then move grandma
@@ -85,22 +92,17 @@ class Scene3: SCNScene {
     }
     
     func disablePlayerMovement() {
-        // You can uncomment and implement this depending on your setup
         // playerEntity.movementComponent.isEnabled = false
     }
     
     func enablePlayerMovement() {
-        // You can uncomment and implement this depending on your setup
         // playerEntity.movementComponent.isEnabled = true
     }
     
     func openDoor(completion: @escaping () -> Void) {
         guard let doorNode = doorNode else { return }
-        
-        // Animate the door opening (rotating around the Y-axis)
         let openDoorAction = SCNAction.rotateBy(x: 0, y: 0, z: .pi / 2, duration: 2.0)
         doorNode.runAction(openDoorAction) {
-            // Call the completion handler once the door has finished opening
             completion()
         }
         isDoorOpen = true
@@ -108,29 +110,21 @@ class Scene3: SCNScene {
     
     func moveGrandma() {
         guard let grandmaNode = grandmaNode else { return }
-        
-        // Move the grandma to the specified position with a slight delay
         let targetPosition = SCNVector3(x: 0, y: -10, z: 0)
         let moveAction = SCNAction.move(to: targetPosition, duration: 2.5)
         
         grandmaNode.runAction(moveAction) { [weak self] in
-            // Re-enable player movement after cutscene
             self?.enablePlayerMovement()
             self?.isCutscenePlaying = false
         }
     }
     
     func setupGestureRecognizers(for view: SCNView) {
-        // Save a reference to the SCNView
         self.scnView = view
-        
-        // Ensure cameraComponent is initialized properly before using it
         guard let cameraComponent = cameraComponent else {
             print("Error: CameraComponent is nil. Cannot set up gesture recognizers.")
             return
         }
-        
-        // Gesture recognizer for camera control
         cameraComponent.setupGestureRecognizers(for: view)
     }
     
