@@ -60,7 +60,7 @@ class Scene3: SCNScene {
         let ambientLightNode = SCNNode()
         let ambientLight = SCNLight()
         ambientLight.type = .ambient
-        ambientLight.intensity = 250
+        ambientLight.intensity = 200
         ambientLight.color = UIColor.white
         ambientLightNode.light = ambientLight
         rootNode.addChildNode(ambientLightNode)
@@ -139,26 +139,49 @@ class Scene3: SCNScene {
             self.playAudio(named: "scene3_grandma_greetings.mp3") {
                 // Player's thoughts
                 self.playAudio(named: "scene3_andra_thoughts.mp3") {
-                    // Close the door
-                    self.closeDoor()
+                    // Play door closing sound and fade to black
+                    self.playDoorCloseSoundAndFadeToBlack()
                 }
             }
         }
     }
     
-    func closeDoor() {
-        guard let doorNode = doorNode else { return }
+    func playDoorCloseSoundAndFadeToBlack() {
+        guard let scnView = scnView else { return }
         
         // Load and play the door closing sound
         let doorCloseSound = SCNAudioSource(named: "door_close.MP3")!
         doorCloseSound.load()
         
-        let closeDoorAction = SCNAction.rotateBy(x: 0, y: 0, z: -.pi / 2, duration: 2.0)
+        // Play the door close sound
         let playSoundAction = SCNAction.playAudio(doorCloseSound, waitForCompletion: false)
         
-        // Sequence to close the door and play the sound
-        let doorSequence = SCNAction.group([closeDoorAction, playSoundAction])
-        doorNode.runAction(doorSequence)
+        // Fade to black at the same time as the sound is playing
+        let fadeToBlackAction = SCNAction.run { [weak self] _ in
+            self?.fadeScreenToBlack()
+        }
+        
+        // Run the sound and fade actions at the same time
+        let groupAction = SCNAction.group([playSoundAction, fadeToBlackAction])
+        rootNode.runAction(groupAction)
+    }
+    
+    func fadeScreenToBlack() {
+        guard let scnView = scnView else { return }
+        
+        DispatchQueue.main.async {
+            let blackOverlay = UIView(frame: scnView.bounds)
+            blackOverlay.backgroundColor = .black
+            blackOverlay.alpha = 0
+            scnView.addSubview(blackOverlay)
+            
+            // Animate the fade to black
+            UIView.animate(withDuration: 2.0) {
+                blackOverlay.alpha = 1.0
+            } completion: { _ in
+                print("Scene 3 ended")
+            }
+        }
     }
     
     // Helper function to play audio files in sequence
