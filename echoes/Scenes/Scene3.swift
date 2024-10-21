@@ -47,11 +47,9 @@ class Scene3: SCNScene {
         SCNTransaction.animationDuration = 0
         SCNTransaction.commit()
         
-        // Ensure the scene is rendered immediately
+        // Start the rendering loop
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.scnView?.scene?.isPaused = false
-            self.scnView?.sceneTime = 0
-            self.startCutscene()
+            self.forceSceneUpdateAndStart()
         }
     }
     
@@ -115,6 +113,18 @@ class Scene3: SCNScene {
         // Initialize MovementComponent with lightNode reference
         let movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode)
         playerEntity.addComponent(movementComponent)
+    }
+    
+    // Force the SCNView to update and play the scene
+    func forceSceneUpdateAndStart() {
+        guard let scnView = self.scnView else { return }
+        
+        scnView.isPlaying = true // Start the rendering loop
+        scnView.scene?.isPaused = false // Unpause the scene if paused
+        scnView.sceneTime = 0           // Reset the scene time to zero
+        
+        // Start the cutscene after forcing an update
+        startCutscene()
     }
     
     // Function to attach wind, crow, and lightRain sounds with reduced volume
@@ -188,13 +198,9 @@ class Scene3: SCNScene {
     }
     
     func playDialogues() {
-        // Player greets grandma
         playAudioSource(andraGreetingsSound, volume: 4.0) {
-            // Grandma replies
             self.playAudioSource(self.grandmaGreetingsSound, volume: 3.0) {
-                // Player's thoughts
                 self.playAudioSource(self.andraThoughtsSound, volume: 4.0) {
-                    // Play door closing sound and fade to black
                     self.playDoorCloseSoundAndFadeToBlack()
                 }
             }
@@ -246,6 +252,9 @@ class Scene3: SCNScene {
             print("Error: CameraComponent is nil. Cannot set up gesture recognizers.")
             return
         }
+        
+        // Ensure the rendering loop is running and scene is active
+        view.isPlaying = true
         view.scene?.isPaused = false
         
         cameraComponent.setupGestureRecognizers(for: view)
