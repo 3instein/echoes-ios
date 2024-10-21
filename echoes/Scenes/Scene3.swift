@@ -47,7 +47,6 @@ class Scene3: SCNScene {
         SCNTransaction.animationDuration = 0
         SCNTransaction.commit()
         
-        // Start the rendering loop
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             self.forceSceneUpdateAndStart()
         }
@@ -79,8 +78,6 @@ class Scene3: SCNScene {
             print("Warning: Player node named 'Player' not found in house model")
             return
         }
-        
-        // Add player node to the GameScene's rootNode
         rootNode.addChildNode(playerNode)
         
         // Attach the existing camera node from the player model to the scene, or create one if missing
@@ -119,9 +116,12 @@ class Scene3: SCNScene {
     func forceSceneUpdateAndStart() {
         guard let scnView = self.scnView else { return }
         
-        scnView.isPlaying = true // Start the rendering loop
-        scnView.scene?.isPaused = false // Unpause the scene if paused
-        scnView.sceneTime = 0           // Reset the scene time to zero
+        scnView.isPlaying = true
+        scnView.scene?.isPaused = false
+        scnView.sceneTime = 0
+        
+        // Lock the camera at the start of the cutscene
+        cameraComponent?.lockCamera()
         
         // Start the cutscene after forcing an update
         startCutscene()
@@ -253,7 +253,6 @@ class Scene3: SCNScene {
             return
         }
         
-        // Ensure the rendering loop is running and scene is active
         view.isPlaying = true
         view.scene?.isPaused = false
         
