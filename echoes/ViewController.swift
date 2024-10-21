@@ -81,7 +81,6 @@ class ViewController: UIViewController {
             creditsButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             creditsButton.topAnchor.constraint(equalTo: settingsButton.bottomAnchor, constant: 10) // Reduce this constant for a smaller gap
         ])
-
     }
     
     func createButton(withText text: String) -> UIButton {

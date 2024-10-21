@@ -33,14 +33,16 @@ class GameViewController: UIViewController {
             // Create a movement component to handle player movement, including the light node
             let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
             playerEntity.movementComponent = movementComponent
-            
+          
+            joystickComponent.hideJoystick()
+          
             // Link the joystick with the movement component
             if let movementComponent = gameScene.playerEntity.movementComponent {
                 movementComponent.joystickComponent = joystickComponent
             }
             
             // Set up fog properties for the scene
-            gameScene.fogStartDistance = 50.0   // Increase the start distance
+            gameScene.fogStartDistance = 100.0   // Increase the start distance
             gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
             gameScene.fogDensityExponent = 0.2  // Reduce density to make the fog less thick
             gameScene.fogColor = UIColor.black
