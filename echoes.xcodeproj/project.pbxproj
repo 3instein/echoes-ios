@@ -30,7 +30,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		C96865842CBF5C9100016CD7 /* Exceptions for "echoes" folder in "echoes" target */ = {
+		45AD9E3D2CC35E9700E43015 /* Exceptions for "echoes" folder in "echoes" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -43,7 +43,7 @@
 		C95733EF2CB4C64C00E35F32 /* echoes */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				C96865842CBF5C9100016CD7 /* Exceptions for "echoes" folder in "echoes" target */,
+				45AD9E3D2CC35E9700E43015 /* Exceptions for "echoes" folder in "echoes" target */,
 			);
 			path = echoes;
 			sourceTree = "<group>";
@@ -408,9 +408,8 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 6R3F5G5AGC;
+				DEVELOPMENT_TEAM = SQYP2NUML9;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = echoes/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -437,9 +436,8 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 6R3F5G5AGC;
+				DEVELOPMENT_TEAM = SQYP2NUML9;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = echoes/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
