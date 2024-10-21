@@ -1,4 +1,4 @@
-//  Scene3.swift
+// Scene3.swift
 
 import SceneKit
 import UIKit
@@ -47,8 +47,12 @@ class Scene3: SCNScene {
         SCNTransaction.animationDuration = 0
         SCNTransaction.commit()
         
-        // Start the cutscene immediately
-        startCutscene()
+        // Ensure the scene is rendered immediately
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.scnView?.scene?.isPaused = false
+            self.scnView?.sceneTime = 0
+            self.startCutscene()
+        }
     }
     
     // Load and cache audio resources to avoid reloading during runtime
@@ -242,6 +246,8 @@ class Scene3: SCNScene {
             print("Error: CameraComponent is nil. Cannot set up gesture recognizers.")
             return
         }
+        view.scene?.isPaused = false
+        
         cameraComponent.setupGestureRecognizers(for: view)
     }
     
