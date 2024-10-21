@@ -41,10 +41,10 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         "puzzle_piece_17.png": ["puzzle_piece_13.png": CGPoint(x: -75, y: -30), "puzzle_piece_14.png": CGPoint(x: -30, y: -25)]
     ]
     
-    override init() {
+    init(lightNode: SCNNode) {
         super.init()
-        lightNode = SCNNode()
-        
+        self.lightNode = lightNode
+
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "scene6.scn") else {
             print("Warning: House scene 'Scene 6.scn' not found")
@@ -81,25 +81,27 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         // Add the camera component to handle the camera logic
         cameraComponent = CameraComponent(cameraNode: cameraNode)
         
-        // Add a default light to the scene
-        let light = SCNLight()
-        light.type = .omni
-        light.intensity = 500
-        light.color = UIColor.white
-        lightNode.light = light
+//        // Add a default light to the scene
+//        let light = SCNLight()
+//        light.type = .omni
+//        light.intensity = 500
+//        light.color = UIColor.white
+//        lightNode.light = light
+//        
+//        // Set the initial position of the lightNode to match the playerNode's position
+//        lightNode.position = playerNode.position
+//        rootNode.addChildNode(lightNode)
+//        
+//        // Add an ambient light to the scene
+//        let ambientLightNode = SCNNode()
+//        let ambientLight = SCNLight()
+//        ambientLight.type = .ambient
+//        ambientLight.intensity = 500
+//        ambientLight.color = UIColor.blue
+//        ambientLightNode.light = ambientLight
+//        rootNode.addChildNode(ambientLightNode)
         
-        // Set the initial position of the lightNode to match the playerNode's position
-        lightNode.position = playerNode.position
         rootNode.addChildNode(lightNode)
-        
-        // Add an ambient light to the scene
-        let ambientLightNode = SCNNode()
-        let ambientLight = SCNLight()
-        ambientLight.type = .ambient
-        ambientLight.intensity = 500
-        ambientLight.color = UIColor.blue
-        ambientLightNode.light = ambientLight
-        rootNode.addChildNode(ambientLightNode)
         
         // Initialize MovementComponent with lightNode reference
         let movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode)
@@ -109,6 +111,31 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         objCakeNode = rootNode.childNode(withName: "Puzzle_Object", recursively: true)
         
         self.physicsWorld.contactDelegate = self
+    }
+    
+    func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
+        let nodeA = contact.nodeA
+        let nodeB = contact.nodeB
+
+        // Check for collision between player and walls/floor
+        if (nodeA.physicsBody?.categoryBitMask == 1 && nodeB.physicsBody?.categoryBitMask == 2) ||
+           (nodeB.physicsBody?.categoryBitMask == 1 && nodeA.physicsBody?.categoryBitMask == 2) {
+            print("Player collided with wall or floor")
+            
+            // Stop player movement by applying a zero velocity
+            let playerNode = (nodeA.physicsBody?.categoryBitMask == 1) ? nodeA : nodeB
+            if let playerPhysicsBody = playerNode.physicsBody {
+                // Gradually dampen the velocity instead of setting it to zero
+                let currentVelocity = playerPhysicsBody.velocity
+                playerPhysicsBody.velocity = SCNVector3(currentVelocity.x * 0.5, 0, currentVelocity.z * 0.5) // Dampen velocity
+                
+                // Adjust friction temporarily
+                playerPhysicsBody.friction = 0.2 // Lower friction for easier movement post-collision
+                
+                // Reset joystick direction only if not touching the joystick
+                joystickComponent?.resetJoystick()
+            }
+        }
     }
     
     func displayPuzzlePieces(on view: UIView) {

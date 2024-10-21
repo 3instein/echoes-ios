@@ -5,6 +5,7 @@ import UIKit
 
 class CameraComponent {
     private var cameraNode: SCNNode
+    private var isCameraLocked: Bool = false
 
     init(cameraNode: SCNNode) {
         self.cameraNode = cameraNode
@@ -14,8 +15,18 @@ class CameraComponent {
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
         view.addGestureRecognizer(panGesture)
     }
+    
+    func lockCamera() {
+        isCameraLocked = true
+    }
+
+    func unlockCamera() {
+        isCameraLocked = false
+    }
 
     @objc private func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
+        guard !isCameraLocked else { return } // Prevent gesture handling if the camera is locked
+
         let translation = gesture.translation(in: gesture.view)
 
         switch gesture.state {
