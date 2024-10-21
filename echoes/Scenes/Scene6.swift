@@ -113,31 +113,6 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         self.physicsWorld.contactDelegate = self
     }
     
-    func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
-        let nodeA = contact.nodeA
-        let nodeB = contact.nodeB
-
-        // Check for collision between player and walls/floor
-        if (nodeA.physicsBody?.categoryBitMask == 1 && nodeB.physicsBody?.categoryBitMask == 2) ||
-           (nodeB.physicsBody?.categoryBitMask == 1 && nodeA.physicsBody?.categoryBitMask == 2) {
-            print("Player collided with wall or floor")
-            
-            // Stop player movement by applying a zero velocity
-            let playerNode = (nodeA.physicsBody?.categoryBitMask == 1) ? nodeA : nodeB
-            if let playerPhysicsBody = playerNode.physicsBody {
-                // Gradually dampen the velocity instead of setting it to zero
-                let currentVelocity = playerPhysicsBody.velocity
-                playerPhysicsBody.velocity = SCNVector3(currentVelocity.x * 0.5, 0, currentVelocity.z * 0.5) // Dampen velocity
-                
-                // Adjust friction temporarily
-                playerPhysicsBody.friction = 0.2 // Lower friction for easier movement post-collision
-                
-                // Reset joystick direction only if not touching the joystick
-                joystickComponent?.resetJoystick()
-            }
-        }
-    }
-    
     func displayPuzzlePieces(on view: UIView) {
         let pieceImages = [
             "puzzle_piece_1.png", "puzzle_piece_2.png", "puzzle_piece_3.png",

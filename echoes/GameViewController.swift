@@ -51,6 +51,7 @@ class GameViewController: UIViewController {
             // Link the joystick with the movement component
             if let movementComponent = gameScene.playerEntity.movementComponent {
                 movementComponent.joystickComponent = joystickComponent
+                scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
             }
 
             // Set up fog properties for the scene
