@@ -117,8 +117,6 @@ class Scene3: SCNScene {
     
     func startCutscene() {
         isCutscenePlaying = true
-        disablePlayerMovement()
-        
         let delayAction = SCNAction.wait(duration: 0.5)
         
         // Sequence of actions: delay, open door with sound, then move grandma, followed by dialogues and door closing
@@ -131,16 +129,6 @@ class Scene3: SCNScene {
         }])
         
         rootNode.runAction(sequence)
-    }
-    
-    func disablePlayerMovement() {
-        // Disable player movement during cutscene
-        // playerEntity.movementComponent.isEnabled = false
-    }
-    
-    func enablePlayerMovement() {
-        // Re-enable player movement after cutscene
-        // playerEntity.movementComponent.isEnabled = true
     }
     
     func openDoor(completion: @escaping () -> Void) {
@@ -164,7 +152,6 @@ class Scene3: SCNScene {
         let moveAction = SCNAction.move(to: targetPosition, duration: 2.5)
         
         grandmaNode.runAction(moveAction) { [weak self] in
-            self?.enablePlayerMovement()
             self?.isCutscenePlaying = false
             completion()
         }
@@ -172,11 +159,11 @@ class Scene3: SCNScene {
     
     func playDialogues() {
         // Player greets grandma
-        playAudio(named: "scene3_andra_greetings.mp3", volume: 3.0) {
+        playAudio(named: "scene3_andra_greetings.mp3", volume: 4.0) {
             // Grandma replies
-            self.playAudio(named: "scene3_grandma_greetings.mp3", volume: 2.0) {
+            self.playAudio(named: "scene3_grandma_greetings.mp3", volume: 3.0) {
                 // Player's thoughts
-                self.playAudio(named: "scene3_andra_thoughts.mp3", volume: 3.0) {
+                self.playAudio(named: "scene3_andra_thoughts.mp3", volume: 4.0) {
                     // Play door closing sound and fade to black
                     self.playDoorCloseSoundAndFadeToBlack()
                 }
