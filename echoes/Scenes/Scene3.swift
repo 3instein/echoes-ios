@@ -12,11 +12,10 @@ class Scene3: SCNScene {
     var grandmaNode: SCNNode?
     var scnView: SCNView?
     var isDoorOpen = false
-    var isCutscenePlaying = false
-    
-    // Scene initializer with lightNode as an external dependency
+  
     init(lightNode: SCNNode) {
         super.init()
+        self.lightNode = lightNode
         
         self.lightNode = lightNode
         
@@ -34,10 +33,10 @@ class Scene3: SCNScene {
         // Find the door and grandma nodes in the scene
         doorNode = rootNode.childNode(withName: "Door", recursively: true)
         grandmaNode = rootNode.childNode(withName: "Grandma", recursively: true)
-        
+      
         // Create a new player entity and initialize it using the house scene's root node
         playerEntity = PlayerEntity(in: rootNode, cameraNode: cameraNode, lightNode: lightNode)
-        
+      
         guard let playerNode = playerEntity.playerNode else {
             print("Warning: Player node named 'Player' not found in house model")
             return

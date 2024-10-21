@@ -11,7 +11,7 @@ class MovementComponent: GKComponent {
 
     // Light node reference
     var lightNode: SCNNode?
-    var originalLightIntensity: CGFloat = 25 // Default intensity
+    var originalLightIntensity: CGFloat = 75 // Default intensity
     var isLightActive = false // Track if light is active
     private var lightIncreaseDuration: TimeInterval = 0.5 // Reduced duration for increasing intensity
     private var lightDecreaseDuration: TimeInterval = 0.3 // Reduced duration for decreasing intensity
@@ -27,7 +27,7 @@ class MovementComponent: GKComponent {
         self.playerNode = playerNode
         self.cameraNode = cameraNode
         self.lightNode = lightNode
-        self.originalLightIntensity = lightNode?.light?.intensity ?? 25 // Set original intensity
+        self.originalLightIntensity = lightNode?.light?.intensity ?? 75 // Set original intensity
 
         super.init()
         
@@ -171,7 +171,17 @@ class MovementComponent: GKComponent {
 
         lightNode.runAction(decreaseAction) { [weak self] in
             self?.isLightActive = false // Mark light as inactive after fading out
-            lightNode.light?.intensity = self?.originalLightIntensity ?? 100 // Ensure it resets to original
+            lightNode.light?.intensity = self?.originalLightIntensity ?? 75 // Ensure it resets to original
+        }
+    }
+    
+    func movePlayer(to position: SCNVector3, duration: TimeInterval) {
+        movingProgramatically = true
+        let playerNode = playerNode
+        let moveAction = SCNAction.move(to: position, duration: duration)
+        moveAction.timingMode = .easeInEaseOut
+        playerNode.runAction(moveAction) {
+            self.movingProgramatically = false
         }
     }
     
