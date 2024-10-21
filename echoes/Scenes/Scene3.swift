@@ -199,7 +199,7 @@ class Scene3: SCNScene {
     
     func playDialogues() {
         playAudioSource(andraGreetingsSound, volume: 4.0) {
-            self.playAudioSource(self.grandmaGreetingsSound, volume: 3.0) {
+            self.playAudioSource(self.grandmaGreetingsSound, volume: 4.0) {
                 self.playAudioSource(self.andraThoughtsSound, volume: 4.0) {
                     self.playDoorCloseSoundAndFadeToBlack()
                 }
