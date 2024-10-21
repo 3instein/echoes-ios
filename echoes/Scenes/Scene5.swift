@@ -5,8 +5,6 @@
 //  Created by Pelangi Masita Wati on 15/10/24.
 //
 
-// GameScene.swift
-
 import SceneKit
 import UIKit
 
@@ -101,55 +99,12 @@ class Scene5: SCNScene {
             attachAudio(to: grandmaNode, audioFileName: "s5-grandma.wav", volume: 100, delay: 5)
         }
         
-        // Add the flashlight to the player node
-        if let playerNode = playerEntity.playerNode {
-            addFlashlightToPlayer(playerNode: playerNode)
-        } else {
-            print("Warning: Player node is nil")
-        }
-        
-        // Find the Armature node in the scene
-        if let armatureNode = rootNode.childNode(withName: "Armature", recursively: true),
-           let geometry = armatureNode.geometry {
-
-            // Create a new material
-            let material = SCNMaterial()
-
-            // Set the diffuse texture
-            material.diffuse.contents = UIImage(named: "9_meshes_Merge_Diffuse.png")
-
-            // Optionally set the normal map
-            material.normal.contents = UIImage(named: "9_meshes_Merge_Normal.png")
-
-            // Optionally set the specular map
-            material.specular.contents = UIImage(named: "9_meshes_Merge_Specular.png")
-
-            // Apply the material to the geometry
-            geometry.materials = [material]
-        } else {
-            print("Warning: Armature node not found in the scene")
-        }
-        
-        if let houseNode = rootNode.childNode(withName: "house_exterior", recursively: true),
-           let geometry = houseNode.geometry {
-
-            // Create a new material
-            let material = SCNMaterial()
-
-            // Set the diffuse texture
-            material.diffuse.contents = UIImage(named: "9_meshes_Merge_Diffuse.png")
-
-            // Optionally set the normal map
-            material.normal.contents = UIImage(named: "9_meshes_Merge_Normal.png")
-
-            // Optionally set the specular map
-            material.specular.contents = UIImage(named: "9_meshes_Merge_Specular.png")
-
-            // Apply the material to the geometry
-            geometry.materials = [material]
-        } else {
-            print("Warning: house_exterior node not found in the scene")
-        }
+//        // Add the flashlight to the player node
+//        if let playerNode = playerEntity.playerNode {
+//            addFlashlightToPlayer(playerNode: playerNode)
+//        } else {
+//            print("Warning: Player node is nil")
+//        }
     }
     
     func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {

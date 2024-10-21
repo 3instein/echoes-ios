@@ -18,10 +18,9 @@ class Scene2: SCNScene {
         super.init()
         self.lightNode = lightNode
 
-
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "Scene2.scn") else {
-            print("Warning: House scene 'Scene 1.scn' not found")
+            print("Warning: House scene 'Scene2.scn' not found")
             return
         }
 
@@ -64,14 +63,14 @@ class Scene2: SCNScene {
 //        lightNode.position = SCNVector3(x: 0, y: 20, z: 20)
 //        rootNode.addChildNode(lightNode)
 //
-//        // Add an ambient light to the scene
-//        let ambientLightNode = SCNNode()
-//        let ambientLight = SCNLight()
-//        ambientLight.type = .ambient
-//        ambientLight.intensity = 500
-//        ambientLight.color = UIColor.white
-//        ambientLightNode.light = ambientLight
-//        rootNode.addChildNode(ambientLightNode)
+        // Add an ambient light to the scene
+        let ambientLightNode = SCNNode()
+        let ambientLight = SCNLight()
+        ambientLight.type = .ambient
+        ambientLight.intensity = 300
+        ambientLight.color = UIColor.white
+        ambientLightNode.light = ambientLight
+        rootNode.addChildNode(ambientLightNode)
         
         rootNode.addChildNode(lightNode)
         
