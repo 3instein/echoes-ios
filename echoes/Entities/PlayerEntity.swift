@@ -15,10 +15,6 @@ class PlayerEntity: GKEntity {
         }
 
         self.playerNode = playerNode
-
-        // Create a movement component to handle player movement, including the light node
-        movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode) // Pass lightNode
-        addComponent(movementComponent)
     }
 
     required init?(coder aDecoder: NSCoder) {
