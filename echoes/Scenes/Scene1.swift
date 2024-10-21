@@ -1,3 +1,5 @@
+// Scene1.swif
+
 import SceneKit
 import UIKit
 
@@ -11,12 +13,13 @@ class Scene1: SCNScene {
 
     weak var scnView: SCNView?
 
-    override init() {
+    // Scene initializer with lightNode as an external dependency
+    init(lightNode: SCNNode) {
         super.init()
-
-        lightNode = SCNNode()
-
-        guard let houseScene = SCNScene(named: "scene1.scn") else {
+        self.lightNode = lightNode
+        
+        // Load the house scene from the Scenes folder
+        guard let houseScene = SCNScene(named: "Scene1.scn") else {
             print("Warning: House scene 'Scene 1.scn' not found")
             return
         }
@@ -44,22 +47,10 @@ class Scene1: SCNScene {
         cameraNode.camera?.automaticallyAdjustsZRange = true
         cameraComponent = CameraComponent(cameraNode: cameraNode)
 
-        let light = SCNLight()
-        light.type = .omni
-        light.intensity = 10
-        lightNode.light = light
-
-        lightNode.position = playerNode.position
+        // Add the external light node to the scene
         rootNode.addChildNode(lightNode)
 
-        let ambientLightNode = SCNNode()
-        let ambientLight = SCNLight()
-        ambientLight.type = .ambient
-        ambientLight.intensity = 20
-        ambientLight.color = UIColor.blue
-        ambientLightNode.light = ambientLight
-        rootNode.addChildNode(ambientLightNode)
-
+        // Initialize MovementComponent with lightNode reference
         let movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode)
         playerEntity.addComponent(movementComponent)
     }

@@ -1,4 +1,9 @@
-// GameScene.swift
+//
+//  Scene2.swift
+//  echoes
+//
+//  Created by Pelangi Masita Wati on 17/10/24.
+//
 
 import SceneKit
 import UIKit
@@ -9,11 +14,13 @@ class Scene2: SCNScene {
     var cameraComponent: CameraComponent!
     var lightNode: SCNNode!
 
-    override init() {
+    init(lightNode: SCNNode) {
         super.init()
+        self.lightNode = lightNode
+
 
         // Load the house scene from the Scenes folder
-        guard let houseScene = SCNScene(named: "Scene2.scn") else {
+        guard let houseScene = SCNScene(named: "scene2.scn") else {
             print("Warning: House scene 'Scene 1.scn' not found")
             return
         }
@@ -47,59 +54,46 @@ class Scene2: SCNScene {
 
         // Add the camera component to handle the camera logic
         cameraComponent = CameraComponent(cameraNode: cameraNode)
-
-        // Add a default light to the scene
-        let lightNode = SCNNode()
-        let light = SCNLight()
-        light.type = .omni
-        light.intensity = 1000
-        lightNode.light = light
-        lightNode.position = SCNVector3(x: 0, y: 20, z: 20)
+        cameraComponent.lockCamera()
         rootNode.addChildNode(lightNode)
 
-        // Add an ambient light to the scene
-        let ambientLightNode = SCNNode()
-        let ambientLight = SCNLight()
-        ambientLight.type = .ambient
-        ambientLight.intensity = 500
-        ambientLight.color = UIColor.white
-        ambientLightNode.light = ambientLight
-        rootNode.addChildNode(ambientLightNode)
-        
-        if let boxNode = rootNode.childNode(withName: "box", recursively: true) {
-            attachAudio(to: boxNode, audioFileName: "swanlake.wav")
-            addBoxVisualization(to: boxNode)
-        } else {
-            print("Warning: Node named 'box' not found in the scene")
-        }
-        
-        if let thunderNode = rootNode.childNode(withName: "thunder", recursively: true) {
-            attachAudio(to: thunderNode, audioFileName: "thunder.wav")
-            addBoxVisualization(to: thunderNode)
-        } else {
-            print("Warning: Node named 'thunder' not found in the scene")
+        guard let windNode = rootNode.childNode(withName: "wind", recursively: true) else {
+            print("Warning: Thunder node named 'wind' not found in house model")
+            return
         }
 
+        attachAudio(to: windNode, audioFileName: "wind.wav", volume: 0.5)
+        
+        guard let crowNode = rootNode.childNode(withName: "crow", recursively: true) else {
+            print("Warning: Crow node named 'crow' not found in house model")
+            return
+        }
+        
+        attachAudio(to: crowNode, audioFileName: "crow.wav", volume: 0.5)
+        
+        guard let lightRainNode = rootNode.childNode(withName: "lightRain", recursively: true) else {
+            print("Warning: LightRain node named 'lightRain' not found in house model")
+            return
+        }
+        
+        attachAudio(to: lightRainNode, audioFileName: "lightRain.wav", volume: 0.5)
     }
     
-    func attachAudio(to node: SCNNode, audioFileName: String) {
-        // Load the audio file as an SCNAudioSource
+    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float = 1.0) {
         guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
             print("Warning: Audio file '\(audioFileName)' not found")
             return
         }
 
-        // Preload the audio for smooth playback
         audioSource.loops = true
         audioSource.isPositional = true
         audioSource.shouldStream = false
         audioSource.load()
-        audioSource.volume = 100.0
+        
+        audioSource.volume = volume
 
-        // Create an SCNAction to play the audio source
         let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: false)
         
-        // Run the action on the node
         node.runAction(playAudioAction)
     }
     

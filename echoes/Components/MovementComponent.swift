@@ -4,13 +4,14 @@ import AVFoundation
 
 class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     let playerNode: SCNNode
-    let movementSpeed: Float = 60
+    let movementSpeed: Float = 2
     var joystickComponent: VirtualJoystickComponent?
     var cameraNode: SCNNode?
+    var movingProgramatically: Bool = false
 
     // Light node reference
     var lightNode: SCNNode?
-    var originalLightIntensity: CGFloat = 25 // Default intensity
+    var originalLightIntensity: CGFloat = 75 // Default intensity
     var isLightActive = false // Track if light is active
     private var lightIncreaseDuration: TimeInterval = 0.5 // Reduced duration for increasing intensity
     private var lightDecreaseDuration: TimeInterval = 0.3 // Reduced duration for decreasing intensity
@@ -26,7 +27,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
         self.playerNode = playerNode
         self.cameraNode = cameraNode
         self.lightNode = lightNode
-        self.originalLightIntensity = lightNode?.light?.intensity ?? 25 // Set original intensity
+        self.originalLightIntensity = lightNode?.light?.intensity ?? 75 // Set original intensity
 
         super.init()
         
@@ -45,41 +46,60 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
         
         addPlayerPhysicsBody()
 
-        let direction = joystick.direction
-        let deltaTime = Float(seconds)
+        if(!movingProgramatically){
+            guard let joystick = joystickComponent, joystick.isTouching, let cameraNode = cameraNode else {
+                return
+            }
 
-        // Calculate the camera's forward and right direction vectors
-        let cameraTransform = cameraNode.transform
-        let forwardVector = SCNVector3(cameraTransform.m31, cameraTransform.m32, cameraTransform.m33)
-        let rightVector = SCNVector3(cameraTransform.m11, cameraTransform.m12, -cameraTransform.m13)
+            let direction = joystick.direction
+            let deltaTime = Float(seconds)
 
-        // Scale direction by joystick input
-        let forwardMovement = forwardVector * Float(direction.y) * movementSpeed * deltaTime
-        let rightMovement = rightVector * Float(direction.x) * movementSpeed * deltaTime
+            // Calculate the camera's forward and right direction vectors
+            let cameraTransform = cameraNode.transform
+            // Calculate the camera's forward and right direction vectors
+            let forwardVector = normalizeVector(SCNVector3(cameraTransform.m31, 0, cameraTransform.m33))
+            let rightVector = normalizeVector(SCNVector3(cameraTransform.m11, 0, cameraTransform.m13))
 
-        // Combine forward and right movement
-        let movementVector = forwardMovement + rightMovement
+            // Scale direction by joystick input
+            let forwardMovement = forwardVector * Float(direction.y) * movementSpeed * deltaTime
+            let rightMovement = rightVector * Float(direction.x) * movementSpeed * deltaTime
 
-        // Use a temporary node to check for collisions
-        let tempNode = SCNNode()
-        tempNode.position = playerNode.position + movementVector
+            // Use a temporary node to check for collisions
+            let tempNode = SCNNode()
+            tempNode.position = playerNode.position + movementVector
 
-        // Translate the player node based on the movement vector
-        playerNode.localTranslate(by: movementVector)
+            // Translate the player node based on the movement vector
+            playerNode.localTranslate(by: movementVector)
+            
+            // Update light position to follow player
+            updateLightPosition()
 
-        // Update light position to follow player
-        updateLightPosition()
+            // Check time since last step to play sound
+            let currentTime = Date()
+            if lastStepTime == nil || currentTime.timeIntervalSince(lastStepTime!) >= stepDelay {
+                playSound() // Play sound if the delay has passed
+                lastStepTime = currentTime // Update the last step time
+            }
 
-        // Check time since last step to play sound
-        let currentTime = Date()
-        if lastStepTime == nil || currentTime.timeIntervalSince(lastStepTime!) >= stepDelay {
-            playSound() // Play sound if the delay has passed
-            lastStepTime = currentTime // Update the last step time
-        }
+            // User is moving
+            if !isLightActive {
+                activateLightPulsing() // Activate light pulsing if not already active
+            }
+        } else if(movingProgramatically){
+            // Update light position to follow player
+            updateLightPosition()
 
-        // User is moving
-        if !isLightActive {
-            activateLightPulsing() // Activate light pulsing if not already active
+            // Check time since last step to play sound
+            let currentTime = Date()
+            if lastStepTime == nil || currentTime.timeIntervalSince(lastStepTime!) >= stepDelay {
+                playSound() // Play sound if the delay has passed
+                lastStepTime = currentTime // Update the last step time
+            }
+
+            // User is moving
+            if !isLightActive {
+                activateLightPulsing() // Activate light pulsing if not already active
+            }
         }
     }
 
@@ -225,7 +245,17 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
 
         lightNode.runAction(decreaseAction) { [weak self] in
             self?.isLightActive = false // Mark light as inactive after fading out
-            lightNode.light?.intensity = self?.originalLightIntensity ?? 100 // Ensure it resets to original
+            lightNode.light?.intensity = self?.originalLightIntensity ?? 75 // Ensure it resets to original
+        }
+    }
+    
+    func movePlayer(to position: SCNVector3, duration: TimeInterval) {
+        movingProgramatically = true
+        let playerNode = playerNode
+        let moveAction = SCNAction.move(to: position, duration: duration)
+        moveAction.timingMode = .easeInEaseOut
+        playerNode.runAction(moveAction) {
+            self.movingProgramatically = false
         }
     }
 }
@@ -237,4 +267,10 @@ func +(left: SCNVector3, right: SCNVector3) -> SCNVector3 {
 
 func *(vector: SCNVector3, scalar: Float) -> SCNVector3 {
     return SCNVector3(vector.x * scalar, vector.y * scalar, vector.z * scalar)
+}
+
+func normalizeVector(_ vector: SCNVector3) -> SCNVector3 {
+    let length = sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z)
+    guard length != 0 else { return SCNVector3Zero }
+    return SCNVector3(vector.x / length, vector.y / length, vector.z / length)
 }

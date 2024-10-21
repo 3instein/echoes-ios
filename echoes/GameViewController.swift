@@ -24,39 +24,38 @@ class GameViewController: UIViewController {
         SceneManager.shared.configure(with: scnView)
 
         // Load the initial game scene
-        SceneManager.shared.loadScene6()
-
-        // Now check if the loaded scene is Scene1 and assign it to the scene1 variable
-        if let loadedScene = scnView.scene as? Scene6 {
-            scene6 = loadedScene
-
-        } else {
-            print("Error: Scene1 not loaded correctly")
-        }
+        SceneManager.shared.loadScene2()
+        
+        // Set up joystick component
+        joystickComponent = VirtualJoystickComponent()
+        joystickComponent.attachToView(self.view)
 
         // Set up the PlayerEntity
-        if let gameScene = scnView.scene as? Scene6 {
-            playerEntity = PlayerEntity(in: gameScene.rootNode, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode)
+        if let gameScene = scnView.scene as? Scene2 {
+            playerEntity = gameScene.playerEntity
+            
+            // Create a movement component to handle player movement, including the light node
+            let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
+            playerEntity.movementComponent = movementComponent
+            
+            joystickComponent.hideJoystick()
+            
+            // Link the joystick with the movement component
+            if let movementComponent = gameScene.playerEntity.movementComponent {
+                movementComponent.joystickComponent = joystickComponent
+            }
             
             // Set up fog properties for the scene
-            gameScene.fogStartDistance = 50.0   // Increase the start distance
+            gameScene.fogStartDistance = 100.0   // Increase the start distance
             gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
             gameScene.fogDensityExponent = 0.2  // Reduce density to make the fog less thick
             gameScene.fogColor = UIColor.black
             
             gameScene.setupGestureRecognizers(for: scnView)
         }
-
-        // Set up joystick component
-        joystickComponent = VirtualJoystickComponent()
-        joystickComponent.attachToView(self.view)
-
-        // Link the joystick with the movement component
-        if let movementComponent = playerEntity?.movementComponent {
-            movementComponent.joystickComponent = joystickComponent
-            scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
-        }
         
+        playerEntity.movementComponent.movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 25)
+
         // Configure the SCNView
         scnView.allowsCameraControl = false
         scnView.showsStatistics = true
