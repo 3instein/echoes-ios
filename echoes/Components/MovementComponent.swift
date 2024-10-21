@@ -1,3 +1,5 @@
+//  MovementComponent.swift
+
 import GameplayKit
 import SceneKit
 import AVFoundation
@@ -172,16 +174,6 @@ class MovementComponent: GKComponent {
         lightNode.runAction(decreaseAction) { [weak self] in
             self?.isLightActive = false // Mark light as inactive after fading out
             lightNode.light?.intensity = self?.originalLightIntensity ?? 75 // Ensure it resets to original
-        }
-    }
-    
-    func movePlayer(to position: SCNVector3, duration: TimeInterval) {
-        movingProgramatically = true
-        let playerNode = playerNode
-        let moveAction = SCNAction.move(to: position, duration: duration)
-        moveAction.timingMode = .easeInEaseOut
-        playerNode.runAction(moveAction) {
-            self.movingProgramatically = false
         }
     }
     
