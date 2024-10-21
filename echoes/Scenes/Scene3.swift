@@ -75,12 +75,12 @@ class Scene3: SCNScene {
         // Attach ambient sounds
         attachAmbientSounds()
         
-        // Force SceneKit to update the scene immediately
+        // Ensure the scene updates happen immediately, without waiting for user interaction
         SCNTransaction.begin()
         SCNTransaction.animationDuration = 0
         SCNTransaction.commit()
         
-        // Start the cutscene automatically without user interaction
+        // Start the cutscene immediately
         startCutscene()
     }
     
