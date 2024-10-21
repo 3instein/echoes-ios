@@ -19,9 +19,14 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     private var lightTimerDelay: TimeInterval = 1.0 // Reduced delay before light starts dimming
     
     // Sound properties
-    var audioPlayer: AVAudioPlayer?
+    var echoAudioPlayer: AVAudioPlayer?
     private var lastStepTime: Date?
     private let stepDelay: TimeInterval = 2.0 // Minimum delay between steps
+
+    var stepAudioPlayer: AVAudioPlayer?
+    private let minStepDelay: TimeInterval = 0.2 // Minimum delay between steps
+    private let maxStepDelay: TimeInterval = 1.0 // Maximum delay between steps
+    private var isWalking = false // Track if the player is walking
 
     init(playerNode: SCNNode, cameraNode: SCNNode?, lightNode: SCNNode?) {
         self.playerNode = playerNode
@@ -32,7 +37,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
         super.init()
         
         // Load sound
-        loadSound()
+        loadSounds()
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -42,6 +47,8 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     override func update(deltaTime seconds: TimeInterval) {
         if (!movingProgramatically){
             guard let joystick = joystickComponent, joystick.isTouching, let cameraNode = cameraNode else {
+                stepAudioPlayer?.stop() // Stop if currently playing
+
                 return
             }
             
@@ -72,11 +79,30 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
             // Update light position to follow player
             updateLightPosition()
 
-            // Check time since last step to play sound
-            let currentTime = Date()
-            if lastStepTime == nil || currentTime.timeIntervalSince(lastStepTime!) >= stepDelay {
-                playSound() // Play sound if the delay has passed
-                lastStepTime = currentTime // Update the last step time
+//            // Calculate player speed and adjust step sound rate
+//            let speed = movementVector.length() / deltaTime
+//            
+//            // Check time since last step to play sound
+//            let currentTime = Date()
+//            let stepDelay = maxStepDelay - (Double(speed) / Double(movementSpeed)) * (maxStepDelay - minStepDelay)
+//            if lastStepTime == nil || currentTime.timeIntervalSince(lastStepTime!) >= stepDelay {
+//                playStepSound()
+//                playEchoSound() // Play sound if the delay has passed
+//                lastStepTime = currentTime // Update the last step time
+//            }
+
+            // Calculate player speed
+            let speed = movementVector.length() / deltaTime
+            
+            // Check if the player is moving
+            if speed > 0 {
+                playEchoSound() // Play echo sound continuously
+                if !stepAudioPlayer!.isPlaying {
+                    playStepSound() // Start playing the step sound if not already playing
+                }
+            } else {
+                stopStepSound() // Stop step sound when not moving
+                isWalking = false
             }
 
             // User is moving
@@ -91,7 +117,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
             // Check time since last step to play sound
             let currentTime = Date()
             if lastStepTime == nil || currentTime.timeIntervalSince(lastStepTime!) >= stepDelay {
-                playSound() // Play sound if the delay has passed
+                playEchoSound() // Play sound if the delay has passed
                 lastStepTime = currentTime // Update the last step time
             }
             
@@ -102,6 +128,64 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
         }
     }
     
+    private func loadSounds() {
+        if let echoSoundURL = Bundle.main.url(forResource: "EcholocationSound", withExtension: "mp3") {
+            do {
+                echoAudioPlayer = try AVAudioPlayer(contentsOf: echoSoundURL)
+                echoAudioPlayer?.prepareToPlay() // Prepare to play
+                print("Sound loaded successfully")
+            } catch {
+                print("Error loading sound: \(error)")
+            }
+        } else {
+            print("Sound file not found")
+        }
+        
+        if let stepSoundURL = Bundle.main.url(forResource: "step", withExtension: "mp3") {
+            do {
+                stepAudioPlayer = try AVAudioPlayer(contentsOf: stepSoundURL)
+                stepAudioPlayer?.prepareToPlay() // Prepare to play
+                print("Sound step loaded successfully")
+            } catch {
+                print("Error loading step sound: \(error)")
+            }
+        } else {
+            print("Sound step file not found")
+        }
+    }
+
+    private func playEchoSound() {
+        guard let echoAudioPlayer = echoAudioPlayer else {
+            print("Echo audio player is nil")
+            return
+        }
+
+        if !echoAudioPlayer.isPlaying {
+            echoAudioPlayer.play() // Play the sound
+            print("Playing echolocation sound")
+        }
+    }
+
+    private func playStepSound() {
+        guard let stepAudioPlayer = stepAudioPlayer else {
+            print("Step audio player is nil")
+            return
+        }
+
+        if !stepAudioPlayer.isPlaying {
+            stepAudioPlayer.play() // Start playing the sound
+            print("Playing step sound")
+        }
+    }
+    
+    private func stopStepSound() {
+        guard let stepAudioPlayer = stepAudioPlayer else {
+            stepAudioPlayer?.stop() // Stop if currently playing
+            print("Stopped step sound")
+            return
+        }
+    }
+
     private func addPlayerPhysicsBody() {
           if playerNode.physicsBody == nil {
               // Ensure the player node has a physics body initialized correctly
@@ -128,7 +212,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
           }
       }
 
-      private func setupWallPhysicsBodies() {
+    private func setupWallPhysicsBodies() {
           // Loop through your walls and apply physics bodies
           for node in playerNode.parent?.childNodes ?? [] {
               if node.name?.contains("wall") == true /*|| node.name?.contains("floor")  == true */{
@@ -141,7 +225,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
           }
       }
 
-      func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
+    func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
           print("Player collided with wall or floor")
 
           let nodeA = contact.nodeA
@@ -167,39 +251,6 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
               }
           }
       }
-
-    private func loadSound() {
-        if let soundURL = Bundle.main.url(forResource: "EcholocationSound", withExtension: "mp3") {
-            do {
-                audioPlayer = try AVAudioPlayer(contentsOf: soundURL)
-                audioPlayer?.prepareToPlay() // Prepare to play
-                print("Sound loaded successfully")
-            } catch {
-                print("Error loading sound: \(error)")
-            }
-        } else {
-            print("Sound file not found")
-        }
-    }
-
-    private func playSound() {
-        guard let audioPlayer = audioPlayer else {
-            print("Audio player is nil")
-            return
-        }
-
-        if audioPlayer.isPlaying {
-            audioPlayer.stop() // Stop if already playing
-            audioPlayer.currentTime = 0 // Reset to the beginning
-        }
-        
-        do {
-            try audioPlayer.play() // Try to play the sound
-            print("Playing sound")
-        } catch {
-            print("Error playing sound: \(error)") // Handle playback errors
-        }
-    }
 
     private func updateLightPosition() {
         guard let lightNode = lightNode else { return }
@@ -265,6 +316,13 @@ func +(left: SCNVector3, right: SCNVector3) -> SCNVector3 {
 
 func *(vector: SCNVector3, scalar: Float) -> SCNVector3 {
     return SCNVector3(vector.x * scalar, vector.y * scalar, vector.z * scalar)
+}
+
+// Utility extension for vector math
+extension SCNVector3 {
+    func length() -> Float {
+        return sqrt(x*x + y*y + z*z)
+    }
 }
 
 func normalizeVector(_ vector: SCNVector3) -> SCNVector3 {
