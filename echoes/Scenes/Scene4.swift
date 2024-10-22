@@ -24,6 +24,7 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
     let snapDistance: CGFloat = 50.0
     
     init(lightNode: SCNNode) {
+        GameViewController.joystickComponent.showJoystick()
         super.init()
         self.lightNode = lightNode
         scnView?.pointOfView = cameraNode
@@ -101,10 +102,6 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
         //        ambientLight.color = UIColor.blue
         //        ambientLightNode.light = ambientLight
         //        rootNode.addChildNode(ambientLightNode)
-        
-        // Initialize MovementComponent with lightNode reference
-        let movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode)
-        playerEntity.addComponent(movementComponent)
         
         self.physicsWorld.contactDelegate = self
     }
