@@ -20,14 +20,14 @@ class GameViewController: UIViewController {
         SceneManager.shared.configure(with: scnView)
 
         // Load the initial game scene
-        SceneManager.shared.loadScene2()
+        SceneManager.shared.loadScene5()
         
         // Set up joystick component
         joystickComponent = VirtualJoystickComponent()
         joystickComponent.attachToView(self.view)
 
         // Set up the PlayerEntity
-        if let gameScene = scnView.scene as? Scene2 {
+        if let gameScene = scnView.scene as? Scene5 {
             playerEntity = gameScene.playerEntity
             
             // Create a movement component to handle player movement, including the light node
@@ -40,15 +40,15 @@ class GameViewController: UIViewController {
             }
             
             // Set up fog properties for the scene
-            gameScene.fogStartDistance = 50.0   // Increase the start distance
-            gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
-            gameScene.fogDensityExponent = 0.2  // Reduce density to make the fog less thick
-            gameScene.fogColor = UIColor.black
+//            gameScene.fogStartDistance = 50.0   // Increase the start distance
+//            gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
+//            gameScene.fogDensityExponent = 0.2  // Reduce density to make the fog less thick
+//            gameScene.fogColor = UIColor.black
             
             gameScene.setupGestureRecognizers(for: scnView)
         }
         
-        playerEntity.movementComponent.movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 20.0)
+        //playerEntity.movementComponent.movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 20.0)
 
         // Configure the SCNView
         scnView.allowsCameraControl = false

@@ -1,83 +1,69 @@
 //
-//  Scene4.swift
+//  Scene6.swift
 //  echoes
 //
-//  Created by Pelangi Masita Wati on 15/10/24.
+//  Created by Pelangi Masita Wati on 21/10/24.
 //
 
 import SceneKit
 import UIKit
 
-class Scene5: SCNScene {
+class Scene5: SCNScene, SCNPhysicsContactDelegate {
     var playerEntity: PlayerEntity!
-    var cameraNode: SCNNode!
     var cameraComponent: CameraComponent!
+    var joystickComponent: VirtualJoystickComponent!
+    var cameraNode: SCNNode!
     var lightNode: SCNNode!
-
+    var combinedPieces: [UIView: [UIView]] = [:]  // Dictionary that tracks combined pieces
+    var completedCombinations: [[UIView]] = []  // Track completed combinations
+    
+    weak var scnView: SCNView?
+    var playButton: UIButton?  // Store a reference to the play button
+    
+    var isGameCompleted: Bool = false  // Track if the game is completed
+    let snapDistance: CGFloat = 50.0
+    
     init(lightNode: SCNNode) {
         super.init()
         self.lightNode = lightNode
-
+        
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "Scene5.scn") else {
             print("Warning: House scene 'Scene 5.scn' not found")
             return
         }
-
+        
         // Add the house's nodes to the root node of the GameScene
         for childNode in houseScene.rootNode.childNodes {
             rootNode.addChildNode(childNode)
         }
-
+        
         // Create a new player entity and initialize it using the house scene's root node
         playerEntity = PlayerEntity(in: rootNode, cameraNode: cameraNode, lightNode: lightNode)
-
+        
         guard let playerNode = playerEntity.playerNode else {
             print("Warning: Player node named 'Player' not found in house model")
             return
         }
-
+        
         // Add player node to the GameScene's rootNode
         rootNode.addChildNode(playerNode)
-
+        
         // Attach the existing camera node from the player model to the scene
         cameraNode = playerNode.childNode(withName: "Camera", recursively: true)
         guard let cameraNode = cameraNode else {
             print("Warning: Camera node named 'Camera' not found in Player model")
             return
         }
-
+        
         // Make optional adjustments to the camera if needed
         cameraNode.camera?.fieldOfView = 75
         cameraNode.camera?.automaticallyAdjustsZRange = true
-
+        
         // Add the camera component to handle the camera logic
         cameraComponent = CameraComponent(cameraNode: cameraNode)
-
-        // Add a default light to the scene
-        let lightNode = SCNNode()
-        let light = SCNLight()
-        //light.type = .omni
-        light.intensity = 1000
-        lightNode.light = light
-        lightNode.position = SCNVector3(x: 0, y: 20, z: 20)
-        rootNode.addChildNode(lightNode)
-
-        // Add an ambient light to the scene
-        let ambientLightNode = SCNNode()
-        let ambientLight = SCNLight()
-        ambientLight.type = .ambient
-        ambientLight.intensity = 500
-        ambientLight.color = UIColor.white
-        ambientLightNode.light = ambientLight
-        rootNode.addChildNode(ambientLightNode)
         
-//        if let boxNode = rootNode.childNode(withName: "box", recursively: true) {
-//            attachAudio(to: boxNode, audioFileName: "swanlake.wav")
-//            addBoxVisualization(to: boxNode)
-//        } else {
-//            print("Warning: Node named 'box' not found in the scene")
-//        }
+        rootNode.addChildNode(lightNode)
         
         if let woodNode = rootNode.childNode(withName: "woodenFloor", recursively: false) {
             attachAudio(to: woodNode, audioFileName: "woodenFloor.wav", volume: 0.2, delay: 0)
@@ -92,19 +78,26 @@ class Scene5: SCNScene {
         }
         
         if let andraNode = rootNode.childNode(withName: "s5-andra", recursively: false) {
-            attachAudio(to: andraNode, audioFileName: "s5-andra.wav", volume: 80, delay: 15)
+            attachAudio(to: andraNode, audioFileName: "s5-andra.wav", volume: 40, delay: 15)
         }
         
         if let grandmaNode = rootNode.childNode(withName: "s5-grandma", recursively: false) {
-            attachAudio(to: grandmaNode, audioFileName: "s5-grandma.wav", volume: 100, delay: 5)
+            attachAudio(to: grandmaNode, audioFileName: "s5-grandma.wav", volume: 120, delay: 3)
         }
         
-//        // Add the flashlight to the player node
-//        if let playerNode = playerEntity.playerNode {
-//            addFlashlightToPlayer(playerNode: playerNode)
-//        } else {
-//            print("Warning: Player node is nil")
-//        }
+//        let ambientLightNode = SCNNode()
+//        let ambientLight = SCNLight()
+//        ambientLight.type = .ambient
+//        ambientLight.intensity = 500
+//        ambientLight.color = UIColor.blue
+//        ambientLightNode.light = ambientLight
+//        rootNode.addChildNode(ambientLightNode)
+        
+        // Initialize MovementComponent with lightNode reference
+        let movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode)
+        playerEntity.addComponent(movementComponent)
+                
+        self.physicsWorld.contactDelegate = self
     }
     
     func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
@@ -124,54 +117,22 @@ class Scene5: SCNScene {
         node.runAction(sequenceAction)
     }
     
-    func addBoxVisualization(to node: SCNNode) {
-        // Create a box geometry
-        let boxGeometry = SCNBox(width: 100, height: 100, length: 100, chamferRadius: 0)
-
-        // Create a material for the box
-        let boxMaterial = SCNMaterial()
-        boxMaterial.diffuse.contents = UIColor.red // Set the color of the box to red
-        boxGeometry.materials = [boxMaterial]
-
-        // Create a node with the box geometry
-        let boxNode = SCNNode(geometry: boxGeometry)
-        
-        // Position the box in the scene
-        boxNode.position = SCNVector3(0, 0.5, 0) // Adjust position so the box sits above ground level
-
-        // Add the box node as a child of the given node (the "box" node)
-        node.addChildNode(boxNode)
-    }
-    
-    // Add a flashlight light to the player
-    func addFlashlightToPlayer(playerNode: SCNNode) {
-        // Create a light for the flashlight
-        let flashlightNode = SCNNode()
-        let flashlight = SCNLight()
-        flashlight.type = .spot
-        flashlight.intensity = 1500
-        flashlight.spotInnerAngle = 20
-        flashlight.spotOuterAngle = 45
-        flashlight.castsShadow = true
-        flashlight.color = UIColor.white
-        flashlightNode.light = flashlight
-        
-        // Position the flashlight relative to the player's hand (adjust based on your player model)
-        if let handNode = playerNode.childNode(withName: "Hand", recursively: true) {
-            handNode.addChildNode(flashlightNode)
-            flashlightNode.position = SCNVector3(0, 0, 0.1)  // Adjust position to simulate the light in front of the hand
-            flashlightNode.eulerAngles = SCNVector3(-Float.pi / 2, 0, 0)  // Aim the light forward
-        } else {
-            print("Warning: Hand node not found")
-        }
-    }
-
     func setupGestureRecognizers(for view: UIView) {
         cameraComponent.setupGestureRecognizers(for: view)
     }
-
+    
     required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        super.init(coder: aDecoder)
+        // Add any additional setup for the scene here
     }
 }
 
+// SCNVector3 extension to calculate the distance between two points
+extension SCNVector3 {
+    func distance(to vector: SCNVector3) -> Float {
+        let dx = self.x - vector.x
+        let dy = self.y - vector.y
+        let dz = self.z - vector.z
+        return sqrt(dx * dx + dy * dy + dz * dz)
+    }
+}
