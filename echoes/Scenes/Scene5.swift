@@ -14,14 +14,9 @@ class Scene5: SCNScene, SCNPhysicsContactDelegate {
     var joystickComponent: VirtualJoystickComponent!
     var cameraNode: SCNNode!
     var lightNode: SCNNode!
-    var combinedPieces: [UIView: [UIView]] = [:]  // Dictionary that tracks combined pieces
-    var completedCombinations: [[UIView]] = []  // Track completed combinations
     
     weak var scnView: SCNView?
     var playButton: UIButton?  // Store a reference to the play button
-    
-    var isGameCompleted: Bool = false  // Track if the game is completed
-    let snapDistance: CGFloat = 50.0
     
     init(lightNode: SCNNode) {
         super.init()
@@ -56,40 +51,47 @@ class Scene5: SCNScene, SCNPhysicsContactDelegate {
             return
         }
         
-        // Make optional adjustments to the camera if needed
-        cameraNode.camera?.fieldOfView = 75
-        cameraNode.camera?.automaticallyAdjustsZRange = true
-        
-        // Add the camera component to handle the camera logic
         cameraComponent = CameraComponent(cameraNode: cameraNode)
         
         rootNode.addChildNode(lightNode)
         
         if let woodNode = rootNode.childNode(withName: "woodenFloor", recursively: false) {
-            attachAudio(to: woodNode, audioFileName: "woodenFloor.wav", volume: 0.2, delay: 0)
+            attachAudio(to: woodNode, audioFileName: "woodenFloor.wav", volume: 0.7, delay: 0)
         }
         
         if let clockNode = rootNode.childNode(withName: "clockTicking", recursively: true) {
-            attachAudio(to: clockNode, audioFileName: "clockTicking.wav", volume: 0.2, delay: 0)
+            attachAudio(to: clockNode, audioFileName: "clockTicking.wav", volume: 0.7, delay: 0)
         }
         
         if let muffledNode = rootNode.childNode(withName: "muffledRain", recursively: true) {
-            attachAudio(to: muffledNode, audioFileName: "muffledRain.wav", volume: 0.2, delay: 0)
+            attachAudio(to: muffledNode, audioFileName: "muffledRain.wav", volume: 0.7, delay: 0)
         }
         
-        if let andraNode = rootNode.childNode(withName: "s5-andra", recursively: false) {
-            attachAudio(to: andraNode, audioFileName: "s5-andra.wav", volume: 40, delay: 15)
+        if let andraParentNode = rootNode.childNode(withName: "player", recursively: true) {
+            if let andraNode = andraParentNode.childNode(withName: "s5-andra", recursively: false) {
+                attachAudio(to: andraNode, audioFileName: "s5-andra.wav", volume: 100, delay: 15)
+            }
+        }
+
+        if let grandmaParentNode = rootNode.childNode(withName: "grandma", recursively: true) {
+            if let grandmaNode1 = grandmaParentNode.childNode(withName: "s5-grandma", recursively: false) {
+                attachAudio(to: grandmaNode1, audioFileName: "s5-grandma.wav", volume: 20, delay: 3)
+            }
         }
         
-        if let grandmaNode = rootNode.childNode(withName: "s5-grandma", recursively: false) {
-            attachAudio(to: grandmaNode, audioFileName: "s5-grandma.wav", volume: 120, delay: 3)
-        }
+//        if let andraNode = rootNode.childNode(withName: "s5-andra", recursively: false) {
+//            attachAudio(to: andraNode, audioFileName: "s5-andra.wav", volume: 100, delay: 15)
+//        }
+//        
+//        if let grandmaNode = rootNode.childNode(withName: "s5-grandma", recursively: false) {
+//            attachAudio(to: grandmaNode, audioFileName: "s5-grandma.wav", volume: 210, delay: 3)
+//        }
         
 //        let ambientLightNode = SCNNode()
 //        let ambientLight = SCNLight()
 //        ambientLight.type = .ambient
 //        ambientLight.intensity = 500
-//        ambientLight.color = UIColor.blue
+//        ambientLight.color = UIColor.white
 //        ambientLightNode.light = ambientLight
 //        rootNode.addChildNode(ambientLightNode)
         
