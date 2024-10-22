@@ -19,10 +19,6 @@ class PlayerEntity: GKEntity {
         
         self.playerNode = playerNode
         
-        // Initialize the movement component
-        movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode)
-        addComponent(movementComponent)
-        
         // Initialize the echolocation component for the player
         echolocationComponent = EcholocationComponent(lightNode: lightNode)
         addComponent(echolocationComponent!)
