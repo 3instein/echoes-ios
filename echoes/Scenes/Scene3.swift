@@ -27,7 +27,7 @@ class Scene3: SCNScene {
         self.lightNode = lightNode
         loadAudioResources()
         
-        guard let houseScene = SCNScene(named: "Scene3.scn") else {
+        guard let houseScene = SCNScene(named: "scene3.scn") else {
             print("Warning: House scene 'Scene3.scn' not found")
             return
         }
