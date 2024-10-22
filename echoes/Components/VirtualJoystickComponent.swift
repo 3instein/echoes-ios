@@ -102,4 +102,21 @@ class VirtualJoystickComponent: GKComponent {
             self.joystickView.alpha = alpha
         }
     }
+
+    // Function to hide the joystick
+    func hideJoystick() {
+        UIView.animate(withDuration: 0.5) {
+            self.joystickView.alpha = 0.0
+        } completion: { _ in
+            self.joystickView.isHidden = true
+        }
+    }
+
+    // Function to show the joystick
+    func showJoystick() {
+        joystickView.isHidden = false
+        UIView.animate(withDuration: 0.5) {
+            self.joystickView.alpha = 0.3
+        }
+    }
 }
