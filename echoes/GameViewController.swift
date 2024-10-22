@@ -28,13 +28,6 @@ class GameViewController: UIViewController {
         // Set up joystick component
         joystickComponent = VirtualJoystickComponent()
         joystickComponent.attachToView(self.view)
- 
-        // Now check if the loaded scene is Scene1 and assign it to the scene1 variable
-        if let loadedScene = scnView.scene as? Scene6 {
-            scene6 = loadedScene
-        } else {
-            print("Error: Scene1 not loaded correctly")
-        }
         
         // Set up the PlayerEntity
         if let gameScene = scnView.scene as? Scene6 {
@@ -106,6 +99,12 @@ class GameViewController: UIViewController {
     }
 
     @objc func interactWithCake() {
+        // Now check if the loaded scene is Scene1 and assign it to the scene1 variable
+        if let loadedScene = scnView.scene as? Scene6 {
+            scene6 = loadedScene
+        } else {
+            print("Error: Scene1 not loaded correctly")
+        }
         if let gameScene = scene6 {
             gameScene.displayPuzzlePieces(on: self.view)
             gameScene.addOpenFridgeSound()
