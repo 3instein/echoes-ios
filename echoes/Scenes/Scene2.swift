@@ -19,7 +19,7 @@ class Scene2: SCNScene {
         self.lightNode = lightNode
 
         // Load the house scene from the Scenes folder
-        guard let houseScene = SCNScene(named: "Scene2.scn") else {
+        guard let houseScene = SCNScene(named: "scene2.scn") else {
             print("Warning: House scene 'Scene 1.scn' not found")
             return
         }
@@ -38,7 +38,7 @@ class Scene2: SCNScene {
         }
 
         // Add player node to the GameScene's rootNode
-        rootNode.addChildNode(playerNode)
+        //rootNode.addChildNode(playerNode)
 
         // Attach the existing camera node from the player model to the scene
         cameraNode = playerNode.childNode(withName: "Camera", recursively: true)
@@ -49,55 +49,33 @@ class Scene2: SCNScene {
 
         // Make optional adjustments to the camera if needed
         cameraNode.camera?.fieldOfView = 75
-        cameraNode.camera?.automaticallyAdjustsZRange = true
+        cameraNode.camera?.automaticallyAdjustsZRange = false
 
         // Add the camera component to handle the camera logic
         cameraComponent = CameraComponent(cameraNode: cameraNode)
-
-//        // Add a default light to the scene
-//        let lightNode = SCNNode()
-//        let light = SCNLight()
-//        light.type = .omni
-//        light.intensity = 1000
-//        lightNode.light = light
-//        lightNode.position = SCNVector3(x: 0, y: 20, z: 20)
-//        rootNode.addChildNode(lightNode)
-//
-//        // Add an ambient light to the scene
-//        let ambientLightNode = SCNNode()
-//        let ambientLight = SCNLight()
-//        ambientLight.type = .ambient
-//        ambientLight.intensity = 500
-//        ambientLight.color = UIColor.white
-//        ambientLightNode.light = ambientLight
-//        rootNode.addChildNode(ambientLightNode)
-        
+        cameraComponent.lockCamera()
         rootNode.addChildNode(lightNode)
-        
-//        if let boxNode = rootNode.childNode(withName: "box", recursively: true) {
-//            attachAudio(to: boxNode, audioFileName: "swanlake.wav", volume: 0.5)
-//            addBoxVisualization(to: boxNode)
-//        }
 
-        if let thunderNode = rootNode.childNode(withName: "wind", recursively: true) {
-            attachAudio(to: thunderNode, audioFileName: "wind.wav", volume: 0.5)
+        guard let windNode = rootNode.childNode(withName: "wind", recursively: true) else {
+            print("Warning: Thunder node named 'wind' not found in house model")
+            return
+        }
+
+        attachAudio(to: windNode, audioFileName: "wind.wav", volume: 0.5)
+        
+        guard let crowNode = rootNode.childNode(withName: "crow", recursively: true) else {
+            print("Warning: Crow node named 'crow' not found in house model")
+            return
         }
         
-        if let crowNode = rootNode.childNode(withName: "crow", recursively: true) {
-            attachAudio(to: crowNode, audioFileName: "crow.wav", volume: 0.5)
+        attachAudio(to: crowNode, audioFileName: "crow.wav", volume: 0.5)
+        
+        guard let lightRainNode = rootNode.childNode(withName: "lightRain", recursively: true) else {
+            print("Warning: LightRain node named 'lightRain' not found in house model")
+            return
         }
         
-        if let lightRainNode = rootNode.childNode(withName: "lightRain", recursively: true) {
-            print("Attaching audio to lightRain node.")
-            attachAudio(to: lightRainNode, audioFileName: "lightRain.wav", volume: 0.5)
-        } else {
-            print("Warning: lightRain node not found.")
-        }
-        
-        //playerEntity.movementComponent.movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 20.0)
-        
-        self.background.contents = UIColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0)
-    
+        attachAudio(to: lightRainNode, audioFileName: "lightRain.wav", volume: 0.5)
     }
     
     func attachAudio(to node: SCNNode, audioFileName: String, volume: Float = 1.0) {
