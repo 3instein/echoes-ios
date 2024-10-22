@@ -173,7 +173,7 @@ class MovementComponent: GKComponent {
 
         lightNode.runAction(decreaseAction) { [weak self] in
             self?.isLightActive = false // Mark light as inactive after fading out
-            lightNode.light?.intensity = self?.originalLightIntensity ?? 75 // Ensure it resets to original
+            lightNode.light?.intensity = self?.originalLightIntensity ?? 0 // Ensure it resets to original
         }
     }
     
