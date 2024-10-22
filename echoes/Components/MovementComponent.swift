@@ -48,9 +48,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     }
 
     override func update(deltaTime seconds: TimeInterval) {
-        print("test")
         if (!movingProgramatically){
-            print("gerak")
             guard let joystick = joystickComponent, joystick.isTouching, let cameraNode = cameraNode else {
                 stepAudioPlayer?.stop() // Stop if currently playing
 
