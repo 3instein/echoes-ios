@@ -22,7 +22,7 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     let snapDistance: CGFloat = 50.0
     
     var timer: Timer?
-    var timeLimit: Int = 10 // 5-minute timer
+    var timeLimit: Int = 600 // 5-minute timer
     var timeLabel: UILabel?
     
     var hasGroupedTwoPieces = false  // Track if two pieces have been grouped
@@ -218,6 +218,7 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     
     // Show failure transition logic
     func triggerPuzzleFailedTransition() {
+        isGameCompleted = true
         puzzleBackground?.backgroundColor = UIColor.white.withAlphaComponent(0)
         
         guard let superview = puzzleBackground?.superview else { return }
