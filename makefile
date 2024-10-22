@@ -1,7 +1,10 @@
 # Define download URLs
 SCENE1_URL=https://drive.google.com/uc?export=download&id=1_Cdmk8AnOk5VmO-DVv1W9sshUUvpsHrh&export=download&authuser=0&confirm=t&uuid=eee07aef-dff2-4f4f-89d9-5b1fe3d7cbf7&at=AN_67v3YwVEkLSElXT3J49tozP57:1729044061491
-SCENE2_URL=https://drive.google.com/uc?export=download&id=1ZhQZqTo96UF3wEt-ouLbK_qors5A0mCj&export=download&authuser=0&confirm=t&uuid=e29618d0-b802-41b5-b02d-6d85f40cf458&at=AN_67v1hqGCZzvCgLkXqc5Y4ei8P:1729324970252
-SCENE4_URL=https://drive.google.com/uc?export=download&id=1_Cdmk8AnOk5VmO-DVv1W9sshUUvpsHrh&export=download&authuser=0&confirm=t&uuid=eee07aef-dff2-4f4f-89d9-5b1fe3d7cbf7&at=AN_67v3YwVEkLSElXT3J49tozP57:1729044061491
+SCENE2_URL=https://drive.google.com/uc?export=download&id=1BW3iBSyg5D3tz1CBEiLr_ayigR8C2uj0&export=download&authuser=0&confirm=t&uuid=e29618d0-b802-41b5-b02d-6d85f40cf458&at=AN_67v1hqGCZzvCgLkXqc5Y4ei8P:1729324970252
+SCENE3_URL=https://drive.google.com/uc?export=download&id=1so06ne9YJRDctFtp4eL71tR2p7gqzXC_&export=download&authuser=0&confirm=t&uuid=e29618d0-b802-41b5-b02d-6d85f40cf458&at=AN_67v1hqGCZzvCgLkXqc5Y4ei8P:1729324970252
+SCENE4_URL=https://drive.google.com/uc?export=download&id=1FfQl9-SIj9orxuJORexGd7M0diUOEx5R&export=download&authuser=0&confirm=t&uuid=eee07aef-dff2-4f4f-89d9-5b1fe3d7cbf7&at=AN_67v3YwVEkLSElXT3J49tozP57:1729044061491
+SCENE5_URL=https://drive.google.com/uc?export=download&id=1NBIr9nRiiGaSReV_imyFpqCAoVK5WR-r&export=download&authuser=0&confirm=t&uuid=eee07aef-dff2-4f4f-89d9-5b1fe3d7cbf7&at=AN_67v3YwVEkLSElXT3J49tozP57:1729044061491
+SCENE6_URL=https://drive.google.com/uc?export=download&id=1e3vr2g9cWMy5JRtAP9QzE5s9QeNG4fre&export=download&authuser=0&confirm=t&uuid=eee07aef-dff2-4f4f-89d9-5b1fe3d7cbf7&at=AN_67v3YwVEkLSElXT3J49tozP57:1729044061491
 HOUSE_URL=https://drive.google.com/uc?export=download&id=1mH7ZiIb_RtlFrVCjLEgE6LgINuu7Q1Qa&export=download&authuser=0&confirm=t&uuid=eee07aef-dff2-4f4f-89d9-5b1fe3d7cbf7&at=AN_67v3YwVEkLSElXT3J49tozP57:1729044061491
 
 # Define target directory to store the downloaded scenes
@@ -20,6 +23,8 @@ download_scenes: $(SCENES_DIR)
 	@curl -L -o $(SCENES_DIR)/scene1.scn "$(SCENE1_URL)"
 	@echo "Downloading Scene 2..."
 	@gdown -O $(SCENES_DIR)/scene2.scn "${SCENE2_URL}"
+	@echo "Downloading Scene 3..."
+	@gdown -O $(SCENES_DIR)/scene3.scn "${SCENE3_URL}"
 	@echo "Downloading Scene 4..."
 	@curl -L -o $(SCENES_DIR)/scene4.scn "$(SCENE4_URL)"
 	@echo "Downloading House..."
