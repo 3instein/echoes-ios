@@ -64,13 +64,13 @@ class Scene2: SCNScene {
 //        rootNode.addChildNode(lightNode)
 //
         // Add an ambient light to the scene
-        let ambientLightNode = SCNNode()
-        let ambientLight = SCNLight()
-        ambientLight.type = .ambient
-        ambientLight.intensity = 300
-        ambientLight.color = UIColor.white
-        ambientLightNode.light = ambientLight
-        rootNode.addChildNode(ambientLightNode)
+//        let ambientLightNode = SCNNode()
+//        let ambientLight = SCNLight()
+//        ambientLight.type = .ambient
+//        ambientLight.intensity = 300
+//        ambientLight.color = UIColor.white
+//        ambientLightNode.light = ambientLight
+//        rootNode.addChildNode(ambientLightNode)
         
         rootNode.addChildNode(lightNode)
         
