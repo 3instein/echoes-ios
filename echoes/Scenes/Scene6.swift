@@ -20,7 +20,14 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     var isPuzzleDisplayed: Bool = false
     var isGameCompleted: Bool = false  // Track if the game is completed
     let snapDistance: CGFloat = 50.0
-
+    
+    var timer: Timer?
+    var timeLimit: Int = 10 // 5-minute timer
+    var timeLabel: UILabel?
+    
+    var hasGroupedTwoPieces = false  // Track if two pieces have been grouped
+    var currentCombination: [UIView] = [] // Initialize currentCombination if not already done
+    
     let neighbors: [String: [String: CGPoint]] = [
         "puzzle_piece_1.png": ["puzzle_piece_2.png": CGPoint(x: 30, y: -20), "puzzle_piece_9.png": CGPoint(x: 20, y: 45)],
         "puzzle_piece_2.png": ["puzzle_piece_1.png": CGPoint(x: -30, y: 20), "puzzle_piece_3.png": CGPoint(x: 20, y: 20)],
@@ -44,7 +51,7 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     init(lightNode: SCNNode) {
         super.init()
         self.lightNode = lightNode
-
+        
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "scene6.scn") else {
             print("Warning: House scene 'Scene 6.scn' not found")
@@ -93,105 +100,9 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         addFallingCupSound()
         addSpoonSound()
         addBackgroundSound()  // Add this line to play background sound
-
+        
         self.physicsWorld.contactDelegate = self
     }
-    
-    func addFallingCupSound() {
-         // Find the cup node
-         guard let cupNode = rootNode.childNode(withName: "cup", recursively: true) else {
-             print("Warning: Cup node not found")
-             return
-         }
-
-         // Load the sound effect
-         let audioSource = SCNAudioSource(fileNamed: "fallingCup.mp3")!
-         audioSource.load()
-         audioSource.volume = 30.0 // Set the volume as needed
-
-         // Create an action to play the sound after 3 seconds
-         let wait = SCNAction.wait(duration: 3.0)
-         let playSound = SCNAction.playAudio(audioSource, waitForCompletion: false)
-
-         // Run the actions sequentially
-         cupNode.runAction(SCNAction.sequence([wait, playSound]))
-    }
-    
-    func addOpenFridgeSound() {
-         // Find the cup node
-         guard let fridgeNode = rootNode.childNode(withName: "fridge", recursively: true) else {
-             print("Warning: Cup node not found")
-             return
-         }
-
-         // Load the sound effect
-         let audioSource = SCNAudioSource(fileNamed: "openFridge.mp3")!
-         audioSource.load()
-         audioSource.volume = 20.0 // Set the volume as needed
-
-         let playSound = SCNAction.playAudio(audioSource, waitForCompletion: false)
-
-         // Run the actions sequentially
-        fridgeNode.runAction(SCNAction.sequence([playSound]))
-    }
-    
-    func addCloseFridgeSound() {
-         // Find the cup node
-         guard let fridgeNode = rootNode.childNode(withName: "fridge", recursively: true) else {
-             print("Warning: Cup node not found")
-             return
-         }
-
-         // Load the sound effect
-         let audioSource = SCNAudioSource(fileNamed: "closeFridge.mp3")!
-         audioSource.load()
-         audioSource.volume = 25.0 // Set the volume as needed
-
-         let playSound = SCNAction.playAudio(audioSource, waitForCompletion: false)
-
-         // Run the actions sequentially
-        fridgeNode.runAction(SCNAction.sequence([playSound]))
-    }
-    
-    func addSpoonSound() {
-         // Find the cup node
-         guard let spoonNode = rootNode.childNode(withName: "fork", recursively: true) else {
-             print("Warning: Cup node not found")
-             return
-         }
-
-         // Load the sound effect
-         let audioSource = SCNAudioSource(fileNamed: "movingSpoon.mp3")!
-         audioSource.load()
-         audioSource.volume = 3.0 // Set the volume as needed
-
-        // Create an action to play the sound after 3 seconds
-        let wait = SCNAction.wait(duration: 18.0)
-        let playSound = SCNAction.playAudio(audioSource, waitForCompletion: false)
-
-        // Run the actions sequentially
-        spoonNode.runAction(SCNAction.sequence([wait, playSound]))
-    }
-    
-    func addBackgroundSound() {
-         // Load the sound effect
-         guard let audioSource = SCNAudioSource(fileNamed: "lightRain.wav") else {
-             print("Warning: Background sound 'lightRain.wav' not found")
-             return
-         }
-         
-         audioSource.load()
-        audioSource.volume = 10.0 // Set the volume as needed
-         audioSource.isPositional = false  // Set to false for background sound
-         audioSource.shouldStream = true     // Stream if it's a long sound
-         
-         // Create a node to attach the sound to
-         let soundNode = SCNNode()
-         soundNode.runAction(SCNAction.repeatForever(SCNAction.playAudio(audioSource, waitForCompletion: true)))
-         
-         // Add the sound node to the root node
-         rootNode.addChildNode(soundNode)
-     }
     
     func displayPuzzlePieces(on view: UIView) {
         let pieceImages = [
@@ -202,7 +113,8 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
             "puzzle_piece_13.png", "puzzle_piece_14.png", "puzzle_piece_15.png",
             "puzzle_piece_16.png", "puzzle_piece_17.png"
         ]
-
+        
+        // Puzzle background setup
         puzzleBackground = UIView()
         puzzleBackground?.backgroundColor = UIColor.white.withAlphaComponent(0.8)
         let backgroundSize = CGSize(width: view.bounds.width * 0.6, height: view.bounds.height * 0.7)
@@ -215,14 +127,24 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         puzzleBackground?.layer.cornerRadius = 20
         puzzleBackground?.layer.borderWidth = 0
         puzzleBackground?.clipsToBounds = true
-
         view.addSubview(puzzleBackground!)
-
+        
+        // Add time label to the top of the white box
+        timeLabel = UILabel(frame: CGRect(
+            x: puzzleBackground!.frame.minX,
+            y: puzzleBackground!.frame.minY - 50, // Position slightly above the white box
+            width: backgroundSize.width, height: 50))
+        timeLabel?.textAlignment = .center
+        timeLabel?.font = UIFont.boldSystemFont(ofSize: 24) // Bigger font size
+        timeLabel?.textColor = .white
+        updateTimeLabel() // Set the initial time
+        view.addSubview(timeLabel!)
+        
+        // Add puzzle pieces to the background
         for pieceImage in pieceImages {
             guard let image = UIImage(named: pieceImage) else { continue }
-
+            
             let pieceSize = CGSize(width: image.size.width * 0.05, height: image.size.height * 0.05)
-
             let imageView = UIImageView(image: image)
             imageView.frame = CGRect(
                 x: CGFloat(arc4random_uniform(UInt32(max(0, backgroundSize.width - pieceSize.width)))),
@@ -233,17 +155,17 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
             imageView.contentMode = .scaleAspectFit
             imageView.isUserInteractionEnabled = true
             imageView.accessibilityIdentifier = pieceImage
-
+            
             // Add shadow to the puzzle piece
             imageView.layer.shadowColor = UIColor.black.cgColor
             imageView.layer.shadowOpacity = 0.5
             imageView.layer.shadowOffset = CGSize(width: 3, height: 3)
             imageView.layer.shadowRadius = 4
             imageView.layer.masksToBounds = false
-
+            
             let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
             imageView.addGestureRecognizer(panGesture)
-
+            
             puzzleBackground?.addSubview(imageView)
         }
         
@@ -252,6 +174,95 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         // Dismiss puzzle when clicking outside the white rectangle
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissPuzzle(_:)))
         view.addGestureRecognizer(tapGesture)
+        
+        // Start the timer
+        startTimer()
+    }
+    
+    func startTimer() {
+        timer?.invalidate() // Reset any existing timer
+        timer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(updateTime), userInfo: nil, repeats: true)
+    }
+    
+    @objc func updateTime() {
+        timeLimit -= 1
+        updateTimeLabel()
+        
+        checkGameEnd() // Check if the game should end
+        
+        if timeLimit <= 0 {
+            timer?.invalidate()
+        }
+    }
+    
+    func updateTimeLabel() {
+        if timeLimit > 0 {
+            let minutes = timeLimit / 60
+            let seconds = timeLimit % 60
+            timeLabel?.text = String(format: "%02d:%02d", minutes, seconds)
+        } else {
+            timeLabel?.text = "Time's Up!"
+            timeOut()
+        }
+    }
+    
+    func timeOut() {
+        print("You failed!")
+        // Show failure transition here
+        triggerPuzzleFailedTransition() // Implement your failure transition logic here
+        
+        // Create a temporary UITapGestureRecognizer
+        let tapGesture = UITapGestureRecognizer()
+        dismissPuzzle(tapGesture) // Dismiss the puzzle using the temporary gesture recognizer
+    }
+    
+    // Show failure transition logic
+    func triggerPuzzleFailedTransition() {
+        puzzleBackground?.backgroundColor = UIColor.white.withAlphaComponent(0)
+        
+        guard let superview = puzzleBackground?.superview else { return }
+        
+        // Get the center of the screen
+        let screenCenter = CGPoint(x: superview.bounds.midX, y: superview.bounds.midY)
+        
+        timeLabel?.isHidden = true
+        
+        // Create an imageView for the completed puzzle image
+        let fullPuzzleImageView = UIImageView(image: UIImage(named: "failed card.png"))
+        fullPuzzleImageView.frame.size = CGSize(width: 450, height: 350)
+        fullPuzzleImageView.contentMode = .scaleAspectFit
+        fullPuzzleImageView.alpha = 0  // Start with hidden image
+        superview.addSubview(fullPuzzleImageView)
+        
+        // Animate each piece to the center of the screen
+        UIView.animate(withDuration: 0.5, delay: 0, options: [.curveEaseInOut], animations: {
+            for piece in self.puzzleBackground?.subviews ?? [] {
+                if let imageView = piece as? UIImageView {
+                    imageView.center = screenCenter  // Move each piece to the center
+                    imageView.alpha = 0  // Fade out the pieces
+                }
+            }
+        }, completion: { _ in
+            // Remove all individual pieces from the view after animation
+            for piece in self.puzzleBackground?.subviews ?? [] {
+                if let imageView = piece as? UIImageView {
+                    imageView.removeFromSuperview()
+                }
+            }
+            
+            // Set initial properties for the fullPuzzleImageView
+            fullPuzzleImageView.alpha = 0  // Start with the image hidden
+            fullPuzzleImageView.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)  // Start small
+            
+            // Center the image on the screen
+            fullPuzzleImageView.center = screenCenter
+            
+            // Fade in the full puzzle image after the pieces are removed
+            UIView.animate(withDuration: 2.0, delay: 0, usingSpringWithDamping: 0.5, initialSpringVelocity: 0.5, options: [.curveEaseInOut], animations: {
+                fullPuzzleImageView.alpha = 1
+                fullPuzzleImageView.transform = CGAffineTransform.identity
+            })
+        })
     }
     
     @objc func dismissPuzzle(_ sender: UITapGestureRecognizer) {
@@ -260,109 +271,229 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
             // Check if the game is completed before dismissing
             if !isGameCompleted {
                 puzzleBackground?.removeFromSuperview()
-                addCloseFridgeSound()
+                timeLabel?.removeFromSuperview()
                 isPuzzleDisplayed = false
+                timer?.invalidate()
             }
         }
     }
-
+    
     @objc func handlePanGesture(_ sender: UIPanGestureRecognizer) {
-        guard let piece = sender.view else { return }
-        let translation = sender.translation(in: piece.superview)
+            guard let piece = sender.view else { return }
+            
+            // Play the puzzle touch sound when the gesture begins
+            if sender.state == .began {
+                playPuzzleTouchSound()
+            }
+            
+            let translation = sender.translation(in: piece.superview)
 
-        let group = combinedPieces[piece] ?? [piece]
+            let group = combinedPieces[piece] ?? [piece]
 
-        // Move all pieces in the group together
-        for pieceInGroup in group {
-            pieceInGroup.center = CGPoint(x: pieceInGroup.center.x + translation.x, y: pieceInGroup.center.y + translation.y)
+            // Get the bounds of the puzzle background
+            guard let puzzleBackground = puzzleBackground else { return }
+            let puzzleBounds = puzzleBackground.bounds
+
+            // Calculate the group's bounding box
+            var minX = CGFloat.greatestFiniteMagnitude
+            var minY = CGFloat.greatestFiniteMagnitude
+            var maxX = CGFloat.leastNormalMagnitude
+            var maxY = CGFloat.leastNormalMagnitude
+
+            for pieceInGroup in group {
+                let pieceFrame = pieceInGroup.frame
+                minX = min(minX, pieceFrame.minX)
+                minY = min(minY, pieceFrame.minY)
+                maxX = max(maxX, pieceFrame.maxX)
+                maxY = max(maxY, pieceFrame.maxY)
+            }
+
+            // Calculate the translation for the group as a whole
+            var groupTranslation = translation
+
+            // Adjust translation to prevent the group from going outside the puzzle background bounds
+            if minX + translation.x < puzzleBounds.minX {
+                groupTranslation.x = puzzleBounds.minX - minX
+            } else if maxX + translation.x > puzzleBounds.maxX {
+                groupTranslation.x = puzzleBounds.maxX - maxX
+            }
+
+            if minY + translation.y < puzzleBounds.minY {
+                groupTranslation.y = puzzleBounds.minY - minY
+            } else if maxY + translation.y > puzzleBounds.maxY {
+                groupTranslation.y = puzzleBounds.maxY - maxY
+            }
+
+            // Move all pieces in the group together
+            for pieceInGroup in group {
+                pieceInGroup.center = CGPoint(
+                    x: pieceInGroup.center.x + groupTranslation.x,
+                    y: pieceInGroup.center.y + groupTranslation.y
+                )
+            }
+
+            // Reset translation to avoid compound translation
+            sender.setTranslation(.zero, in: piece.superview)
+
+            if sender.state == .ended {
+                print("\(piece.accessibilityIdentifier ?? "Piece") dropped at position: \(piece.center)")
+
+                // Check for nearby pieces to merge
+                checkForNearbyPieces(piece)
+            }
         }
-
-        sender.setTranslation(.zero, in: piece.superview)
-
-        if sender.state == .ended {
-            print("\(piece.accessibilityIdentifier ?? "Piece") dropped at position: \(piece.center)")
-
-            // Check for nearby pieces
-            checkForNearbyPieces(piece)
+    
+    func playPuzzleTouchSound() {
+        guard let audioSource = SCNAudioSource(fileNamed: "puzzle.mp3") else {
+            print("Warning: puzzle.mp3 sound not found")
+            return
         }
+        
+        audioSource.load()
+        audioSource.volume = 5.0 // Set the volume as needed
+        audioSource.isPositional = false  // Set to false for background sound
+        audioSource.shouldStream = false     // Stream if it's a long sound
+        
+        // Create a node to attach the sound to
+        let soundNode = SCNNode()
+        soundNode.runAction(SCNAction.playAudio(audioSource, waitForCompletion: true))
+        
+        // Add the sound node to the root node
+        rootNode.addChildNode(soundNode)
     }
-
+    
     func checkForNearbyPieces(_ currentPiece: UIView) {
         guard let currentImageView = currentPiece as? UIImageView,
               let currentImageName = currentImageView.accessibilityIdentifier else { return }
-
+        
         let currentGroup = combinedPieces[currentPiece] ?? [currentPiece]
-
+        
+        // Check if a current combination already exists
+        if !currentCombination.isEmpty {
+            if currentCombination.count < 17 {
+                print("Current combination is in progress. Trying to add a new piece.")
+            } else {
+                print("Cannot create a new combination until the current one is completed.")
+                return
+            }
+        }
+        
         if let currentNeighbors = neighbors[currentImageName] {
             for (neighborName, offset) in currentNeighbors {
                 if let neighborPiece = findPiece(byName: neighborName, in: currentPiece.superview) {
                     let neighborGroup = combinedPieces[neighborPiece] ?? [neighborPiece]
-
-                    if let pieceInCurrentGroup = currentGroup.first {
-                        let expectedPosition = CGPoint(
-                            x: pieceInCurrentGroup.center.x + offset.x,
-                            y: pieceInCurrentGroup.center.y + offset.y
-                        )
-
-                        let distance = hypot(neighborPiece.center.x - expectedPosition.x,
-                                             neighborPiece.center.y - expectedPosition.y)
-
-                        if distance <= snapDistance {
-                            let offsetX = expectedPosition.x - neighborPiece.center.x
-                            let offsetY = expectedPosition.y - neighborPiece.center.y
-
-                            for piece in neighborGroup {
-                                piece.center = CGPoint(x: piece.center.x + offsetX, y: piece.center.y + offsetY)
+                    
+                    // Calculate the actual distance between the current piece and its neighbor
+                    let distance = hypot(neighborPiece.center.x - currentPiece.center.x, neighborPiece.center.y - currentPiece.center.y)
+                    
+                    // Only snap the pieces together if they are within the snapDistance
+                    if distance <= snapDistance {
+                        // If the neighbor belongs to a different group, find the correct pieces to align them
+                        if currentGroup != neighborGroup {
+                            // Find the first piece in the current group that has a neighbor in the other group
+                            if let (currentGroupPiece, neighborGroupPiece, alignmentOffset) = findMatchingNeighborPair(currentGroup: currentGroup, neighborGroup: neighborGroup) {
+                                
+                                // Calculate the alignment offset between the two groups
+                                let offsetX = currentGroupPiece.center.x + alignmentOffset.x - neighborGroupPiece.center.x
+                                let offsetY = currentGroupPiece.center.y + alignmentOffset.y - neighborGroupPiece.center.y
+                                
+                                // Apply the offset to align the entire neighbor group with the current group
+                                for piece in neighborGroup {
+                                    piece.center = CGPoint(x: piece.center.x + offsetX, y: piece.center.y + offsetY)
+                                }
+                                
+                                // Merge the two groups into a single combined group
+                                let combinedGroup = Array(Set(currentGroup + neighborGroup))
+                                
+                                // Update the combinedPieces dictionary for all pieces in the combined group
+                                for piece in combinedGroup {
+                                    combinedPieces[piece] = combinedGroup
+                                }
+                                
+                                // Update the current combination to reflect the new group
+                                currentCombination = combinedGroup
+                                
+                                // If all pieces are combined, mark the puzzle as completed
+                                if combinedGroup.count == 17 {
+                                    completedCombinations.append(combinedGroup)
+                                    checkForPuzzleCompletion()
+                                }
+                                
+                                print("Groups combined: \(currentImageName) and \(neighborName)")
+                                return
                             }
-
-                            let combinedGroup = Array(Set(currentGroup + neighborGroup))
-
-                            for piece in combinedGroup {
-                                combinedPieces[piece] = combinedGroup
-                            }
-
-                            if combinedGroup.count == 17 {
-                                // Add completed group to the completed combinations
-                                completedCombinations.append(combinedGroup)
-                                checkForPuzzleCompletion()
-                            }
-
-                            print("Pieces combined: \(currentImageName) and \(neighborName)")
-                            return
                         }
                     }
                 }
             }
         }
     }
-
+    
+    func findMatchingNeighborPair(currentGroup: [UIView], neighborGroup: [UIView]) -> (UIView, UIView, CGPoint)? {
+        // Iterate through each piece in the current group
+        for currentPiece in currentGroup {
+            if let currentImageView = currentPiece as? UIImageView,
+               let currentImageName = currentImageView.accessibilityIdentifier,
+               let currentNeighbors = neighbors[currentImageName] {
+                // Check if any piece in the neighbor group is listed as a neighbor
+                for neighborPiece in neighborGroup {
+                    if let neighborImageView = neighborPiece as? UIImageView,
+                       let neighborImageName = neighborImageView.accessibilityIdentifier,
+                       let alignmentOffset = currentNeighbors[neighborImageName] {
+                        // We found a matching pair of neighbors, return them along with the alignment offset
+                        return (currentPiece, neighborPiece, alignmentOffset)
+                    }
+                }
+            }
+        }
+        // If no matching pair of neighbors was found, return nil
+        return nil
+    }
+    
     func checkForPuzzleCompletion() {
         // Check if there are either 1 complete combination with 17 pieces or 2 combinations
         if completedCombinations.count == 1 && completedCombinations[0].count == 17 {
             print("Puzzle completed with one combination!")
-            triggerPuzzleCompletionTransition()
+            isGameCompleted = true // Mark as completed
+            timer?.invalidate() // Stop the timer
+            checkGameEnd() // Check the game end conditions
         } else if completedCombinations.count == 2 {
             print("Puzzle completed with two combinations!")
+            isGameCompleted = true // Mark as completed
+            timer?.invalidate() // Stop the timer
+            checkGameEnd(); // Check the game end conditions
+        }
+    }
+    
+    func checkGameEnd() {
+        if timeLimit <= 0 {
+            // Call the function to handle game failure if time runs out
+            timeOut()
+            triggerPuzzleFailedTransition()
+        } else if isGameCompleted {
+            // Call the function to handle successful completion
             triggerPuzzleCompletionTransition()
         }
     }
-
+    
     func triggerPuzzleCompletionTransition() {
         isGameCompleted = true
         puzzleBackground?.backgroundColor = UIColor.white.withAlphaComponent(0)
-
+        
         guard let superview = combinedPieces.keys.first?.superview else { return }
-
+        
+        timeLabel?.removeFromSuperview()
+        
         // Get the center of the screen
         let screenCenter = CGPoint(x: superview.bounds.midX, y: superview.bounds.midY)
-
+        
         // Create an imageView for the completed puzzle image
         let fullPuzzleImageView = UIImageView(image: UIImage(named: "puzzle_full.png"))
-        fullPuzzleImageView.frame.size = CGSize(width: 300, height: 200)
+        fullPuzzleImageView.frame.size = CGSize(width: 450, height: 350)
         fullPuzzleImageView.contentMode = .scaleAspectFit
         fullPuzzleImageView.alpha = 0  // Start with hidden image
         superview.addSubview(fullPuzzleImageView)
-
+        
         // Animate each piece to the center of the screen
         UIView.animate(withDuration: 0.5, delay: 0, options: [.curveEaseInOut], animations: {
             for (piece, _) in self.combinedPieces {
@@ -378,47 +509,29 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
             // Set initial properties for the fullPuzzleImageView
             fullPuzzleImageView.alpha = 0  // Start with the image hidden
             fullPuzzleImageView.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)  // Start small
-
+            
             // Center the image on the screen
             fullPuzzleImageView.center = screenCenter
             // Fade in the full puzzle image after the pieces are removed
-            fullPuzzleImageView.center = screenCenter  // Ensure it is centered
-            UIView.animate(withDuration: 2.0, delay: 0, usingSpringWithDamping: 0.5, initialSpringVelocity: 0.5, options: [.curveEaseInOut], animations: {
+            UIView.animate(withDuration: 2.0, delay: 0, usingSpringWithDamping: 1.0, initialSpringVelocity: 0.2, options: [.curveEaseInOut], animations: {
                 fullPuzzleImageView.alpha = 1
                 fullPuzzleImageView.transform = CGAffineTransform.identity
             }, completion: { finished in
-                let tapGesture = UITapGestureRecognizer(target: self, action: #selector(self.handleFullPuzzleTap(_:)))
-                fullPuzzleImageView.isUserInteractionEnabled = true
-                fullPuzzleImageView.addGestureRecognizer(tapGesture)
+                // Automatically flip the puzzle image to the "Thank you" card after 3 seconds
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                    self.flipToThankYouCard(imageView: fullPuzzleImageView)
+                }
             })
-
         })
     }
-    
-    @objc func handleFullPuzzleTap(_ sender: UITapGestureRecognizer) {
-        guard let imageView = sender.view as? UIImageView else { return }
 
+    func flipToThankYouCard(imageView: UIImageView) {
         // Create a flip animation
         UIView.transition(with: imageView, duration: 1, options: [.transitionFlipFromLeft], animations: {
-            // Change the image to a blank image or add a label with "The End"
-            imageView.image = nil  // Optionally set to a blank image
-            let endLabel = UILabel(frame: imageView.bounds)
-            endLabel.text = "Bravo! You’ve done it! \nBut the truth is just beginning to unfold. Stay tuned for the next part of the story."
-            endLabel.textColor = .white
-            // Load and apply the custom font for buttons
-            if let customFont = UIFont(name: "SpecialElite-Regular", size: 18) {
-                endLabel.font = customFont
-            } else {
-                print("Failed to load SpecialElite-Regular font.")
-            }
-            endLabel.textAlignment = .center
-            endLabel.backgroundColor = UIColor.black.withAlphaComponent(1) // Optional background
-            endLabel.layer.cornerRadius = 10
-            endLabel.clipsToBounds = true
-            endLabel.numberOfLines = 0  // Allows unlimited lines
-            endLabel.preferredMaxLayoutWidth = 200
-            endLabel.lineBreakMode = .byWordWrapping  // Wraps text by words
-            imageView.addSubview(endLabel)  // Add the label to the imageView
+            // Change the image to the "Thankyou card" image
+            imageView.image = UIImage(named: "thankyou card.png")
+            imageView.frame.size = CGSize(width: 450, height: 350)
+
         }, completion: nil)
     }
 
@@ -441,10 +554,10 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
             print("Error: Player node or Cake node not found")
             return
         }
-
+        
         // Calculate the distance between the player and the cake
         let distance = playerNode.position.distance(to: objCakeNode.position)
-
+        
         // If the player is within the proximity distance, show the button; otherwise, hide it
         if isPuzzleDisplayed == true || distance > proximityDistance {
             interactButton.isHidden = true // Hide the button
@@ -453,6 +566,103 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
             isPuzzleDisplayed = false
         }
     }
+    
+    func addFallingCupSound() {
+        // Find the cup node
+        guard let cupNode = rootNode.childNode(withName: "cup", recursively: true) else {
+            print("Warning: Cup node not found")
+            return
+        }
+        
+        // Load the sound effect
+        let audioSource = SCNAudioSource(fileNamed: "fallingCup.mp3")!
+        audioSource.load()
+        audioSource.volume = 30.0 // Set the volume as needed
+        
+        // Create an action to play the sound after 3 seconds
+        let wait = SCNAction.wait(duration: 3.0)
+        let playSound = SCNAction.playAudio(audioSource, waitForCompletion: false)
+        
+        // Run the actions sequentially
+        cupNode.runAction(SCNAction.sequence([wait, playSound]))
+    }
+    
+    func addOpenFridgeSound() {
+        // Find the cup node
+        guard let fridgeNode = rootNode.childNode(withName: "fridge", recursively: true) else {
+            print("Warning: Cup node not found")
+            return
+        }
+        
+        // Load the sound effect
+        let audioSource = SCNAudioSource(fileNamed: "openFridge.mp3")!
+        audioSource.load()
+        audioSource.volume = 20.0 // Set the volume as needed
+        
+        let playSound = SCNAction.playAudio(audioSource, waitForCompletion: false)
+        
+        // Run the actions sequentially
+        fridgeNode.runAction(SCNAction.sequence([playSound]))
+    }
+    
+    func addCloseFridgeSound() {
+        // Find the cup node
+        guard let fridgeNode = rootNode.childNode(withName: "fridge", recursively: true) else {
+            print("Warning: Cup node not found")
+            return
+        }
+        
+        // Load the sound effect
+        let audioSource = SCNAudioSource(fileNamed: "closeFridge.mp3")!
+        audioSource.load()
+        audioSource.volume = 25.0 // Set the volume as needed
+        
+        let playSound = SCNAction.playAudio(audioSource, waitForCompletion: false)
+        
+        // Run the actions sequentially
+        fridgeNode.runAction(SCNAction.sequence([playSound]))
+    }
+    
+    func addSpoonSound() {
+        // Find the cup node
+        guard let spoonNode = rootNode.childNode(withName: "fork", recursively: true) else {
+            print("Warning: Cup node not found")
+            return
+        }
+        
+        // Load the sound effect
+        let audioSource = SCNAudioSource(fileNamed: "movingSpoon.mp3")!
+        audioSource.load()
+        audioSource.volume = 1.0 // Set the volume as needed
+        
+        // Create an action to play the sound after 3 seconds
+        let wait = SCNAction.wait(duration: 18.0)
+        let playSound = SCNAction.playAudio(audioSource, waitForCompletion: false)
+        
+        // Run the actions sequentially
+        spoonNode.runAction(SCNAction.sequence([wait, playSound]))
+    }
+    
+    func addBackgroundSound() {
+            // Load the sound effect
+            guard let audioSource = SCNAudioSource(fileNamed: "lightRain.wav") else {
+                print("Warning: Background sound 'lightRain.wav' not found")
+                return
+            }
+            
+            audioSource.load()
+           audioSource.volume = 10.0 // Set the volume as needed
+            audioSource.isPositional = false  // Set to false for background sound
+            audioSource.shouldStream = true     // Stream if it's a long sound
+            
+            // Create a node to attach the sound to
+            let soundNode = SCNNode()
+            soundNode.runAction(SCNAction.repeatForever(SCNAction.playAudio(audioSource, waitForCompletion: true)))
+            
+            // Add the sound node to the root node
+            rootNode.addChildNode(soundNode)
+        }
+       
     
     func setupGestureRecognizers(for view: UIView) {
         cameraComponent.setupGestureRecognizers(for: view)

@@ -11,7 +11,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
 
     // Light node reference
     var lightNode: SCNNode?
-    var originalLightIntensity: CGFloat = 75 // Default intensity
+    var originalLightIntensity: CGFloat = 25 // Default intensity
     var isLightActive = false // Track if light is active
     private var lightIncreaseDuration: TimeInterval = 0.5 // Reduced duration for increasing intensity
     private var lightDecreaseDuration: TimeInterval = 0.3 // Reduced duration for decreasing intensity
@@ -115,13 +115,59 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
             }
         }
     }
+
+    private func updateLightPosition() {
+        guard let lightNode = lightNode else { return }
+        // Update the light position to follow the player
+        lightNode.position = SCNVector3(playerNode.position.x, playerNode.position.y + 5, playerNode.position.z) // Adjust height as necessary
+    }
+
+    func activateLightPulsing() {
+        guard let lightNode = lightNode else { return }
+
+        isLightActive = true
+
+        // Increase light intensity smoothly
+        let targetIntensity: CGFloat = originalLightIntensity + 500 // Set the target intensity
+        let increaseAction = SCNAction.customAction(duration: lightIncreaseDuration) { node, elapsedTime in
+            let percent = elapsedTime / CGFloat(self.lightIncreaseDuration)
+            let newIntensity = self.originalLightIntensity + (500 * percent) // Change 500 to desired increase amount
+            node.light?.intensity = newIntensity
+        }
+
+        lightNode.runAction(increaseAction)
+
+        // Schedule a timer to decrease intensity after a shorter delay
+        lightTimer?.invalidate() // Invalidate any existing timer
+        lightTimer = Timer.scheduledTimer(withTimeInterval: lightTimerDelay, repeats: false) { [weak self] _ in
+            self?.decreaseLightIntensity()
+        }
+    }
+
+    private func decreaseLightIntensity() {
+        guard let lightNode = lightNode else { return }
+        print("decreasing")
+
+        // Decrease light intensity smoothly
+        let decreaseAction = SCNAction.customAction(duration: lightDecreaseDuration) { node, elapsedTime in
+            let percent = elapsedTime / CGFloat(self.lightDecreaseDuration)
+            let newIntensity = self.originalLightIntensity + (500 * (1 - percent)) // Reverse the increase effect
+            node.light?.intensity = newIntensity // Ensure it doesn't go below original
+            
+        }
+
+        lightNode.runAction(decreaseAction) { [weak self] in
+            self?.isLightActive = false // Mark light as inactive after fading out
+            lightNode.light?.intensity = self?.originalLightIntensity ?? 0 // Ensure it resets to original
+        }
+    }
+    
     
     private func loadSounds() {
         if let echoSoundURL = Bundle.main.url(forResource: "EcholocationSound", withExtension: "mp3") {
             do {
                 echoAudioPlayer = try AVAudioPlayer(contentsOf: echoSoundURL)
                 echoAudioPlayer?.prepareToPlay() // Prepare to play
-                print("Sound loaded successfully")
             } catch {
                 print("Error loading sound: \(error)")
             }
@@ -133,7 +179,6 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
             do {
                 stepAudioPlayer = try AVAudioPlayer(contentsOf: stepSoundURL)
                 stepAudioPlayer?.prepareToPlay() // Prepare to play
-                print("Sound step loaded successfully")
             } catch {
                 print("Error loading step sound: \(error)")
             }
@@ -144,32 +189,27 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
 
     private func playEchoSound() {
         guard let echoAudioPlayer = echoAudioPlayer else {
-            print("Echo audio player is nil")
             return
         }
 
         if !echoAudioPlayer.isPlaying {
             echoAudioPlayer.play() // Play the sound
-            print("Playing echolocation sound")
         }
     }
 
     private func playStepSound() {
         guard let stepAudioPlayer = stepAudioPlayer else {
-            print("Step audio player is nil")
             return
         }
 
         if !stepAudioPlayer.isPlaying {
             stepAudioPlayer.play() // Start playing the sound
-            print("Playing step sound")
         }
     }
     
     private func stopStepSound() {
         guard let stepAudioPlayer = stepAudioPlayer else {
             stepAudioPlayer?.stop() // Stop if currently playing
-            print("Stopped step sound")
             return
         }
     }
@@ -239,52 +279,6 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
               }
           }
       }
-
-    private func updateLightPosition() {
-        guard let lightNode = lightNode else { return }
-        // Update the light position to follow the player
-        lightNode.position = SCNVector3(playerNode.position.x, playerNode.position.y + 5, playerNode.position.z) // Adjust height as necessary
-    }
-
-    private func activateLightPulsing() {
-        guard let lightNode = lightNode else { return }
-
-        isLightActive = true
-
-        // Increase light intensity smoothly
-        let targetIntensity: CGFloat = originalLightIntensity + 500 // Set the target intensity
-        let increaseAction = SCNAction.customAction(duration: lightIncreaseDuration) { node, elapsedTime in
-            let percent = elapsedTime / CGFloat(self.lightIncreaseDuration)
-            let newIntensity = self.originalLightIntensity + (500 * percent) // Change 500 to desired increase amount
-            node.light?.intensity = newIntensity
-        }
-
-        lightNode.runAction(increaseAction)
-
-        // Schedule a timer to decrease intensity after a shorter delay
-        lightTimer?.invalidate() // Invalidate any existing timer
-        lightTimer = Timer.scheduledTimer(withTimeInterval: lightTimerDelay, repeats: false) { [weak self] _ in
-            self?.decreaseLightIntensity()
-        }
-    }
-
-    private func decreaseLightIntensity() {
-        guard let lightNode = lightNode else { return }
-        print("decreasing")
-
-        // Decrease light intensity smoothly
-        let decreaseAction = SCNAction.customAction(duration: lightDecreaseDuration) { node, elapsedTime in
-            let percent = elapsedTime / CGFloat(self.lightDecreaseDuration)
-            let newIntensity = self.originalLightIntensity + (500 * (1 - percent)) // Reverse the increase effect
-            node.light?.intensity = newIntensity // Ensure it doesn't go below original
-            
-        }
-
-        lightNode.runAction(decreaseAction) { [weak self] in
-            self?.isLightActive = false // Mark light as inactive after fading out
-            lightNode.light?.intensity = self?.originalLightIntensity ?? 100 // Ensure it resets to original
-        }
-    }
     
     func movePlayer(to position: SCNVector3, duration: TimeInterval) {
         movingProgramatically = true
