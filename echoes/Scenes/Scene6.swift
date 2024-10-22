@@ -90,10 +90,6 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         
         rootNode.addChildNode(lightNode)
         
-        // Initialize MovementComponent with lightNode reference
-        let movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode)
-        playerEntity.addComponent(movementComponent)
-        
         // Find Obj_Cake_003 node in the scene
         objCakeNode = rootNode.childNode(withName: "Puzzle_Object", recursively: true)
         
@@ -646,13 +642,13 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     
     func addBackgroundSound() {
             // Load the sound effect
-            guard let audioSource = SCNAudioSource(fileNamed: "lightRain.wav") else {
+            guard let audioSource = SCNAudioSource(fileNamed: "outsideRain.wav") else {
                 print("Warning: Background sound 'lightRain.wav' not found")
                 return
             }
             
             audioSource.load()
-           audioSource.volume = 10.0 // Set the volume as needed
+            audioSource.volume = 0.1 // Set the volume as needed
             audioSource.isPositional = false  // Set to false for background sound
             audioSource.shouldStream = true     // Stream if it's a long sound
             
@@ -672,15 +668,5 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         // Add any additional setup for the scene here
-    }
-}
-
-// SCNVector3 extension to calculate the distance between two points
-extension SCNVector3 {
-    func distance(to vector: SCNVector3) -> Float {
-        let dx = self.x - vector.x
-        let dy = self.y - vector.y
-        let dz = self.z - vector.z
-        return sqrt(dx * dx + dy * dy + dz * dz)
     }
 }
