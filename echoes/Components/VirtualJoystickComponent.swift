@@ -106,7 +106,7 @@ class VirtualJoystickComponent: GKComponent {
             self.joystickView.alpha = alpha
         }
     }
-    
+
     // Function to hide the joystick
     func hideJoystick() {
         UIView.animate(withDuration: 0.5) {
