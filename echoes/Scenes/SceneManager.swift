@@ -61,7 +61,7 @@ class SceneManager {
             print("Error: Light node is not initialized.")
             return
         }
-        let scene4 = Scene4(lightNode: lightNode)
+        let scene4 = Scene4(lightNode: lightNode) 
         scnView?.scene = scene4
         currentScene = scene4
     }

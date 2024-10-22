@@ -1,193 +1,137 @@
 //
-//  Scene4.swift
+//  Scene6.swift
 //  echoes
 //
-//  Created by Pelangi Masita Wati on 15/10/24.
+//  Created by Pelangi Masita Wati on 21/10/24.
 //
-
-// GameScene.swift
 
 import SceneKit
 import UIKit
 
-class Scene4: SCNScene {
+class Scene4: SCNScene, SCNPhysicsContactDelegate {
     var playerEntity: PlayerEntity!
-    var cameraNode: SCNNode!
     var cameraComponent: CameraComponent!
+    var joystickComponent: VirtualJoystickComponent!
+    var cameraNode: SCNNode!
     var lightNode: SCNNode!
-
+    var combinedPieces: [UIView: [UIView]] = [:]  // Dictionary that tracks combined pieces
+    var completedCombinations: [[UIView]] = []  // Track completed combinations
+    
+    weak var scnView: SCNView?
+    var playButton: UIButton?  // Store a reference to the play button
+    
+    var isGameCompleted: Bool = false  // Track if the game is completed
+    let snapDistance: CGFloat = 50.0
+    
     init(lightNode: SCNNode) {
         super.init()
         self.lightNode = lightNode
-
+        scnView?.pointOfView = cameraNode
+        
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "Scene4.scn") else {
-            print("Warning: House scene 'Scene 1.scn' not found")
+            print("Warning: House scene 'Scene 4.scn' not found")
             return
         }
-
+        
         // Add the house's nodes to the root node of the GameScene
         for childNode in houseScene.rootNode.childNodes {
             rootNode.addChildNode(childNode)
         }
-
+        
         // Create a new player entity and initialize it using the house scene's root node
         playerEntity = PlayerEntity(in: rootNode, cameraNode: cameraNode, lightNode: lightNode)
-
+        
         guard let playerNode = playerEntity.playerNode else {
             print("Warning: Player node named 'Player' not found in house model")
             return
         }
-
+        
         // Add player node to the GameScene's rootNode
         rootNode.addChildNode(playerNode)
-
+        
         // Attach the existing camera node from the player model to the scene
         cameraNode = playerNode.childNode(withName: "Camera", recursively: true)
         guard let cameraNode = cameraNode else {
             print("Warning: Camera node named 'Camera' not found in Player model")
             return
         }
-
+        
         // Make optional adjustments to the camera if needed
         cameraNode.camera?.fieldOfView = 75
-        cameraNode.camera?.automaticallyAdjustsZRange = true
-
+        cameraNode.camera?.automaticallyAdjustsZRange = false
+        
         // Add the camera component to handle the camera logic
         cameraComponent = CameraComponent(cameraNode: cameraNode)
-
-        // Add a default light to the scene
-        let lightNode = SCNNode()
-        let light = SCNLight()
-        //light.type = .omni
-        light.intensity = 1000
-        lightNode.light = light
-        lightNode.position = SCNVector3(x: 0, y: 20, z: 20)
+        
         rootNode.addChildNode(lightNode)
-
-        // Add an ambient light to the scene
-        let ambientLightNode = SCNNode()
-        let ambientLight = SCNLight()
-        ambientLight.type = .ambient
-        ambientLight.intensity = 500
-        ambientLight.color = UIColor.white
-        ambientLightNode.light = ambientLight
-        rootNode.addChildNode(ambientLightNode)
         
-        if let boxNode = rootNode.childNode(withName: "box", recursively: true) {
-            attachAudio(to: boxNode, audioFileName: "swanlake.wav")
-            addBoxVisualization(to: boxNode)
-        } else {
-            print("Warning: Node named 'box' not found in the scene")
+        if let woodNode = rootNode.childNode(withName: "woodenFloor", recursively: false) {
+            attachAudio(to: woodNode, audioFileName: "woodenFloor.wav", volume: 0.7, delay: 0)
         }
         
-        if let thunderNode = rootNode.childNode(withName: "thunder", recursively: true) {
-            attachAudio(to: thunderNode, audioFileName: "thunder.wav")
-            addBoxVisualization(to: thunderNode)
-        } else {
-            print("Warning: Node named 'thunder' not found in the scene")
+        if let clockNode = rootNode.childNode(withName: "clockTicking", recursively: true) {
+            attachAudio(to: clockNode, audioFileName: "clockTicking.wav", volume: 0.7, delay: 0)
         }
         
-        // Add the flashlight to the player node
-        if let playerNode = playerEntity.playerNode {
-            addFlashlightToPlayer(playerNode: playerNode)
-        } else {
-            print("Warning: Player node is nil")
+        if let muffledNode = rootNode.childNode(withName: "muffledRain", recursively: true) {
+            attachAudio(to: muffledNode, audioFileName: "muffledRain.wav", volume: 1.0, delay: 0)
         }
         
-        // Find the Armature node in the scene
-//        if let armatureNode = rootNode.childNode(withName: "Armature", recursively: true),
-//           let geometry = armatureNode.geometry {
-//
-//            // Create a new material
-//            let material = SCNMaterial()
+        if let andraParentNode = rootNode.childNode(withName: "player", recursively: true) {
+            if let andraNode = andraParentNode.childNode(withName: "s4-andra", recursively: false) {
+                attachAudio(to: andraNode, audioFileName: "s4-andra.wav", volume: 300, delay: 19)
+            }
+        }
 
-            // Set the diffuse texture
-            //material.diffuse.contents = UIImage(named: "9_meshes_Merge_Diffuse.png")
+        if let grandmaParentNode = rootNode.childNode(withName: "grandma", recursively: true) {
+            if let grandmaNode1 = grandmaParentNode.childNode(withName: "s4-grandma1", recursively: false) {
+                attachAudio(to: grandmaNode1, audioFileName: "s4-grandma1.wav", volume: 3, delay: 3)
+            }
 
-            // Optionally set the normal map
-            //material.normal.contents = UIImage(named: "9_meshes_Merge_Normal.png")
-
-            // Optionally set the specular map
-//            material.specular.contents = UIImage(named: "9_meshes_Merge_Specular.png")
-
-            // Apply the material to the geometry
-//            geometry.materials = [material]
-//        } else {
-//            print("Warning: Armature node not found in the scene")
-//        }
+            if let grandmaNode2 = grandmaParentNode.childNode(withName: "s4-grandma2", recursively: false) {
+                attachAudio(to: grandmaNode2, audioFileName: "s4-grandma2.wav", volume: 200, delay: 11)
+            }
+        }
         
-
+//        let ambientLightNode = SCNNode()
+//        let ambientLight = SCNLight()
+//        ambientLight.type = .ambient
+//        ambientLight.intensity = 500
+//        ambientLight.color = UIColor.blue
+//        ambientLightNode.light = ambientLight
+//        rootNode.addChildNode(ambientLightNode)
+        
+        // Initialize MovementComponent with lightNode reference
+        let movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode)
+        playerEntity.addComponent(movementComponent)
+                
+        self.physicsWorld.contactDelegate = self
     }
     
-    func attachAudio(to node: SCNNode, audioFileName: String) {
-        // Load the audio file as an SCNAudioSource
+    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
         guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
             print("Warning: Audio file '\(audioFileName)' not found")
             return
         }
 
-        // Preload the audio for smooth playback
-        audioSource.loops = true
         audioSource.isPositional = true
         audioSource.shouldStream = false
         audioSource.load()
-        audioSource.volume = 100.0
+        audioSource.volume = volume
 
-        // Create an SCNAction to play the audio source
-        let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: false)
-        
-        // Run the action on the node
-        node.runAction(playAudioAction)
+        let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: true)
+        let waitAction = SCNAction.wait(duration: delay)
+        let sequenceAction = SCNAction.sequence([waitAction, playAudioAction])
+        node.runAction(sequenceAction)
     }
     
-    func addBoxVisualization(to node: SCNNode) {
-        // Create a box geometry
-        let boxGeometry = SCNBox(width: 100, height: 100, length: 100, chamferRadius: 0)
-
-        // Create a material for the box
-        let boxMaterial = SCNMaterial()
-        boxMaterial.diffuse.contents = UIColor.red // Set the color of the box to red
-        boxGeometry.materials = [boxMaterial]
-
-        // Create a node with the box geometry
-        let boxNode = SCNNode(geometry: boxGeometry)
-        
-        // Position the box in the scene
-        boxNode.position = SCNVector3(0, 0.5, 0) // Adjust position so the box sits above ground level
-
-        // Add the box node as a child of the given node (the "box" node)
-        node.addChildNode(boxNode)
-    }
-    
-    // Add a flashlight light to the player
-    func addFlashlightToPlayer(playerNode: SCNNode) {
-        // Create a light for the flashlight
-        let flashlightNode = SCNNode()
-        let flashlight = SCNLight()
-        flashlight.type = .spot
-        flashlight.intensity = 1500
-        flashlight.spotInnerAngle = 20
-        flashlight.spotOuterAngle = 45
-        flashlight.castsShadow = true
-        flashlight.color = UIColor.white
-        flashlightNode.light = flashlight
-        
-        // Position the flashlight relative to the player's hand (adjust based on your player model)
-        if let handNode = playerNode.childNode(withName: "Hand", recursively: true) {
-            handNode.addChildNode(flashlightNode)
-            flashlightNode.position = SCNVector3(0, 0, 0.1)  // Adjust position to simulate the light in front of the hand
-            flashlightNode.eulerAngles = SCNVector3(-Float.pi / 2, 0, 0)  // Aim the light forward
-        } else {
-            print("Warning: Hand node not found")
-        }
-    }
-
     func setupGestureRecognizers(for view: UIView) {
         cameraComponent.setupGestureRecognizers(for: view)
     }
-
+    
     required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        super.init(coder: aDecoder)
+        // Add any additional setup for the scene here
     }
 }
