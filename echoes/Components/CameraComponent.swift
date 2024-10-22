@@ -24,14 +24,6 @@ class CameraComponent {
         isCameraLocked = false
     }
 
-    func lockCamera() {
-        isCameraLocked = true
-    }
-
-    func unlockCamera() {
-        isCameraLocked = false
-    }
-
     @objc private func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
         guard !isCameraLocked else { return } // Prevent gesture handling if the camera is locked
 
