@@ -282,13 +282,14 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
           }
       }
     
-    func movePlayer(to position: SCNVector3, duration: TimeInterval) {
+    func movePlayer(to position: SCNVector3, duration: TimeInterval, completion: @escaping () -> Void) {
         movingProgramatically = true
         let playerNode = playerNode
         let moveAction = SCNAction.move(to: position, duration: duration)
         moveAction.timingMode = .easeInEaseOut
         playerNode.runAction(moveAction) {
             self.movingProgramatically = false
+            completion()
         }
     }
 }
