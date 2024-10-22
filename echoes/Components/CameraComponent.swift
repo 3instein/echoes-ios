@@ -15,7 +15,7 @@ class CameraComponent {
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
         view.addGestureRecognizer(panGesture)
     }
-
+    
     func lockCamera() {
         isCameraLocked = true
     }

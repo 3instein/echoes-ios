@@ -4,9 +4,9 @@ import GameplayKit
 import SceneKit
 import AVFoundation
 
-class MovementComponent: GKComponent {
+class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     let playerNode: SCNNode
-    let movementSpeed: Float = 2
+    let movementSpeed: Float = 60
     var joystickComponent: VirtualJoystickComponent?
     var cameraNode: SCNNode?
     var movingProgramatically: Bool = false
@@ -21,9 +21,14 @@ class MovementComponent: GKComponent {
     private var lightTimerDelay: TimeInterval = 1.0 // Reduced delay before light starts dimming
     
     // Sound properties
-    var audioPlayer: AVAudioPlayer?
+    var echoAudioPlayer: AVAudioPlayer?
     private var lastStepTime: Date?
     private let stepDelay: TimeInterval = 2.0 // Minimum delay between steps
+
+    var stepAudioPlayer: AVAudioPlayer?
+    private let minStepDelay: TimeInterval = 0.2 // Minimum delay between steps
+    private let maxStepDelay: TimeInterval = 1.0 // Maximum delay between steps
+    private var isWalking = false // Track if the player is walking
 
     init(playerNode: SCNNode, cameraNode: SCNNode?, lightNode: SCNNode?) {
         self.playerNode = playerNode
@@ -34,7 +39,7 @@ class MovementComponent: GKComponent {
         super.init()
         
         // Load sound
-        loadSound()
+        loadSounds()
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -42,19 +47,22 @@ class MovementComponent: GKComponent {
     }
 
     override func update(deltaTime seconds: TimeInterval) {
-        if(!movingProgramatically){
+        if (!movingProgramatically){
             guard let joystick = joystickComponent, joystick.isTouching, let cameraNode = cameraNode else {
+                stepAudioPlayer?.stop() // Stop if currently playing
+
                 return
             }
+            
+            addPlayerPhysicsBody()
 
             let direction = joystick.direction
             let deltaTime = Float(seconds)
 
             // Calculate the camera's forward and right direction vectors
             let cameraTransform = cameraNode.transform
-            // Calculate the camera's forward and right direction vectors
-            let forwardVector = normalizeVector(SCNVector3(cameraTransform.m31, 0, cameraTransform.m33))
-            let rightVector = normalizeVector(SCNVector3(cameraTransform.m11, 0, cameraTransform.m13))
+            let forwardVector = SCNVector3(cameraTransform.m31, cameraTransform.m32, cameraTransform.m33)
+            let rightVector = SCNVector3(cameraTransform.m11, cameraTransform.m12, -cameraTransform.m13)
 
             // Scale direction by joystick input
             let forwardMovement = forwardVector * Float(direction.y) * movementSpeed * deltaTime
@@ -63,32 +71,28 @@ class MovementComponent: GKComponent {
             // Combine forward and right movement
             let movementVector = forwardMovement + rightMovement
 
+            // Use a temporary node to check for collisions
+            let tempNode = SCNNode()
+            tempNode.position = playerNode.position + movementVector
+
             // Translate the player node based on the movement vector
             playerNode.localTranslate(by: movementVector)
+
+            // Update light position to follow player
+            updateLightPosition()
+
+            // Calculate player speed
+            let speed = movementVector.length() / deltaTime
             
-            // Update light position to follow player
-            updateLightPosition()
-
-            // Check time since last step to play sound
-            let currentTime = Date()
-            if lastStepTime == nil || currentTime.timeIntervalSince(lastStepTime!) >= stepDelay {
-                playSound() // Play sound if the delay has passed
-                lastStepTime = currentTime // Update the last step time
-            }
-
-            // User is moving
-            if !isLightActive {
-                activateLightPulsing() // Activate light pulsing if not already active
-            }
-        } else if(movingProgramatically){
-            // Update light position to follow player
-            updateLightPosition()
-
-            // Check time since last step to play sound
-            let currentTime = Date()
-            if lastStepTime == nil || currentTime.timeIntervalSince(lastStepTime!) >= stepDelay {
-                playSound() // Play sound if the delay has passed
-                lastStepTime = currentTime // Update the last step time
+            // Check if the player is moving
+            if speed > 0 {
+                playEchoSound() // Play echo sound continuously
+                if !stepAudioPlayer!.isPlaying {
+                    playStepSound() // Start playing the step sound if not already playing
+                }
+            } else {
+                stopStepSound() // Stop step sound when not moving
+                isWalking = false
             }
 
             // User is moving
@@ -96,38 +100,21 @@ class MovementComponent: GKComponent {
                 activateLightPulsing() // Activate light pulsing if not already active
             }
         }
-    }
-
-    private func loadSound() {
-        if let soundURL = Bundle.main.url(forResource: "EcholocationSound", withExtension: "mp3") {
-            do {
-                audioPlayer = try AVAudioPlayer(contentsOf: soundURL)
-                audioPlayer?.prepareToPlay() // Prepare to play
-                print("Sound loaded successfully")
-            } catch {
-                print("Error loading sound: \(error)")
+        else if (movingProgramatically) {
+            // Update light position to follow player
+            updateLightPosition()
+            
+            // Check time since last step to play sound
+            let currentTime = Date()
+            if lastStepTime == nil || currentTime.timeIntervalSince(lastStepTime!) >= stepDelay {
+                playEchoSound() // Play sound if the delay has passed
+                lastStepTime = currentTime // Update the last step time
             }
-        } else {
-            print("Sound file not found")
-        }
-    }
-
-    private func playSound() {
-        guard let audioPlayer = audioPlayer else {
-            print("Audio player is nil")
-            return
-        }
-
-        if audioPlayer.isPlaying {
-            audioPlayer.stop() // Stop if already playing
-            audioPlayer.currentTime = 0 // Reset to the beginning
-        }
-        
-        do {
-            try audioPlayer.play() // Try to play the sound
-            print("Playing sound")
-        } catch {
-            print("Error playing sound: \(error)") // Handle playback errors
+            
+            // User is moving
+            if !isLightActive {
+                activateLightPulsing() // Activate light pulsing if not already active
+            }
         }
     }
 
@@ -137,7 +124,7 @@ class MovementComponent: GKComponent {
         lightNode.position = SCNVector3(playerNode.position.x, playerNode.position.y + 5, playerNode.position.z) // Adjust height as necessary
     }
 
-    private func activateLightPulsing() {
+    func activateLightPulsing() {
         guard let lightNode = lightNode else { return }
 
         isLightActive = true
@@ -173,17 +160,136 @@ class MovementComponent: GKComponent {
 
         lightNode.runAction(decreaseAction) { [weak self] in
             self?.isLightActive = false // Mark light as inactive after fading out
-            lightNode.light?.intensity = self?.originalLightIntensity ?? 75 // Ensure it resets to original
+            lightNode.light?.intensity = self?.originalLightIntensity ?? 0 // Ensure it resets to original
         }
     }
     
-    func movePlayer(to position: SCNVector3, duration: TimeInterval) {
+    
+    private func loadSounds() {
+        if let echoSoundURL = Bundle.main.url(forResource: "EcholocationSound", withExtension: "mp3") {
+            do {
+                echoAudioPlayer = try AVAudioPlayer(contentsOf: echoSoundURL)
+                echoAudioPlayer?.prepareToPlay() // Prepare to play
+            } catch {
+                print("Error loading sound: \(error)")
+            }
+        } else {
+            print("Sound file not found")
+        }
+        
+        if let stepSoundURL = Bundle.main.url(forResource: "step", withExtension: "mp3") {
+            do {
+                stepAudioPlayer = try AVAudioPlayer(contentsOf: stepSoundURL)
+                stepAudioPlayer?.prepareToPlay() // Prepare to play
+            } catch {
+                print("Error loading step sound: \(error)")
+            }
+        } else {
+            print("Sound step file not found")
+        }
+    }
+
+    private func playEchoSound() {
+        guard let echoAudioPlayer = echoAudioPlayer else {
+            return
+        }
+
+        if !echoAudioPlayer.isPlaying {
+            echoAudioPlayer.play() // Play the sound
+        }
+    }
+
+    private func playStepSound() {
+        guard let stepAudioPlayer = stepAudioPlayer else {
+            return
+        }
+
+        if !stepAudioPlayer.isPlaying {
+            stepAudioPlayer.play() // Start playing the sound
+        }
+    }
+    
+    private func stopStepSound() {
+        guard let stepAudioPlayer = stepAudioPlayer else {
+            stepAudioPlayer?.stop() // Stop if currently playing
+            return
+        }
+    }
+
+    private func addPlayerPhysicsBody() {
+          if playerNode.physicsBody == nil {
+              // Ensure the player node has a physics body initialized correctly
+              playerNode.physicsBody = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(node: playerNode, options: nil))
+
+              guard let playerPhysicsBody = playerNode.physicsBody else {
+                  print("Error: Player physics body is nil after initialization")
+                  return
+              }
+
+              // Set mass, category, collision, and contact test bit masks
+              playerPhysicsBody.mass = 1.0 // Set a lower mass for better movement control
+  //            playerPhysicsBody.friction = 0.5 // Adjust friction as needed
+              playerPhysicsBody.restitution = 1.0 // No bounciness
+
+              playerPhysicsBody.isAffectedByGravity = false
+              // Set up collision and contact masks
+              playerPhysicsBody.categoryBitMask = 1  // Define a bitmask for the player
+              playerPhysicsBody.collisionBitMask = 2 // Collides with walls/floor
+              playerPhysicsBody.contactTestBitMask = 2 // Test for contact with walls
+              
+              // Now call the method to setup walls physics
+              setupWallPhysicsBodies()
+          }
+      }
+
+    private func setupWallPhysicsBodies() {
+          // Loop through your walls and apply physics bodies
+          for node in playerNode.parent?.childNodes ?? [] {
+              if node.name?.contains("wall") == true /*|| node.name?.contains("floor")  == true */{
+                  print("wall")
+                  node.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
+                  node.physicsBody?.categoryBitMask = 2  // Wall category
+                  node.physicsBody?.collisionBitMask = 1  // Collides with player
+                  node.physicsBody?.contactTestBitMask = 1
+              }
+          }
+      }
+
+    func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
+          print("Player collided with wall or floor")
+
+          let nodeA = contact.nodeA
+          let nodeB = contact.nodeB
+
+          // Check for collision between player and walls/floor
+          if (nodeA.physicsBody?.categoryBitMask == 1 && nodeB.physicsBody?.categoryBitMask == 2) ||
+             (nodeB.physicsBody?.categoryBitMask == 1 && nodeA.physicsBody?.categoryBitMask == 2) {
+              print("Player collided with wall or floor")
+              
+              // Stop player movement by applying a zero velocity
+              let playerNode = (nodeA.physicsBody?.categoryBitMask == 1) ? nodeA : nodeB
+              if let playerPhysicsBody = playerNode.physicsBody {
+                  // Gradually dampen the velocity instead of setting it to zero
+                  let currentVelocity = playerPhysicsBody.velocity
+                  playerPhysicsBody.velocity = SCNVector3(currentVelocity.x * 0.5, 0, currentVelocity.z * 0.5) // Dampen velocity
+                  
+                  // Adjust friction temporarily
+                  playerPhysicsBody.friction = 0.2 // Lower friction for easier movement post-collision
+                  
+                  // Reset joystick direction only if not touching the joystick
+                  joystickComponent?.resetJoystick()
+              }
+          }
+      }
+    
+    func movePlayer(to position: SCNVector3, duration: TimeInterval, completion: @escaping () -> Void) {
         movingProgramatically = true
         let playerNode = playerNode
         let moveAction = SCNAction.move(to: position, duration: duration)
         moveAction.timingMode = .easeInEaseOut
         playerNode.runAction(moveAction) {
             self.movingProgramatically = false
+            completion()
         }
     }
 }
@@ -195,6 +301,13 @@ func +(left: SCNVector3, right: SCNVector3) -> SCNVector3 {
 
 func *(vector: SCNVector3, scalar: Float) -> SCNVector3 {
     return SCNVector3(vector.x * scalar, vector.y * scalar, vector.z * scalar)
+}
+
+// Utility extension for vector math
+extension SCNVector3 {
+    func length() -> Float {
+        return sqrt(x*x + y*y + z*z)
+    }
 }
 
 func normalizeVector(_ vector: SCNVector3) -> SCNVector3 {

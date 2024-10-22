@@ -18,7 +18,6 @@ class Scene2: SCNScene {
         super.init()
         self.lightNode = lightNode
 
-
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "scene2.scn") else {
             print("Warning: House scene 'Scene 1.scn' not found")
@@ -39,7 +38,7 @@ class Scene2: SCNScene {
         }
 
         // Add player node to the GameScene's rootNode
-        rootNode.addChildNode(playerNode)
+        //rootNode.addChildNode(playerNode)
 
         // Attach the existing camera node from the player model to the scene
         cameraNode = playerNode.childNode(withName: "Camera", recursively: true)
@@ -50,7 +49,7 @@ class Scene2: SCNScene {
 
         // Make optional adjustments to the camera if needed
         cameraNode.camera?.fieldOfView = 75
-        cameraNode.camera?.automaticallyAdjustsZRange = true
+        cameraNode.camera?.automaticallyAdjustsZRange = false
 
         // Add the camera component to handle the camera logic
         cameraComponent = CameraComponent(cameraNode: cameraNode)
@@ -71,12 +70,12 @@ class Scene2: SCNScene {
         
         attachAudio(to: crowNode, audioFileName: "crow.wav", volume: 0.5)
         
-        guard let lightRainNode = rootNode.childNode(withName: "lightRain", recursively: true) else {
+        guard let lightRainNode = rootNode.childNode(withName: "outsideRain", recursively: true) else {
             print("Warning: LightRain node named 'lightRain' not found in house model")
             return
         }
         
-        attachAudio(to: lightRainNode, audioFileName: "lightRain.wav", volume: 0.5)
+        attachAudio(to: lightRainNode, audioFileName: "outsideRain.wav", volume: 0.5)
     }
     
     func attachAudio(to node: SCNNode, audioFileName: String, volume: Float = 1.0) {
