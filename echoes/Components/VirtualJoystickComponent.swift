@@ -72,15 +72,19 @@ class VirtualJoystickComponent: GKComponent {
             joystickKnob.frame.origin = CGPoint(x: xPosition, y: yPosition)
             resetIdleTimer()
         case .ended, .cancelled:
-            isTouching = false
-            direction = .zero
-            joystickKnob.frame.origin = CGPoint(x: (joystickSize - knobSize) / 2, y: (joystickSize - knobSize) / 2)
+            resetJoystick()
             startIdleTimer()
         default:
             break
         }
     }
-
+    
+    func resetJoystick() {
+        isTouching = false
+        direction = .zero
+        joystickKnob.frame.origin = CGPoint(x: (joystickSize - knobSize) / 2, y: (joystickSize - knobSize) / 2)
+    }
+    
     func startIdleTimer() {
         idleTimer?.invalidate()
         idleTimer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(handleIdleState), userInfo: nil, repeats: false)
