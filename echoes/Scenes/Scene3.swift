@@ -91,8 +91,8 @@ class Scene3: SCNScene {
         cameraComponent = CameraComponent(cameraNode: cameraNode)
         rootNode.addChildNode(lightNode)
         
-        let movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode)
-        playerEntity.addComponent(movementComponent)
+//        let movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode)
+//        playerEntity.addComponent(movementComponent)
         
         let playerLightNode = SCNNode()
         let grandmaLightNode = SCNNode()
@@ -239,8 +239,35 @@ class Scene3: SCNScene {
             self?.fadeScreenToBlack()
         }
         
-        let groupAction = SCNAction.group([playSoundAction, fadeToBlackAction])
-        rootNode.runAction(groupAction)
+        let groupAction = SCNAction.group([playSoundAction])
+        rootNode.runAction(groupAction) {
+            DispatchQueue.main.async {
+                // Load Scene3 after the movement finishes
+                SceneManager.shared.loadScene4()
+                
+                if let gameScene = self.scnView?.scene as? Scene4 {
+                    GameViewController.playerEntity = gameScene.playerEntity
+        
+                    // Create a movement component to handle player movement, including the light node
+                    let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
+                    GameViewController.playerEntity.movementComponent = movementComponent
+        
+                    // Link the joystick with the movement component
+                    if let movementComponent = gameScene.playerEntity.movementComponent {
+                        movementComponent.joystickComponent = GameViewController.joystickComponent
+                        self.scnView?.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
+                    }
+        
+                    // Set up fog properties for the scene
+                    gameScene.fogStartDistance = 25.0   // Increase the start distance
+                    gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
+                    gameScene.fogDensityExponent = 0.2  // Reduce density to make the fog less thick
+                    gameScene.fogColor = UIColor.black
+        
+                    gameScene.setupGestureRecognizers(for: self.scnView!)
+                }
+            }
+        }
     }
     
     func fadeScreenToBlack() {
