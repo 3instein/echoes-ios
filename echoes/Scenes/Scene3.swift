@@ -1,12 +1,13 @@
-// Scene3.swift
+//  Scene3.swift
 
 import SceneKit
 import UIKit
 
 class Scene3: SCNScene {
     var playerEntity: PlayerEntity!
-    var cameraNode: SCNNode!
+    var grandmaEntity: NPCEntity!
     var cameraComponent: CameraComponent?
+    var cameraNode: SCNNode!
     var lightNode: SCNNode!
     var doorNode: SCNNode?
     var grandmaNode: SCNNode?
@@ -14,27 +15,23 @@ class Scene3: SCNScene {
     var isDoorOpen = false
     var isCutscenePlaying = false
     
-    // Preloaded audio sources for efficiency
     var doorOpenSound: SCNAudioSource!
     var doorCloseSound: SCNAudioSource!
     var andraGreetingsSound: SCNAudioSource!
     var grandmaGreetingsSound: SCNAudioSource!
     var andraThoughtsSound: SCNAudioSource!
     
-    // Scene initializer with lightNode as an external dependency
     init(lightNode: SCNNode) {
         super.init()
         
         self.lightNode = lightNode
-        loadAudioResources() // Preload audio sources
+        loadAudioResources()
         
-        // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "Scene3.scn") else {
             print("Warning: House scene 'Scene3.scn' not found")
             return
         }
         
-        // Add the house's nodes to the root node of the GameScene
         for childNode in houseScene.rootNode.childNodes {
             rootNode.addChildNode(childNode)
         }
@@ -42,54 +39,48 @@ class Scene3: SCNScene {
         setupSceneComponents()
         attachAmbientSounds()
         
-        // Ensure the scene updates happen immediately, without waiting for user interaction
         SCNTransaction.begin()
         SCNTransaction.animationDuration = 0
         SCNTransaction.commit()
         
-        // Ensure the scene is rendered immediately
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.scnView?.scene?.isPaused = false
-            self.scnView?.sceneTime = 0
-            self.startCutscene()
+            self.forceSceneUpdateAndStart()
         }
     }
     
-    // Load and cache audio resources to avoid reloading during runtime
     func loadAudioResources() {
         doorOpenSound = SCNAudioSource(named: "door_open.MP3")
-        doorCloseSound = SCNAudioSource(named: "door_close.MP3")
         andraGreetingsSound = SCNAudioSource(named: "scene3_andra_greetings.mp3")
         grandmaGreetingsSound = SCNAudioSource(named: "scene3_grandma_greetings.mp3")
-        andraThoughtsSound = SCNAudioSource(named: "scene3_andra_thoughts.mp3")
+        // andraThoughtsSound = SCNAudioSource(named: "scene3_andra_thoughts.mp3")
+        doorCloseSound = SCNAudioSource(named: "door_close.MP3")
         
-        [doorOpenSound, doorCloseSound, andraGreetingsSound, grandmaGreetingsSound, andraThoughtsSound].forEach {
-            $0?.load()
+        [doorOpenSound, andraGreetingsSound, grandmaGreetingsSound, doorCloseSound].forEach {
+            if let source = $0 {
+                source.shouldStream = false
+                source.loops = false
+                source.volume = 1.0
+                print("Loaded audio source: \(source)")
+            } else {
+                print("Error loading audio source")
+            }
         }
     }
     
-    // Function to set up player entity, camera, lighting, etc.
     func setupSceneComponents() {
-        // Find the door and grandma nodes in the scene
         doorNode = rootNode.childNode(withName: "Door", recursively: true)
         grandmaNode = rootNode.childNode(withName: "Grandma", recursively: true)
-        
-        // Create a new player entity and initialize it using the house scene's root node
         playerEntity = PlayerEntity(in: rootNode, cameraNode: cameraNode, lightNode: lightNode)
         
         guard let playerNode = playerEntity.playerNode else {
             print("Warning: Player node named 'Player' not found in house model")
             return
         }
-        
-        // Add player node to the GameScene's rootNode
         rootNode.addChildNode(playerNode)
         
-        // Attach the existing camera node from the player model to the scene, or create one if missing
         if let cameraNode = playerNode.childNode(withName: "Camera", recursively: true) {
             self.cameraNode = cameraNode
         } else {
-            // Create a new camera node if not present
             self.cameraNode = SCNNode()
             let camera = SCNCamera()
             camera.fieldOfView = 75
@@ -97,27 +88,43 @@ class Scene3: SCNScene {
             playerNode.addChildNode(self.cameraNode)
         }
         
-        // Initialize cameraComponent with a valid cameraNode
         cameraComponent = CameraComponent(cameraNode: cameraNode)
-        
-        // Temporarily illuminate the scene with ambient lighting
-        let ambientLightNode = SCNNode()
-        let ambientLight = SCNLight()
-        ambientLight.type = .ambient
-        ambientLight.intensity = 200
-        ambientLight.color = UIColor.white
-        ambientLightNode.light = ambientLight
-        rootNode.addChildNode(ambientLightNode)
-        
-        // Add the external light node to the scene
         rootNode.addChildNode(lightNode)
         
-        // Initialize MovementComponent with lightNode reference
         let movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode)
         playerEntity.addComponent(movementComponent)
+        
+        let playerLightNode = SCNNode()
+        let grandmaLightNode = SCNNode()
+        
+        playerLightNode.light = SCNLight()
+        grandmaLightNode.light = SCNLight()
+        
+        // Add EcholocationComponent to player and grandma
+        let playerEcholocationComponent = EcholocationComponent(lightNode: playerLightNode)
+        playerEntity.addComponent(playerEcholocationComponent)
+        
+        // Add grandma entity and its echolocation component
+        grandmaEntity = NPCEntity(npcNode: grandmaNode, lightNode: grandmaLightNode)
+        
+        rootNode.addChildNode(playerLightNode)
+        rootNode.addChildNode(grandmaLightNode)
     }
     
-    // Function to attach wind, crow, and lightRain sounds with reduced volume
+    func forceSceneUpdateAndStart() {
+        guard let scnView = self.scnView else {
+            print("SCNView not assigned")
+            return
+        }
+        
+        scnView.isPlaying = true
+        scnView.scene?.isPaused = false
+        scnView.sceneTime = 0
+        
+        cameraComponent?.lockCamera()
+        startCutscene()
+    }
+    
     func attachAmbientSounds() {
         if let windNode = rootNode.childNode(withName: "wind", recursively: true) {
             attachAudio(to: windNode, audioFileName: "wind.wav", volume: 0.1)
@@ -151,8 +158,6 @@ class Scene3: SCNScene {
     func startCutscene() {
         isCutscenePlaying = true
         let delayAction = SCNAction.wait(duration: 0.5)
-        
-        // Sequence of actions: delay, open door with sound, then move grandma, followed by dialogues and door closing
         let sequence = SCNAction.sequence([delayAction, SCNAction.run { [weak self] _ in
             self?.openDoor {
                 self?.moveGrandma {
@@ -160,17 +165,25 @@ class Scene3: SCNScene {
                 }
             }
         }])
-        
         rootNode.runAction(sequence)
     }
     
     func openDoor(completion: @escaping () -> Void) {
         guard let doorNode = doorNode else { return }
         
-        let openDoorAction = SCNAction.rotateBy(x: 0, y: 0, z: .pi / 2, duration: 2.0)
+        let openDoorAction = SCNAction.rotateBy(x: 0, y: 0, z: .pi / 2, duration: 2.5)
+        openDoorAction.timingMode = .easeInEaseOut
+        
         let playSoundAction = SCNAction.playAudio(doorOpenSound, waitForCompletion: false)
         
+        // Activate the player's echolocation flash effect
+        if let echolocationComponent = playerEntity.component(ofType: EcholocationComponent.self) {
+            echolocationComponent.activateFlash()
+        }
+        
+        // Group the door rotation and sound action
         let doorSequence = SCNAction.group([openDoorAction, playSoundAction])
+        
         doorNode.runAction(doorSequence) {
             completion()
         }
@@ -182,19 +195,36 @@ class Scene3: SCNScene {
         let targetPosition = SCNVector3(x: 0, y: -10, z: 0)
         let moveAction = SCNAction.move(to: targetPosition, duration: 2.5)
         
+        grandmaEntity.activateEcholocation()
+        
         grandmaNode.runAction(moveAction) {
             completion()
         }
     }
     
     func playDialogues() {
-        // Player greets grandma
-        playAudioSource(andraGreetingsSound, volume: 4.0) {
-            // Grandma replies
-            self.playAudioSource(self.grandmaGreetingsSound, volume: 3.0) {
-                // Player's thoughts
-                self.playAudioSource(self.andraThoughtsSound, volume: 4.0) {
-                    // Play door closing sound and fade to black
+        print("Starting dialogues...")
+        
+        // Ensure that all audio sources are loaded and ready
+        guard let andraGreetingsSound = andraGreetingsSound,
+              let grandmaGreetingsSound = grandmaGreetingsSound else {
+            print("One or more audio sources not loaded properly")
+            return
+        }
+        
+        andraGreetingsSound.loops = false
+        grandmaGreetingsSound.loops = false
+        
+        // Play first dialogue (Andra greetings)
+        playAudioSource(andraGreetingsSound, volume: 5.0) {
+            print("Andra greetings finished")
+            
+            let delayAction = SCNAction.wait(duration: 2.0)
+            self.rootNode.runAction(delayAction) {
+                // Play second dialogue (Grandma greetings)
+                self.playAudioSource(self.grandmaGreetingsSound, volume: 8.0) {
+                    print("Grandma greetings finished")
+                    
                     self.playDoorCloseSoundAndFadeToBlack()
                 }
             }
@@ -230,11 +260,11 @@ class Scene3: SCNScene {
         }
     }
     
-    // Helper function to play preloaded audio
     func playAudioSource(_ audioSource: SCNAudioSource, volume: Float, completion: @escaping () -> Void) {
         audioSource.volume = volume
-        let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: true)
+        audioSource.isPositional = false
         
+        let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: true)
         rootNode.runAction(playAudioAction) {
             completion()
         }
@@ -246,6 +276,7 @@ class Scene3: SCNScene {
             print("Error: CameraComponent is nil. Cannot set up gesture recognizers.")
             return
         }
+        view.isPlaying = true
         view.scene?.isPaused = false
         
         cameraComponent.setupGestureRecognizers(for: view)
