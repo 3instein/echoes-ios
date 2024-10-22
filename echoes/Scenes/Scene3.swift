@@ -50,13 +50,20 @@ class Scene3: SCNScene {
     
     func loadAudioResources() {
         doorOpenSound = SCNAudioSource(named: "door_open.MP3")
-        doorCloseSound = SCNAudioSource(named: "door_close.MP3")
         andraGreetingsSound = SCNAudioSource(named: "scene3_andra_greetings.mp3")
         grandmaGreetingsSound = SCNAudioSource(named: "scene3_grandma_greetings.mp3")
         andraThoughtsSound = SCNAudioSource(named: "scene3_andra_thoughts.mp3")
+        doorCloseSound = SCNAudioSource(named: "door_close.MP3")
         
-        [doorOpenSound, doorCloseSound, andraGreetingsSound, grandmaGreetingsSound, andraThoughtsSound].forEach {
-            $0?.load()
+        [doorOpenSound, andraGreetingsSound, grandmaGreetingsSound, andraThoughtsSound, doorCloseSound].forEach {
+            if let source = $0 {
+                source.shouldStream = false
+                source.loops = false
+                source.volume = 1.0
+                print("Loaded audio source: \(source)")
+            } else {
+                print("Error loading audio source")
+            }
         }
     }
     
@@ -196,9 +203,33 @@ class Scene3: SCNScene {
     }
     
     func playDialogues() {
-        playAudioSource(andraGreetingsSound, volume: 4.0) {
-            self.playAudioSource(self.grandmaGreetingsSound, volume: 4.0) {
-                self.playAudioSource(self.andraThoughtsSound, volume: 4.0) {
+        print("Starting dialogues...")
+        
+        // Ensure that all audio sources are loaded and ready
+        guard let andraGreetingsSound = andraGreetingsSound,
+              let grandmaGreetingsSound = grandmaGreetingsSound,
+              let andraThoughtsSound = andraThoughtsSound else {
+            print("One or more audio sources not loaded properly")
+            return
+        }
+        
+        andraGreetingsSound.loops = false
+        grandmaGreetingsSound.loops = false
+        andraThoughtsSound.loops = false
+        
+        // Play first dialogue (Andra greetings)
+        playAudioSource(andraGreetingsSound, volume: 5.0) {
+            print("Andra greetings finished")
+            
+            // Play second dialogue (Grandma greetings)
+            self.playAudioSource(self.grandmaGreetingsSound, volume: 8.0) {
+                print("Grandma greetings finished")
+                
+                // Play third dialogue (Andra thoughts)
+                self.playAudioSource(self.andraThoughtsSound, volume: 7.0) {
+                    print("Andra thoughts finished")
+                    
+                    // After all dialogues, play door close sound and fade to black
                     self.playDoorCloseSoundAndFadeToBlack()
                 }
             }
@@ -236,8 +267,9 @@ class Scene3: SCNScene {
     
     func playAudioSource(_ audioSource: SCNAudioSource, volume: Float, completion: @escaping () -> Void) {
         audioSource.volume = volume
-        let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: true)
+        audioSource.isPositional = false
         
+        let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: true)
         rootNode.runAction(playAudioAction) {
             completion()
         }
