@@ -52,10 +52,10 @@ class Scene3: SCNScene {
         doorOpenSound = SCNAudioSource(named: "door_open.MP3")
         andraGreetingsSound = SCNAudioSource(named: "scene3_andra_greetings.mp3")
         grandmaGreetingsSound = SCNAudioSource(named: "scene3_grandma_greetings.mp3")
-        andraThoughtsSound = SCNAudioSource(named: "scene3_andra_thoughts.mp3")
+        // andraThoughtsSound = SCNAudioSource(named: "scene3_andra_thoughts.mp3")
         doorCloseSound = SCNAudioSource(named: "door_close.MP3")
         
-        [doorOpenSound, andraGreetingsSound, grandmaGreetingsSound, andraThoughtsSound, doorCloseSound].forEach {
+        [doorOpenSound, andraGreetingsSound, grandmaGreetingsSound, doorCloseSound].forEach {
             if let source = $0 {
                 source.shouldStream = false
                 source.loops = false
@@ -207,29 +207,24 @@ class Scene3: SCNScene {
         
         // Ensure that all audio sources are loaded and ready
         guard let andraGreetingsSound = andraGreetingsSound,
-              let grandmaGreetingsSound = grandmaGreetingsSound,
-              let andraThoughtsSound = andraThoughtsSound else {
+              let grandmaGreetingsSound = grandmaGreetingsSound else {
             print("One or more audio sources not loaded properly")
             return
         }
         
         andraGreetingsSound.loops = false
         grandmaGreetingsSound.loops = false
-        andraThoughtsSound.loops = false
         
         // Play first dialogue (Andra greetings)
         playAudioSource(andraGreetingsSound, volume: 5.0) {
             print("Andra greetings finished")
             
-            // Play second dialogue (Grandma greetings)
-            self.playAudioSource(self.grandmaGreetingsSound, volume: 8.0) {
-                print("Grandma greetings finished")
-                
-                // Play third dialogue (Andra thoughts)
-                self.playAudioSource(self.andraThoughtsSound, volume: 7.0) {
-                    print("Andra thoughts finished")
+            let delayAction = SCNAction.wait(duration: 2.0)
+            self.rootNode.runAction(delayAction) {
+                // Play second dialogue (Grandma greetings)
+                self.playAudioSource(self.grandmaGreetingsSound, volume: 8.0) {
+                    print("Grandma greetings finished")
                     
-                    // After all dialogues, play door close sound and fade to black
                     self.playDoorCloseSoundAndFadeToBlack()
                 }
             }
