@@ -38,7 +38,7 @@ class Scene2: SCNScene {
         }
 
         // Add player node to the GameScene's rootNode
-        rootNode.addChildNode(playerNode)
+        //rootNode.addChildNode(playerNode)
 
         // Attach the existing camera node from the player model to the scene
         cameraNode = playerNode.childNode(withName: "Camera", recursively: true)
@@ -49,7 +49,7 @@ class Scene2: SCNScene {
 
         // Make optional adjustments to the camera if needed
         cameraNode.camera?.fieldOfView = 75
-        cameraNode.camera?.automaticallyAdjustsZRange = true
+        cameraNode.camera?.automaticallyAdjustsZRange = false
 
         // Add the camera component to handle the camera logic
         cameraComponent = CameraComponent(cameraNode: cameraNode)
