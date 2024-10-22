@@ -53,6 +53,8 @@ class SceneManager {
         }
         let scene3 = Scene3(lightNode: lightNode)
         scnView?.scene = scene3
+        scene3.scnView = scnView  // Assign the SCNView to the scene
+        scene3.setupGestureRecognizers(for: scnView!)
         currentScene = scene3
     }
     
