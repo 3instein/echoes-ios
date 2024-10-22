@@ -16,6 +16,7 @@ extension UIColor {
 }
 
 class VirtualJoystickComponent: GKComponent {
+    static var shared = VirtualJoystickComponent()
     var joystickView: UIView!
     var joystickKnob: UIView!
     var basePosition: CGPoint = .zero

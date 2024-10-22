@@ -31,6 +31,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     private var isWalking = false // Track if the player is walking
 
     init(playerNode: SCNNode, cameraNode: SCNNode?, lightNode: SCNNode?) {
+        print("movecomp init")
         self.playerNode = playerNode
         self.cameraNode = cameraNode
         self.lightNode = lightNode

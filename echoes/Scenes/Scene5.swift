@@ -24,7 +24,7 @@ class Scene5: SCNScene, SCNPhysicsContactDelegate {
         
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "Scene5.scn") else {
-            print("Warning: House scene 'Scene 5.scn' not found")
+//            print("Warning: House scene 'Scene 5.scn' not found")
             return
         }
         
@@ -37,7 +37,7 @@ class Scene5: SCNScene, SCNPhysicsContactDelegate {
         playerEntity = PlayerEntity(in: rootNode, cameraNode: cameraNode, lightNode: lightNode)
         
         guard let playerNode = playerEntity.playerNode else {
-            print("Warning: Player node named 'Player' not found in house model")
+//            print("Warning: Player node named 'Player' not found in house model")
             return
         }
         
@@ -47,7 +47,7 @@ class Scene5: SCNScene, SCNPhysicsContactDelegate {
         // Attach the existing camera node from the player model to the scene
         cameraNode = playerNode.childNode(withName: "Camera", recursively: true)
         guard let cameraNode = cameraNode else {
-            print("Warning: Camera node named 'Camera' not found in Player model")
+//            print("Warning: Camera node named 'Camera' not found in Player model")
             return
         }
         
@@ -67,18 +67,20 @@ class Scene5: SCNScene, SCNPhysicsContactDelegate {
             attachAudio(to: muffledNode, audioFileName: "muffledRain.wav", volume: 0.7, delay: 0)
         }
         
-        if let andraParentNode = rootNode.childNode(withName: "player", recursively: true) {
-            if let andraNode = andraParentNode.childNode(withName: "s5-andra", recursively: false) {
-                attachAudio(to: andraNode, audioFileName: "s5-andra.wav", volume: 100, delay: 15)
-            }
-        }
-
+        
         if let grandmaParentNode = rootNode.childNode(withName: "grandma", recursively: true) {
             if let grandmaNode1 = grandmaParentNode.childNode(withName: "s5-grandma", recursively: false) {
-                attachAudio(to: grandmaNode1, audioFileName: "s5-grandma.wav", volume: 20, delay: 3)
+                attachAudio(to: grandmaNode1, audioFileName: "s5-grandma.wav", volume: 5, delay: 6)
             }
         }
         
+        if let andraParentNode = rootNode.childNode(withName: "player", recursively: true) {
+            if let andraNode = andraParentNode.childNode(withName: "s5-andra", recursively: false) {
+                attachAudio(to: andraNode, audioFileName: "s5-andra.wav", volume: 4, delay: 15)
+            }
+        }
+
+//        
 //        if let andraNode = rootNode.childNode(withName: "s5-andra", recursively: false) {
 //            attachAudio(to: andraNode, audioFileName: "s5-andra.wav", volume: 100, delay: 15)
 //        }
@@ -108,17 +110,28 @@ class Scene5: SCNScene, SCNPhysicsContactDelegate {
             return
         }
 
-        audioSource.isPositional = true
+        if audioFileName == "s5-grandma.wav" || audioFileName == "s5-andra.wav" {
+            audioSource.isPositional = false
+        } else {
+            audioSource.isPositional = true
+        }
+
         audioSource.shouldStream = false
         audioSource.load()
         audioSource.volume = volume
+        
+        // Set looping for continuous rain sound
+        if audioFileName == "muffledRain.wav" {
+            audioSource.loops = true  // This ensures the rain loops without breaking
+        }
 
         let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: false)
         let waitAction = SCNAction.wait(duration: delay)
+
         let sequenceAction = SCNAction.sequence([waitAction, playAudioAction])
         node.runAction(sequenceAction)
     }
-    
+
     func setupGestureRecognizers(for view: UIView) {
         cameraComponent.setupGestureRecognizers(for: view)
     }
