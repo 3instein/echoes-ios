@@ -32,8 +32,6 @@ class GameViewController: UIViewController {
         // Now check if the loaded scene is Scene1 and assign it to the scene1 variable
         if let loadedScene = scnView.scene as? Scene6 {
             scene6 = loadedScene
-//            // Call displayPuzzlePieces after ensuring scene1 is not nil
-
         } else {
             print("Error: Scene1 not loaded correctly")
         }
@@ -109,11 +107,11 @@ class GameViewController: UIViewController {
     @objc func interactWithCake() {
         if let gameScene = scene6 {
             gameScene.displayPuzzlePieces(on: self.view)
+            gameScene.addOpenFridgeSound()
         } else {
             print("Error: Scene6 is not initialized.")
         }
     }
-
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()

@@ -79,18 +79,6 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
             // Update light position to follow player
             updateLightPosition()
 
-//            // Calculate player speed and adjust step sound rate
-//            let speed = movementVector.length() / deltaTime
-//            
-//            // Check time since last step to play sound
-//            let currentTime = Date()
-//            let stepDelay = maxStepDelay - (Double(speed) / Double(movementSpeed)) * (maxStepDelay - minStepDelay)
-//            if lastStepTime == nil || currentTime.timeIntervalSince(lastStepTime!) >= stepDelay {
-//                playStepSound()
-//                playEchoSound() // Play sound if the delay has passed
-//                lastStepTime = currentTime // Update the last step time
-//            }
-
             // Calculate player speed
             let speed = movementVector.length() / deltaTime
             

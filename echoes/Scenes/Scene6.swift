@@ -81,26 +81,6 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         // Add the camera component to handle the camera logic
         cameraComponent = CameraComponent(cameraNode: cameraNode)
         
-//        // Add a default light to the scene
-//        let light = SCNLight()
-//        light.type = .omni
-//        light.intensity = 500
-//        light.color = UIColor.white
-//        lightNode.light = light
-//        
-//        // Set the initial position of the lightNode to match the playerNode's position
-//        lightNode.position = playerNode.position
-//        rootNode.addChildNode(lightNode)
-//        
-//        // Add an ambient light to the scene
-//        let ambientLightNode = SCNNode()
-//        let ambientLight = SCNLight()
-//        ambientLight.type = .ambient
-//        ambientLight.intensity = 500
-//        ambientLight.color = UIColor.blue
-//        ambientLightNode.light = ambientLight
-//        rootNode.addChildNode(ambientLightNode)
-        
         rootNode.addChildNode(lightNode)
         
         // Initialize MovementComponent with lightNode reference
@@ -110,8 +90,108 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         // Find Obj_Cake_003 node in the scene
         objCakeNode = rootNode.childNode(withName: "Puzzle_Object", recursively: true)
         
+        addFallingCupSound()
+        addSpoonSound()
+        addBackgroundSound()  // Add this line to play background sound
+
         self.physicsWorld.contactDelegate = self
     }
+    
+    func addFallingCupSound() {
+         // Find the cup node
+         guard let cupNode = rootNode.childNode(withName: "cup", recursively: true) else {
+             print("Warning: Cup node not found")
+             return
+         }
+
+         // Load the sound effect
+         let audioSource = SCNAudioSource(fileNamed: "fallingCup.mp3")!
+         audioSource.load()
+         audioSource.volume = 30.0 // Set the volume as needed
+
+         // Create an action to play the sound after 3 seconds
+         let wait = SCNAction.wait(duration: 3.0)
+         let playSound = SCNAction.playAudio(audioSource, waitForCompletion: false)
+
+         // Run the actions sequentially
+         cupNode.runAction(SCNAction.sequence([wait, playSound]))
+    }
+    
+    func addOpenFridgeSound() {
+         // Find the cup node
+         guard let fridgeNode = rootNode.childNode(withName: "fridge", recursively: true) else {
+             print("Warning: Cup node not found")
+             return
+         }
+
+         // Load the sound effect
+         let audioSource = SCNAudioSource(fileNamed: "openFridge.mp3")!
+         audioSource.load()
+         audioSource.volume = 20.0 // Set the volume as needed
+
+         let playSound = SCNAction.playAudio(audioSource, waitForCompletion: false)
+
+         // Run the actions sequentially
+        fridgeNode.runAction(SCNAction.sequence([playSound]))
+    }
+    
+    func addCloseFridgeSound() {
+         // Find the cup node
+         guard let fridgeNode = rootNode.childNode(withName: "fridge", recursively: true) else {
+             print("Warning: Cup node not found")
+             return
+         }
+
+         // Load the sound effect
+         let audioSource = SCNAudioSource(fileNamed: "closeFridge.mp3")!
+         audioSource.load()
+         audioSource.volume = 25.0 // Set the volume as needed
+
+         let playSound = SCNAction.playAudio(audioSource, waitForCompletion: false)
+
+         // Run the actions sequentially
+        fridgeNode.runAction(SCNAction.sequence([playSound]))
+    }
+    
+    func addSpoonSound() {
+         // Find the cup node
+         guard let spoonNode = rootNode.childNode(withName: "fork", recursively: true) else {
+             print("Warning: Cup node not found")
+             return
+         }
+
+         // Load the sound effect
+         let audioSource = SCNAudioSource(fileNamed: "movingSpoon.mp3")!
+         audioSource.load()
+         audioSource.volume = 3.0 // Set the volume as needed
+
+        // Create an action to play the sound after 3 seconds
+        let wait = SCNAction.wait(duration: 18.0)
+        let playSound = SCNAction.playAudio(audioSource, waitForCompletion: false)
+
+        // Run the actions sequentially
+        spoonNode.runAction(SCNAction.sequence([wait, playSound]))
+    }
+    
+    func addBackgroundSound() {
+         // Load the sound effect
+         guard let audioSource = SCNAudioSource(fileNamed: "lightRain.wav") else {
+             print("Warning: Background sound 'lightRain.wav' not found")
+             return
+         }
+         
+         audioSource.load()
+        audioSource.volume = 10.0 // Set the volume as needed
+         audioSource.isPositional = false  // Set to false for background sound
+         audioSource.shouldStream = true     // Stream if it's a long sound
+         
+         // Create a node to attach the sound to
+         let soundNode = SCNNode()
+         soundNode.runAction(SCNAction.repeatForever(SCNAction.playAudio(audioSource, waitForCompletion: true)))
+         
+         // Add the sound node to the root node
+         rootNode.addChildNode(soundNode)
+     }
     
     func displayPuzzlePieces(on view: UIView) {
         let pieceImages = [
@@ -180,6 +260,7 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
             // Check if the game is completed before dismissing
             if !isGameCompleted {
                 puzzleBackground?.removeFromSuperview()
+                addCloseFridgeSound()
                 isPuzzleDisplayed = false
             }
         }
