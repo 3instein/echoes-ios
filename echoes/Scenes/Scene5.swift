@@ -18,6 +18,9 @@ class Scene5: SCNScene, SCNPhysicsContactDelegate {
     weak var scnView: SCNView?
     var playButton: UIButton?  // Store a reference to the play button
     
+    var transitionTriggerPosition = SCNVector3(2613.325, 564.546, 88.015)
+    var triggerDistance: Float = 100
+    
     init(lightNode: SCNNode) {
         super.init()
         self.lightNode = lightNode
@@ -131,6 +134,15 @@ class Scene5: SCNScene, SCNPhysicsContactDelegate {
         let sequenceAction = SCNAction.sequence([waitAction, playAudioAction])
         node.runAction(sequenceAction)
     }
+    
+    // Check if the player is close to the transition trigger point
+     func checkProximityToTransition() -> Bool {
+         guard let playerPosition = playerEntity.playerNode?.position else { return false }
+         let distance = playerPosition.distance(to: transitionTriggerPosition)
+         print("player:", playerPosition)
+         print("distance:", distance)
+         return distance < triggerDistance
+     }
 
     func setupGestureRecognizers(for view: UIView) {
         cameraComponent.setupGestureRecognizers(for: view)
