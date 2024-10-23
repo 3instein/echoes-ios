@@ -23,6 +23,9 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
     var isGameCompleted: Bool = false  // Track if the game is completed
     let snapDistance: CGFloat = 50.0
     
+    let transitionTriggerPosition = SCNVector3(62.983, 98.335, 29.035)
+    let triggerDistance: Float = 100.0
+    
     init(lightNode: SCNNode) {
         GameViewController.joystickComponent.showJoystick()
         super.init()
@@ -105,6 +108,13 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
         
         self.physicsWorld.contactDelegate = self
     }
+    
+    // Check if the player is close to the transition trigger point
+     func checkProximityToTransition() -> Bool {
+         guard let playerPosition = playerEntity.playerNode?.position else { return false }
+         let distance = playerPosition.distance(to: transitionTriggerPosition)
+         return distance < triggerDistance
+     }
     
     func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
         guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
