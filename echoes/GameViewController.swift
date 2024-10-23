@@ -5,9 +5,10 @@ import SceneKit
 import GameplayKit
 
 class GameViewController: UIViewController {
+    static var shared = GameViewController()
     var scnView: SCNView!
-    var playerEntity: PlayerEntity!
-    var joystickComponent: VirtualJoystickComponent!
+    static var playerEntity: PlayerEntity!
+    static var joystickComponent: VirtualJoystickComponent!
     var scene6: Scene6!
     
     var interactButton: UIButton!
@@ -22,26 +23,26 @@ class GameViewController: UIViewController {
         // Configure the SceneManager with the SCNView
         SceneManager.shared.configure(with: scnView)
 
+        // Set up joystick component
+        GameViewController.joystickComponent = VirtualJoystickComponent.shared
+        GameViewController.joystickComponent.attachToView(self.view)
+        
         // Load the initial game scene
         SceneManager.shared.loadScene2()
 
-        // Set up joystick component
-        joystickComponent = VirtualJoystickComponent()
-        joystickComponent.attachToView(self.view)
-        
         // Set up the PlayerEntity
-        if let gameScene = scnView.scene as? Scene2 {
-            playerEntity = gameScene.playerEntity
-            
+        if let gameScene = self.scnView.scene as? Scene2 {
+            GameViewController.playerEntity = gameScene.playerEntity
+
             // Create a movement component to handle player movement, including the light node
             let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
-            playerEntity.movementComponent = movementComponent
-          
-            joystickComponent.hideJoystick()
-          
+            GameViewController.playerEntity.movementComponent = movementComponent
+            
+            GameViewController.joystickComponent.hideJoystick()
+
             // Link the joystick with the movement component
             if let movementComponent = gameScene.playerEntity.movementComponent {
-                movementComponent.joystickComponent = joystickComponent
+                movementComponent.joystickComponent = GameViewController.joystickComponent
                 scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
             }
 
@@ -50,39 +51,38 @@ class GameViewController: UIViewController {
             gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
             gameScene.fogDensityExponent = 0.2  // Reduce density to make the fog less thick
             gameScene.fogColor = UIColor.black
-            
-            gameScene.setupGestureRecognizers(for: scnView)
+
+            gameScene.setupGestureRecognizers(for: self.scnView)
         }
         
-        playerEntity.movementComponent.movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 1.0) {
+        GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 10.0) {
             DispatchQueue.main.async {
                 // Load Scene3 after the movement finishes
                 SceneManager.shared.loadScene3()
                 
                 if let gameScene = self.scnView.scene as? Scene3 {
-                    self.playerEntity = gameScene.playerEntity
-                    
+                    GameViewController.playerEntity = gameScene.playerEntity
+        
                     // Create a movement component to handle player movement, including the light node
                     let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
-                    self.playerEntity.movementComponent = movementComponent
-                  
+                    GameViewController.playerEntity.movementComponent = movementComponent
+        
                     // Link the joystick with the movement component
                     if let movementComponent = gameScene.playerEntity.movementComponent {
-                        movementComponent.joystickComponent = self.joystickComponent
+                        movementComponent.joystickComponent = GameViewController.joystickComponent
                         self.scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
                     }
-
+        
                     // Set up fog properties for the scene
                     gameScene.fogStartDistance = 25.0   // Increase the start distance
                     gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
                     gameScene.fogDensityExponent = 0.2  // Reduce density to make the fog less thick
                     gameScene.fogColor = UIColor.black
-                    
+        
                     gameScene.setupGestureRecognizers(for: self.scnView)
                 }
             }
         }
-
 
         // Configure the SCNView
         scnView.allowsCameraControl = false
@@ -112,15 +112,15 @@ class GameViewController: UIViewController {
     }
 
     @objc func updateScene() {
-        playerEntity?.movementComponent?.update(deltaTime: 0.016)
+        GameViewController.playerEntity?.movementComponent?.update(deltaTime: 0.016)
         
         // Check proximity to the cake
         if let gameScene = scnView.scene as? Scene6 {
             gameScene.checkProximityToCake(interactButton: interactButton)  // Pass the button to the check
             if gameScene.isPuzzleDisplayed {
-                joystickComponent.joystickView.isHidden = true
+                GameViewController.joystickComponent.joystickView.isHidden = true
             } else {
-                joystickComponent.joystickView.isHidden = false
+                GameViewController.joystickComponent.joystickView.isHidden = false
             }
         }
     }
@@ -147,17 +147,17 @@ class GameViewController: UIViewController {
         scnView.frame = self.view.bounds
 
         // Update joystick position
-        joystickComponent.joystickView.frame = CGRect(
+        GameViewController.joystickComponent.joystickView.frame = CGRect(
             x: 50,
-            y: self.view.bounds.height - joystickComponent.joystickSize - 50,
-            width: joystickComponent.joystickSize,
-            height: joystickComponent.joystickSize
+            y: self.view.bounds.height - GameViewController.joystickComponent.joystickSize - 50,
+            width: GameViewController.joystickComponent.joystickSize,
+            height: GameViewController.joystickComponent.joystickSize
         )
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        joystickComponent.joystickView.removeFromSuperview()
+        GameViewController.joystickComponent.joystickView.removeFromSuperview()
     }
 
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {

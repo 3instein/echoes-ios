@@ -24,6 +24,7 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
     let snapDistance: CGFloat = 50.0
     
     init(lightNode: SCNNode) {
+        GameViewController.joystickComponent.showJoystick()
         super.init()
         self.lightNode = lightNode
         scnView?.pointOfView = cameraNode
@@ -80,32 +81,28 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
         
         if let andraParentNode = rootNode.childNode(withName: "player", recursively: true) {
             if let andraNode = andraParentNode.childNode(withName: "s4-andra", recursively: false) {
-                attachAudio(to: andraNode, audioFileName: "s4-andra.wav", volume: 300, delay: 19)
+                attachAudio(to: andraNode, audioFileName: "s4-andra.wav", volume: 300, delay: 23)
             }
         }
-
+        
         if let grandmaParentNode = rootNode.childNode(withName: "grandma", recursively: true) {
             if let grandmaNode1 = grandmaParentNode.childNode(withName: "s4-grandma1", recursively: false) {
                 attachAudio(to: grandmaNode1, audioFileName: "s4-grandma1.wav", volume: 3, delay: 3)
             }
-
+            
             if let grandmaNode2 = grandmaParentNode.childNode(withName: "s4-grandma2", recursively: false) {
-                attachAudio(to: grandmaNode2, audioFileName: "s4-grandma2.wav", volume: 200, delay: 11)
+                attachAudio(to: grandmaNode2, audioFileName: "s4-grandma2.wav", volume: 200, delay: 14)
             }
         }
         
-//        let ambientLightNode = SCNNode()
-//        let ambientLight = SCNLight()
-//        ambientLight.type = .ambient
-//        ambientLight.intensity = 500
-//        ambientLight.color = UIColor.blue
-//        ambientLightNode.light = ambientLight
-//        rootNode.addChildNode(ambientLightNode)
+        //        let ambientLightNode = SCNNode()
+        //        let ambientLight = SCNLight()
+        //        ambientLight.type = .ambient
+        //        ambientLight.intensity = 500
+        //        ambientLight.color = UIColor.blue
+        //        ambientLightNode.light = ambientLight
+        //        rootNode.addChildNode(ambientLightNode)
         
-        // Initialize MovementComponent with lightNode reference
-        let movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode)
-        playerEntity.addComponent(movementComponent)
-                
         self.physicsWorld.contactDelegate = self
     }
     
@@ -114,12 +111,22 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
             print("Warning: Audio file '\(audioFileName)' not found")
             return
         }
-
-        audioSource.isPositional = true
+        
+        if (audioFileName == "s4-andra.wav"){
+            audioSource.isPositional = false
+        } else {
+            audioSource.isPositional = true
+        }
+        
         audioSource.shouldStream = false
         audioSource.load()
         audioSource.volume = volume
-
+        
+        // Set looping for continuous rain sound
+        if audioFileName == "muffledRain.wav" {
+            audioSource.loops = true  // This ensures the rain loops without breaking
+        }
+        
         let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: true)
         let waitAction = SCNAction.wait(duration: delay)
         let sequenceAction = SCNAction.sequence([waitAction, playAudioAction])
