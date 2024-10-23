@@ -135,7 +135,7 @@ class Scene3: SCNScene {
         }
         
         if let lightRainNode = rootNode.childNode(withName: "lightRain", recursively: true) {
-            attachAudio(to: lightRainNode, audioFileName: "lightRain.wav", volume: 0.1)
+            attachAudio(to: lightRainNode, audioFileName: "outsideRain.wav", volume: 0.1)
         }
     }
     
