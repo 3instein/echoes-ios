@@ -63,7 +63,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
             // Calculate the camera's forward and right direction vectors
             let cameraTransform = cameraNode.transform
             let forwardVector = SCNVector3(cameraTransform.m31, cameraTransform.m32, cameraTransform.m33)
-            let rightVector = SCNVector3(cameraTransform.m11, cameraTransform.m12, -cameraTransform.m13)
+            let rightVector = SCNVector3(cameraTransform.m11, cameraTransform.m12, cameraTransform.m13)
 
             // Scale direction by joystick input
             let forwardMovement = forwardVector * Float(direction.y) * movementSpeed * deltaTime

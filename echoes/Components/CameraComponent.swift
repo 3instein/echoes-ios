@@ -34,7 +34,7 @@ class CameraComponent {
             // Nothing specific needed on gesture begin.
             break
         case .changed:
-            let deltaX = Float(translation.x) * 0.005
+            let deltaX = -Float(translation.x) * 0.005
             let deltaY = Float(translation.y) * 0.005
 
             let currentOrientation = cameraNode.eulerAngles
