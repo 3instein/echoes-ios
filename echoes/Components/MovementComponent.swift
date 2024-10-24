@@ -48,73 +48,60 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     }
 
     override func update(deltaTime seconds: TimeInterval) {
-        if (!movingProgramatically){
+        if (!movingProgramatically) {
             guard let joystick = joystickComponent, joystick.isTouching, let cameraNode = cameraNode else {
-                stepAudioPlayer?.stop() // Stop if currently playing
-
+                stepAudioPlayer?.stop()
                 return
             }
-            
+
             addPlayerPhysicsBody()
 
             let direction = joystick.direction
             let deltaTime = Float(seconds)
 
-            // Calculate the camera's forward and right direction vectors
             let cameraTransform = cameraNode.transform
-            let forwardVector = SCNVector3(cameraTransform.m31, cameraTransform.m32, cameraTransform.m33)
-            let rightVector = SCNVector3(cameraTransform.m11, cameraTransform.m12, cameraTransform.m13)
 
-            // Scale direction by joystick input
+            var forwardVector = SCNVector3(cameraTransform.m31, 0, cameraTransform.m33)
+            forwardVector = forwardVector.normalized()
+            var rightVector = SCNVector3(cameraTransform.m11, 0, cameraTransform.m13)
+            rightVector = rightVector.normalized()
+
             let forwardMovement = forwardVector * Float(direction.y) * movementSpeed * deltaTime
             let rightMovement = rightVector * Float(direction.x) * movementSpeed * deltaTime
 
-            // Combine forward and right movement
             let movementVector = forwardMovement + rightMovement
 
-            // Use a temporary node to check for collisions
-            let tempNode = SCNNode()
-            tempNode.position = playerNode.position + movementVector
-
-            // Translate the player node based on the movement vector
             playerNode.localTranslate(by: movementVector)
 
-            // Update light position to follow player
             updateLightPosition()
 
-            // Calculate player speed
             let speed = movementVector.length() / deltaTime
-            
-            // Check if the player is moving
+
             if speed > 0 {
-                playEchoSound() // Play echo sound continuously
+                playEchoSound()
                 if !stepAudioPlayer!.isPlaying {
-                    playStepSound() // Start playing the step sound if not already playing
+                    playStepSound()
                 }
             } else {
-                stopStepSound() // Stop step sound when not moving
+                stopStepSound()
                 isWalking = false
             }
 
-            // User is moving
             if !isLightActive {
-                activateLightPulsing() // Activate light pulsing if not already active
+                activateLightPulsing()
             }
-        }
-        else if (movingProgramatically) {
-            // Update light position to follow player
+        } else if (movingProgramatically) {
             updateLightPosition()
-            
-            // Check time since last step to play sound
+
             let currentTime = Date()
             if lastStepTime == nil || currentTime.timeIntervalSince(lastStepTime!) >= stepDelay {
-                playEchoSound() // Play sound if the delay has passed
-                lastStepTime = currentTime // Update the last step time
+                playEchoSound()
+                lastStepTime = currentTime
             }
-            
+
             // User is moving
             if !isLightActive {
-                activateLightPulsing() // Activate light pulsing if not already active
+                activateLightPulsing()
             }
         }
     }
@@ -306,8 +293,15 @@ func *(vector: SCNVector3, scalar: Float) -> SCNVector3 {
 
 // Utility extension for vector math
 extension SCNVector3 {
+    // Length (magnitude) of the vector
     func length() -> Float {
-        return sqrt(x*x + y*y + z*z)
+        return sqrtf(x * x + y * y + z * z)
+    }
+    
+    // Normalized vector (unit vector in the same direction)
+    func normalized() -> SCNVector3 {
+        let len = length()
+        return len > 0 ? SCNVector3(x / len, y / len, z / len) : SCNVector3(0, 0, 0)
     }
 }
 
