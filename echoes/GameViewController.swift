@@ -155,6 +155,7 @@ class GameViewController: UIViewController {
                     if let gameScene = self.scnView.scene as? Scene6 {
                         GameViewController.playerEntity = gameScene.playerEntity
                         
+                        
                         // Create a movement component to handle player movement, including the light node
                         let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
                         GameViewController.playerEntity.movementComponent = movementComponent
@@ -175,6 +176,32 @@ class GameViewController: UIViewController {
                     }
                 }
             }
+        
+        if let gameScene = scnView.scene as? Scene6 {
+            // Loop through each puzzle piece
+            for i in 1...6 {
+                let puzzleNodeName = "Puzzle_\(i)"
+                if let puzzleNode = gameScene.rootNode.childNode(withName: puzzleNodeName, recursively: true) {
+                    // Set the category bitmask for post-processing
+                    puzzleNode.categoryBitMask = 2
+                }
+            }
+            
+            // Load and apply the SCNTechnique for the glow effect
+            if let path = Bundle.main.path(forResource: "NodeTechnique", ofType: "plist"),
+               let dict = NSDictionary(contentsOfFile: path) as? [String: AnyObject] {
+                let technique = SCNTechnique(dictionary: dict)
+
+                // Optionally set a custom color for the glow
+                let glowColor = SCNVector3(0.0, 1.0, 1.0)  // Cyan outline
+                technique?.setValue(NSValue(scnVector3: glowColor), forKeyPath: "glowColorSymbol")
+
+                scnView.technique = technique
+            }
+        }
+
+
+        
             // Check proximity to the cake
             if let gameScene = scnView.scene as? Scene6 {
                 gameScene.checkProximityToCake(interactButton: interactButton)  // Pass the button to the check
