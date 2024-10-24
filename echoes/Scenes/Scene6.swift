@@ -11,7 +11,7 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     var completedCombinations: [[UIView]] = []  // Track completed combinations
     
     var objCakeNode: SCNNode!  // Add a reference for Obj_Cake_003
-    let proximityDistance: Float = 150.0  // Define a proximity distance
+    let proximityDistance: Float = 180.0  // Define a proximity distance
     
     weak var scnView: SCNView?
     var puzzleBackground: UIView?
@@ -22,7 +22,7 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     let snapDistance: CGFloat = 50.0
     
     var timer: Timer?
-    var timeLimit: Int = 600 // 5-minute timer
+    var timeLimit: Int = 210 // 5-minute timer
     var timeLabel: UILabel?
     
     var hasGroupedTwoPieces = false  // Track if two pieces have been grouped
