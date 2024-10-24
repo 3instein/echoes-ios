@@ -86,7 +86,7 @@ class GameViewController: UIViewController {
 
         // Configure the SCNView
         scnView.allowsCameraControl = false
-        scnView.showsStatistics = true
+//        scnView.showsStatistics = true
         scnView.backgroundColor = UIColor.black
         
         // Create and configure the interaction button

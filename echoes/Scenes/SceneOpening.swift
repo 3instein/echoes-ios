@@ -36,8 +36,8 @@ class SceneOpening: UIViewController {
             NotificationCenter.default.addObserver(self, selector: #selector(videoDidFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem)
             
             // Add tap gesture to skip video
-//            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(skipVideo))
-//            self.view.addGestureRecognizer(tapGesture)
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(skipVideo))
+            self.view.addGestureRecognizer(tapGesture)
 
         } else {
             print("Video file not found.")
@@ -67,5 +67,13 @@ class SceneOpening: UIViewController {
 
         // Call the same function when the video finishes
         videoDidFinishPlaying()
+    }
+    
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return .landscape
+    }
+
+    override var shouldAutorotate: Bool {
+        return true
     }
 }
