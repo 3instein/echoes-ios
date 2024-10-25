@@ -91,7 +91,7 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         rootNode.addChildNode(lightNode)
         
         // Find Obj_Cake_003 node in the scene
-        objCakeNode = rootNode.childNode(withName: "Puzzle_Object", recursively: true)
+        objCakeNode = rootNode.childNode(withName: "Puzzle_3", recursively: true)
         
         addFallingCupSound()
         addSpoonSound()
