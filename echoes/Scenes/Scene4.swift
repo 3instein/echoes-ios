@@ -23,7 +23,7 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
     var isGameCompleted: Bool = false  // Track if the game is completed
     let snapDistance: CGFloat = 50.0
     
-    let transitionTriggerPosition = SCNVector3(62.983, 98.335, 29.035)
+    let transitionTriggerPosition = SCNVector3(28, 62, 65)
     let triggerDistance: Float = 100.0
     
     init(lightNode: SCNNode) {
@@ -98,17 +98,29 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
             }
         }
         
-        //        let ambientLightNode = SCNNode()
-        //        let ambientLight = SCNLight()
-        //        ambientLight.type = .ambient
-        //        ambientLight.intensity = 500
-        //        ambientLight.color = UIColor.blue
-        //        ambientLightNode.light = ambientLight
-        //        rootNode.addChildNode(ambientLightNode)
+        // Create and add blue fire animation node
+        addBlueFireAnimationNode()
         
         self.physicsWorld.contactDelegate = self
     }
     
+    private func addBlueFireAnimationNode() {
+        // Create the fire particle system
+        let fireParticleSystem = SCNParticleSystem(named: "smoothFire.scnp", inDirectory: nil)
+        
+        // Create a new SCNNode for the fire effect
+        let fireNode = SCNNode()
+        fireNode.position = transitionTriggerPosition
+        
+        // Attach the particle system to the fire node
+        fireNode.addParticleSystem(fireParticleSystem!)
+        
+        scnView?.antialiasingMode = .multisampling4X // Apply anti-aliasing for smoother visuals
+
+        // Add the fire node to the scene
+        rootNode.addChildNode(fireNode)
+    }
+
     // Check if the player is close to the transition trigger point
      func checkProximityToTransition() -> Bool {
          guard let playerPosition = playerEntity.playerNode?.position else { return false }

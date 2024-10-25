@@ -18,7 +18,7 @@ class Scene5: SCNScene, SCNPhysicsContactDelegate {
     weak var scnView: SCNView?
     var playButton: UIButton?  // Store a reference to the play button
     
-    var transitionTriggerPosition = SCNVector3(2613.325, 564.546, 88.015)
+    var transitionTriggerPosition = SCNVector3(2602, 559, 45)
     var triggerDistance: Float = 100
     
     init(lightNode: SCNNode) {
@@ -104,7 +104,26 @@ class Scene5: SCNScene, SCNPhysicsContactDelegate {
         let movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode)
         playerEntity.addComponent(movementComponent)
                 
+        addBlueFireAnimationNode()
+        
         self.physicsWorld.contactDelegate = self
+    }
+    
+    private func addBlueFireAnimationNode() {
+        // Create the fire particle system
+        let fireParticleSystem = SCNParticleSystem(named: "smoothFire.scnp", inDirectory: nil)
+        
+        // Create a new SCNNode for the fire effect
+        let fireNode = SCNNode()
+        fireNode.position = transitionTriggerPosition
+        
+        // Attach the particle system to the fire node
+        fireNode.addParticleSystem(fireParticleSystem!)
+        
+        scnView?.antialiasingMode = .multisampling4X // Apply anti-aliasing for smoother visuals
+
+        // Add the fire node to the scene
+        rootNode.addChildNode(fireNode)
     }
     
     func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
