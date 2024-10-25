@@ -362,9 +362,9 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     func checkForNearbyPieces(_ currentPiece: UIView) {
         guard let currentImageView = currentPiece as? UIImageView,
               let currentImageName = currentImageView.accessibilityIdentifier else { return }
-        
+
         let currentGroup = combinedPieces[currentPiece] ?? [currentPiece]
-        
+
         // Check if a current combination already exists
         if !currentCombination.isEmpty {
             if currentCombination.count < 17 {
@@ -374,50 +374,57 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
                 return
             }
         }
-        
-        if let currentNeighbors = neighbors[currentImageName] {
-            for (neighborName, offset) in currentNeighbors {
-                if let neighborPiece = findPiece(byName: neighborName, in: currentPiece.superview) {
-                    let neighborGroup = combinedPieces[neighborPiece] ?? [neighborPiece]
-                    
-                    // Calculate the actual distance between the current piece and its neighbor
-                    let distance = hypot(neighborPiece.center.x - currentPiece.center.x, neighborPiece.center.y - currentPiece.center.y)
-                    
-                    // Only snap the pieces together if they are within the snapDistance
-                    if distance <= snapDistance {
-                        // If the neighbor belongs to a different group, find the correct pieces to align them
-                        if currentGroup != neighborGroup {
-                            // Find the first piece in the current group that has a neighbor in the other group
-                            if let (currentGroupPiece, neighborGroupPiece, alignmentOffset) = findMatchingNeighborPair(currentGroup: currentGroup, neighborGroup: neighborGroup) {
-                                
-                                // Calculate the alignment offset between the two groups
-                                let offsetX = currentGroupPiece.center.x + alignmentOffset.x - neighborGroupPiece.center.x
-                                let offsetY = currentGroupPiece.center.y + alignmentOffset.y - neighborGroupPiece.center.y
-                                
-                                // Apply the offset to align the entire neighbor group with the current group
-                                for piece in neighborGroup {
-                                    piece.center = CGPoint(x: piece.center.x + offsetX, y: piece.center.y + offsetY)
+
+        // Iterate through all the pieces in the current group
+        for pieceInCurrentGroup in currentGroup {
+            if let pieceInCurrentGroupImageView = pieceInCurrentGroup as? UIImageView,
+               let currentGroupImageName = pieceInCurrentGroupImageView.accessibilityIdentifier,
+               let currentNeighbors = neighbors[currentGroupImageName] {
+               
+                // Check for nearby neighbors for each piece in the current group
+                for (neighborName, offset) in currentNeighbors {
+                    if let neighborPiece = findPiece(byName: neighborName, in: currentPiece.superview) {
+                        let neighborGroup = combinedPieces[neighborPiece] ?? [neighborPiece]
+
+                        // Calculate the actual distance between the piece in the current group and the neighbor piece
+                        let distance = hypot(neighborPiece.center.x - pieceInCurrentGroup.center.x, neighborPiece.center.y - pieceInCurrentGroup.center.y)
+
+                        // Only snap the pieces together if they are within the snapDistance
+                        if distance <= snapDistance {
+                            // If the neighbor belongs to a different group, find the correct pieces to align them
+                            if currentGroup != neighborGroup {
+                                // Find the first piece in the current group that has a neighbor in the other group
+                                if let (currentGroupPiece, neighborGroupPiece, alignmentOffset) = findMatchingNeighborPair(currentGroup: currentGroup, neighborGroup: neighborGroup) {
+
+                                    // Calculate the alignment offset between the two groups
+                                    let offsetX = currentGroupPiece.center.x + alignmentOffset.x - neighborGroupPiece.center.x
+                                    let offsetY = currentGroupPiece.center.y + alignmentOffset.y - neighborGroupPiece.center.y
+
+                                    // Apply the offset to align the entire neighbor group with the current group
+                                    for piece in neighborGroup {
+                                        piece.center = CGPoint(x: piece.center.x + offsetX, y: piece.center.y + offsetY)
+                                    }
+
+                                    // Merge the two groups into a single combined group
+                                    let combinedGroup = Array(Set(currentGroup + neighborGroup))
+
+                                    // Update the combinedPieces dictionary for all pieces in the combined group
+                                    for piece in combinedGroup {
+                                        combinedPieces[piece] = combinedGroup
+                                    }
+
+                                    // Update the current combination to reflect the new group
+                                    currentCombination = combinedGroup
+
+                                    // If all pieces are combined, mark the puzzle as completed
+                                    if combinedGroup.count == 17 {
+                                        completedCombinations.append(combinedGroup)
+                                        checkForPuzzleCompletion()
+                                    }
+
+                                    print("Groups combined: \(currentImageName) and \(neighborName)")
+                                    return
                                 }
-                                
-                                // Merge the two groups into a single combined group
-                                let combinedGroup = Array(Set(currentGroup + neighborGroup))
-                                
-                                // Update the combinedPieces dictionary for all pieces in the combined group
-                                for piece in combinedGroup {
-                                    combinedPieces[piece] = combinedGroup
-                                }
-                                
-                                // Update the current combination to reflect the new group
-                                currentCombination = combinedGroup
-                                
-                                // If all pieces are combined, mark the puzzle as completed
-                                if combinedGroup.count == 17 {
-                                    completedCombinations.append(combinedGroup)
-                                    checkForPuzzleCompletion()
-                                }
-                                
-                                print("Groups combined: \(currentImageName) and \(neighborName)")
-                                return
                             }
                         }
                     }
@@ -425,6 +432,7 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
             }
         }
     }
+
     
     func findMatchingNeighborPair(currentGroup: [UIView], neighborGroup: [UIView]) -> (UIView, UIView, CGPoint)? {
         // Iterate through each piece in the current group
@@ -555,14 +563,48 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         // Calculate the distance between the player and the cake
         let distance = playerNode.position.distance(to: objCakeNode.position)
         
-        // If the player is within the proximity distance, show the button; otherwise, hide it
+        // If the player is within proximity, show the button and enable the glow
         if isPuzzleDisplayed == true || distance > proximityDistance {
             interactButton.isHidden = true // Hide the button
+            toggleGlowEffect(isEnabled: false)
         } else {
             interactButton.isHidden = false // Show the button
             isPuzzleDisplayed = false
+            toggleGlowEffect(isEnabled: true)
         }
     }
+    
+    func toggleGlowEffect(isEnabled: Bool) {
+            if isEnabled {
+                // Load and apply the SCNTechnique for the glow effect
+                if let path = Bundle.main.path(forResource: "NodeTechnique", ofType: "plist"),
+                   let dict = NSDictionary(contentsOfFile: path) as? [String: AnyObject] {
+                    let technique = SCNTechnique(dictionary: dict)
+                    let glowColor = SCNVector3(0.8, 1.0, 0.2)
+                    technique?.setValue(NSValue(scnVector3: glowColor), forKeyPath: "glowColorSymbol")
+                    scnView?.technique = technique
+                }
+                
+                // Loop through each puzzle piece and set the category bitmask
+                for i in 1...6 {
+                    let puzzleNodeName = "Puzzle_\(i)"
+                    if let puzzleNode = rootNode.childNode(withName: puzzleNodeName, recursively: true) {
+                        puzzleNode.categoryBitMask = 2
+                    }
+                }
+            } else {
+                // Disable the technique
+                scnView?.technique = nil
+                
+                // Reset the category bitmask if needed
+                for i in 1...6 {
+                    let puzzleNodeName = "Puzzle_\(i)"
+                    if let puzzleNode = rootNode.childNode(withName: puzzleNodeName, recursively: true) {
+                        puzzleNode.categoryBitMask = 0
+                    }
+                }
+            }
+        }
     
     func addFallingCupSound() {
         // Find the cup node
@@ -584,6 +626,8 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         cupNode.runAction(SCNAction.sequence([wait, playSound]))
     }
     
+
+
     func addOpenFridgeSound() {
         // Find the cup node
         guard let fridgeNode = rootNode.childNode(withName: "fridge", recursively: true) else {
