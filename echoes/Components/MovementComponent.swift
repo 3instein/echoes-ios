@@ -11,6 +11,8 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     var cameraNode: SCNNode?
     var movingProgramatically: Bool = false
 
+    private var lastSafePosition: SCNVector3?
+
     // Light node reference
     var lightNode: SCNNode?
     var originalLightIntensity: CGFloat = 75 // Default intensity
@@ -53,6 +55,8 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
                 stepAudioPlayer?.stop()
                 return
             }
+            
+            lastSafePosition = playerNode.position
 
             addPlayerPhysicsBody()
 
@@ -257,12 +261,14 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
               // Stop player movement by applying a zero velocity
               let playerNode = (nodeA.physicsBody?.categoryBitMask == 1) ? nodeA : nodeB
               if let playerPhysicsBody = playerNode.physicsBody {
-                  // Gradually dampen the velocity instead of setting it to zero
-                  let currentVelocity = playerPhysicsBody.velocity
-                  playerPhysicsBody.velocity = SCNVector3(currentVelocity.x * 0.5, 0, currentVelocity.z * 0.5) // Dampen velocity
+                  // Reset player position to last known safe position
+                  if let safePosition = lastSafePosition {
+                      playerNode.position = safePosition
+                      playerNode.physicsBody?.velocity = SCNVector3Zero
+                  }
                   
                   // Adjust friction temporarily
-                  playerPhysicsBody.friction = 0.2 // Lower friction for easier movement post-collision
+                  playerPhysicsBody.friction = 0.5 // Lower friction for easier movement post-collision
                   
                   // Reset joystick direction only if not touching the joystick
                   joystickComponent?.resetJoystick()

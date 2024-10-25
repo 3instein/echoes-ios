@@ -134,9 +134,12 @@ class Scene3: SCNScene {
             attachAudio(to: crowNode, audioFileName: "crow.wav", volume: 0.1)
         }
         
-        if let lightRainNode = rootNode.childNode(withName: "lightRain", recursively: true) {
-            attachAudio(to: lightRainNode, audioFileName: "outsideRain.wav", volume: 0.1)
+        guard let lightRainNode = rootNode.childNode(withName: "outsideRain", recursively: true) else {
+            print("Warning: LightRain node named 'lightRain' not found in house model")
+            return
         }
+        
+        attachAudio(to: lightRainNode, audioFileName: "outsideRain.wav", volume: 0.2)
     }
     
     func attachAudio(to node: SCNNode, audioFileName: String, volume: Float = 1.0) {
