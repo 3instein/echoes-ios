@@ -223,10 +223,14 @@ class GameViewController: UIViewController {
         if let gameScene = scene6 {
             gameScene.displayPuzzlePieces(on: self.view)
             gameScene.addOpenFridgeSound()
+
         } else {
             print("Error: Scene6 is not initialized.")
         }
     }
+    
+
+
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
