@@ -83,7 +83,9 @@ class VirtualJoystickComponent: GKComponent {
     func resetJoystick() {
         isTouching = false
         direction = .zero
-        joystickKnob.frame.origin = CGPoint(x: (joystickSize - knobSize) / 2, y: (joystickSize - knobSize) / 2)
+        DispatchQueue.main.async {
+            self.joystickKnob.frame.origin = CGPoint(x: (self.joystickSize - self.knobSize) / 2, y: (self.joystickSize - self.knobSize) / 2)
+        }
     }
     
     func startIdleTimer() {

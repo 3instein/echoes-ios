@@ -31,6 +31,8 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     private let stepDelay: TimeInterval = 2.0 // Minimum delay between steps
 
     var stepAudioPlayer: AVAudioPlayer?
+    var toiletStepAudioPlayer: AVAudioPlayer?
+
     private let minStepDelay: TimeInterval = 0.2 // Minimum delay between steps
     private let maxStepDelay: TimeInterval = 1.0 // Maximum delay between steps
     private var isWalking = false // Track if the player is walking
@@ -178,8 +180,6 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
             lightNode.light?.intensity = self?.originalLightIntensity ?? 0 // Ensure it resets to original
         }
     }
-    
-    
     private func loadSounds() {
         if let echoSoundURL = Bundle.main.url(forResource: "EcholocationSound", withExtension: "mp3") {
             do {
@@ -191,7 +191,8 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
         } else {
             print("Sound file not found")
         }
-        
+
+        // Load both step sounds
         if let stepSoundURL = Bundle.main.url(forResource: "step", withExtension: "mp3") {
             do {
                 stepAudioPlayer = try AVAudioPlayer(contentsOf: stepSoundURL)
@@ -201,6 +202,18 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
             }
         } else {
             print("Sound step file not found")
+        }
+
+        // Load the toilet step sound
+        if let toiletStepSoundURL = Bundle.main.url(forResource: "toiletStep", withExtension: "mp3") {
+            do {
+                toiletStepAudioPlayer = try AVAudioPlayer(contentsOf: toiletStepSoundURL)
+                toiletStepAudioPlayer?.prepareToPlay() // Prepare to play
+            } catch {
+                print("Error loading toilet step sound: \(error)")
+            }
+        } else {
+            print("Toilet step sound file not found")
         }
     }
 
