@@ -98,6 +98,13 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         addBackgroundSound()  // Add this line to play background sound
         
         self.physicsWorld.contactDelegate = self
+        
+        guard let clueNode = rootNode.childNode(withName: "SoundClue", recursively: true) else {
+            print("Warning: SounClue node named not found in house model")
+            return
+        }
+        
+        attachAudio(to: clueNode, audioFileName: "clue.wav", volume: 1.0)
     }
     
     func displayPuzzlePieces(on view: UIView) {
@@ -659,6 +666,24 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
             // Add the sound node to the root node
             rootNode.addChildNode(soundNode)
         }
+    
+    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float = 1.0) {
+        guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
+            print("Warning: Audio file '\(audioFileName)' not found")
+            return
+        }
+
+        audioSource.loops = true
+        audioSource.isPositional = true
+        audioSource.shouldStream = false
+        audioSource.load()
+        
+        audioSource.volume = volume
+
+        let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: false)
+        
+        node.runAction(playAudioAction)
+    }
        
     
     func setupGestureRecognizers(for view: UIView) {

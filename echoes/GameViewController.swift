@@ -55,7 +55,7 @@ class GameViewController: UIViewController {
             gameScene.setupGestureRecognizers(for: self.scnView)
         }
         
-        GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 20.0) {
+        GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 30.0) {
             DispatchQueue.main.async {
                 // Load Scene3 after the movement finishes
                 SceneManager.shared.loadScene3()

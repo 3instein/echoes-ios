@@ -62,8 +62,8 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
         }
         
         // Make optional adjustments to the camera if needed
-        cameraNode.camera?.fieldOfView = 75
-        cameraNode.camera?.automaticallyAdjustsZRange = false
+//        cameraNode.camera?.fieldOfView = 75
+//        cameraNode.camera?.automaticallyAdjustsZRange = false
         
         // Add the camera component to handle the camera logic
         cameraComponent = CameraComponent(cameraNode: cameraNode)
