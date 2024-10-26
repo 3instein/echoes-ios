@@ -13,6 +13,9 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
 
     private var lastSafePosition: SCNVector3?
 
+    var velocity: CGPoint = .zero
+    var collisionDetected: Bool = false
+    
     // Light node reference
     var lightNode: SCNNode?
     var originalLightIntensity: CGFloat = 75 // Default intensity
@@ -50,25 +53,28 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     }
 
     override func update(deltaTime seconds: TimeInterval) {
-        if (!movingProgramatically) {
+        if !movingProgramatically {
             guard let joystick = joystickComponent, joystick.isTouching, let cameraNode = cameraNode else {
                 stepAudioPlayer?.stop()
                 return
             }
             
+            // If collisionDetected is true, reset it if player has moved away
+            if collisionDetected {
+                resetCollisionIfMovedAway()
+                if collisionDetected { return }  // Skip update if still colliding
+            }
+
             lastSafePosition = playerNode.position
 
             addPlayerPhysicsBody()
-
+            
             let direction = joystick.direction
             let deltaTime = Float(seconds)
-
             let cameraTransform = cameraNode.transform
 
-            var forwardVector = SCNVector3(cameraTransform.m31, 0, cameraTransform.m33)
-            forwardVector = forwardVector.normalized()
-            var rightVector = SCNVector3(cameraTransform.m11, 0, cameraTransform.m13)
-            rightVector = rightVector.normalized()
+            var forwardVector = SCNVector3(cameraTransform.m31, 0, cameraTransform.m33).normalized()
+            var rightVector = SCNVector3(cameraTransform.m11, 0, cameraTransform.m13).normalized()
 
             let forwardMovement = forwardVector * Float(direction.y) * movementSpeed * deltaTime
             let rightMovement = rightVector * Float(direction.x) * movementSpeed * deltaTime
@@ -79,8 +85,11 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
 
             updateLightPosition()
 
-            let speed = movementVector.length() / deltaTime
+            if movementVector.length() > 0 {
+                collisionDetected = false
+            }
 
+            let speed = movementVector.length() / deltaTime
             if speed > 0 {
                 playEchoSound()
                 if !stepAudioPlayer!.isPlaying {
@@ -94,7 +103,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
             if !isLightActive {
                 activateLightPulsing()
             }
-        } else if (movingProgramatically) {
+        } else if movingProgramatically {
             updateLightPosition()
 
             let currentTime = Date()
@@ -103,13 +112,27 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
                 lastStepTime = currentTime
             }
 
-            // User is moving
             if !isLightActive {
                 activateLightPulsing()
             }
         }
     }
 
+    func applyCollisionResponse() {
+        // Set collisionDetected to true to prevent further movement
+        collisionDetected = true
+        velocity = .zero
+    }
+    
+    func resetCollisionIfMovedAway() {
+        guard let joystick = joystickComponent else { return }
+
+        // Reset collision if player has input and is moving away from collision point
+        if joystick.direction != .zero {
+            collisionDetected = false
+        }
+    }
+    
     private func updateLightPosition() {
         guard let lightNode = lightNode else { return }
         // Update the light position to follow the player
@@ -248,34 +271,34 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
       }
 
     func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
-          print("Player collided with wall or floor")
+        print("Player collided with wall or floor")
 
-          let nodeA = contact.nodeA
-          let nodeB = contact.nodeB
+        let nodeA = contact.nodeA
+        let nodeB = contact.nodeB
 
-          // Check for collision between player and walls/floor
-          if (nodeA.physicsBody?.categoryBitMask == 1 && nodeB.physicsBody?.categoryBitMask == 2) ||
-             (nodeB.physicsBody?.categoryBitMask == 1 && nodeA.physicsBody?.categoryBitMask == 2) {
-              print("Player collided with wall or floor")
-              
-              // Stop player movement by applying a zero velocity
-              let playerNode = (nodeA.physicsBody?.categoryBitMask == 1) ? nodeA : nodeB
-              if let playerPhysicsBody = playerNode.physicsBody {
-                  // Reset player position to last known safe position
-                  if let safePosition = lastSafePosition {
-                      playerNode.position = safePosition
-                      playerNode.physicsBody?.velocity = SCNVector3Zero
-                  }
-                  
-                  // Adjust friction temporarily
-                  playerPhysicsBody.friction = 0.5 // Lower friction for easier movement post-collision
-                  
-                  // Reset joystick direction only if not touching the joystick
-                  joystickComponent?.resetJoystick()
-              }
-          }
-      }
-    
+        // Check for collision between player and walls/floor
+        if (nodeA.physicsBody?.categoryBitMask == 1 && nodeB.physicsBody?.categoryBitMask == 2) ||
+           (nodeB.physicsBody?.categoryBitMask == 1 && nodeA.physicsBody?.categoryBitMask == 2) {
+
+            // Identify the player node from the contact nodes
+            let playerNode = (nodeA.physicsBody?.categoryBitMask == 1) ? nodeA : nodeB
+
+            if let playerPhysicsBody = playerNode.physicsBody {
+                // Restore position to last known safe location
+                if let safePosition = lastSafePosition {
+                    playerNode.position = safePosition
+                    playerPhysicsBody.velocity = SCNVector3Zero // Stop movement
+                }
+
+                // Zero out velocity and joystick input for accurate stopping
+                velocity = .zero
+                joystickComponent?.resetJoystick() // Prevents movement continuation
+
+                // Set collision detected flag
+                collisionDetected = true
+            }
+        }
+    }
     func movePlayer(to position: SCNVector3, duration: TimeInterval, completion: @escaping () -> Void) {
         movingProgramatically = true
         let playerNode = playerNode
