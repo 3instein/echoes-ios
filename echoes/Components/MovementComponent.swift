@@ -13,7 +13,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
 
     // Light node reference
     var lightNode: SCNNode?
-    var originalLightIntensity: CGFloat = 75 // Default intensity
+    var originalLightIntensity: CGFloat = 100 // Default intensity
     var isLightActive = false // Track if light is active
     private var lightIncreaseDuration: TimeInterval = 0.5 // Reduced duration for increasing intensity
     private var lightDecreaseDuration: TimeInterval = 0.3 // Reduced duration for decreasing intensity
@@ -35,7 +35,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
         self.playerNode = playerNode
         self.cameraNode = cameraNode
         self.lightNode = lightNode
-        self.originalLightIntensity = lightNode?.light?.intensity ?? 75 // Set original intensity
+        self.originalLightIntensity = lightNode?.light?.intensity ?? 100 // Set original intensity
 
         super.init()
         

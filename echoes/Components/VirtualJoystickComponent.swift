@@ -31,13 +31,13 @@ class VirtualJoystickComponent: GKComponent {
 
         // Set up the joystick base view
         joystickView = UIView(frame: CGRect(x: 50, y: UIScreen.main.bounds.height - joystickSize - 50, width: joystickSize, height: joystickSize))
-        joystickView.backgroundColor = UIColor(hex: "2A2DCE")
+        joystickView.backgroundColor = UIColor(hex: "20226F")
         joystickView.layer.cornerRadius = joystickSize / 2
         joystickView.alpha = 0.3 // Always visible initially
 
         // Set up the joystick knob view
         joystickKnob = UIView(frame: CGRect(x: (joystickSize - knobSize) / 2, y: (joystickSize - knobSize) / 2, width: knobSize, height: knobSize))
-        joystickKnob.backgroundColor = UIColor(hex: "A0F30C")
+        joystickKnob.backgroundColor = UIColor(hex: "2A2B87")
         joystickKnob.layer.cornerRadius = knobSize / 2
         joystickView.addSubview(joystickKnob)
     }
