@@ -95,7 +95,7 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         
         addFallingCupSound()
         addSpoonSound()
-        addBackgroundSound()  // Add this line to play background sound
+        addBackgroundSound(audioFileName: "muffledRain.wav")  // Add this line to play background sound
         
         self.physicsWorld.contactDelegate = self
     }
@@ -684,27 +684,33 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         spoonNode.runAction(SCNAction.sequence([wait, playSound]))
     }
     
-    func addBackgroundSound() {
-            // Load the sound effect
-            guard let audioSource = SCNAudioSource(fileNamed: "outsideRain.wav") else {
-                print("Warning: Background sound 'lightRain.wav' not found")
+    func addBackgroundSound(audioFileName: String, volume: Float = 0.7, delay: TimeInterval = 0) {
+        // Load the sound effect and attach to node
+        if let muffledNode = rootNode.childNode(withName: "muffledRain", recursively: true) {
+            guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
+                print("Warning: Audio file '\(audioFileName)' not found")
                 return
             }
-            
+
+            // Configure audio properties
+            audioSource.isPositional = true
+            audioSource.shouldStream = false
+            audioSource.volume = volume
             audioSource.load()
-            audioSource.volume = 0.1 // Set the volume as needed
-            audioSource.isPositional = false  // Set to false for background sound
-            audioSource.shouldStream = true     // Stream if it's a long sound
-            
-            // Create a node to attach the sound to
-            let soundNode = SCNNode()
-            soundNode.runAction(SCNAction.repeatForever(SCNAction.playAudio(audioSource, waitForCompletion: true)))
-            
-            // Add the sound node to the root node
-            rootNode.addChildNode(soundNode)
+            audioSource.loops = true
+
+            // Prepare action sequence with delay and playback
+            let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: false)
+            let waitAction = SCNAction.wait(duration: delay)
+            let sequenceAction = SCNAction.sequence([waitAction, playAudioAction])
+
+            // Run the action on the node
+            muffledNode.runAction(sequenceAction)
+        } else {
+            print("Warning: Node 'muffledRain' not found in the scene.")
         }
-       
-    
+    }
+
     func setupGestureRecognizers(for view: UIView) {
         cameraComponent.setupGestureRecognizers(for: view)
     }
