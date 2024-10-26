@@ -271,6 +271,7 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
                 timeLabel?.removeFromSuperview()
                 isPuzzleDisplayed = false
                 timer?.invalidate()
+                addCloseFridgeSound()
             }
         }
     }
@@ -432,7 +433,6 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
             }
         }
     }
-
     
     func findMatchingNeighborPair(currentGroup: [UIView], neighborGroup: [UIView]) -> (UIView, UIView, CGPoint)? {
         // Iterate through each piece in the current group
@@ -626,8 +626,6 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         cupNode.runAction(SCNAction.sequence([wait, playSound]))
     }
     
-
-
     func addOpenFridgeSound() {
         // Find the cup node
         guard let fridgeNode = rootNode.childNode(withName: "fridge", recursively: true) else {
@@ -684,7 +682,7 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         spoonNode.runAction(SCNAction.sequence([wait, playSound]))
     }
     
-    func addBackgroundSound(audioFileName: String, volume: Float = 0.7, delay: TimeInterval = 0) {
+    func addBackgroundSound(audioFileName: String, volume: Float = 0.9, delay: TimeInterval = 0) {
         // Load the sound effect and attach to node
         if let muffledNode = rootNode.childNode(withName: "muffledRain", recursively: true) {
             guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
