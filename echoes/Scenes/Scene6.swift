@@ -277,69 +277,69 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     }
     
     @objc func handlePanGesture(_ sender: UIPanGestureRecognizer) {
-            guard let piece = sender.view else { return }
-            
-            // Play the puzzle touch sound when the gesture begins
-            if sender.state == .began {
-                playPuzzleTouchSound()
-            }
-            
-            let translation = sender.translation(in: piece.superview)
-
-            let group = combinedPieces[piece] ?? [piece]
-
-            // Get the bounds of the puzzle background
-            guard let puzzleBackground = puzzleBackground else { return }
-            let puzzleBounds = puzzleBackground.bounds
-
-            // Calculate the group's bounding box
-            var minX = CGFloat.greatestFiniteMagnitude
-            var minY = CGFloat.greatestFiniteMagnitude
-            var maxX = CGFloat.leastNormalMagnitude
-            var maxY = CGFloat.leastNormalMagnitude
-
-            for pieceInGroup in group {
-                let pieceFrame = pieceInGroup.frame
-                minX = min(minX, pieceFrame.minX)
-                minY = min(minY, pieceFrame.minY)
-                maxX = max(maxX, pieceFrame.maxX)
-                maxY = max(maxY, pieceFrame.maxY)
-            }
-
-            // Calculate the translation for the group as a whole
-            var groupTranslation = translation
-
-            // Adjust translation to prevent the group from going outside the puzzle background bounds
-            if minX + translation.x < puzzleBounds.minX {
-                groupTranslation.x = puzzleBounds.minX - minX
-            } else if maxX + translation.x > puzzleBounds.maxX {
-                groupTranslation.x = puzzleBounds.maxX - maxX
-            }
-
-            if minY + translation.y < puzzleBounds.minY {
-                groupTranslation.y = puzzleBounds.minY - minY
-            } else if maxY + translation.y > puzzleBounds.maxY {
-                groupTranslation.y = puzzleBounds.maxY - maxY
-            }
-
-            // Move all pieces in the group together
-            for pieceInGroup in group {
-                pieceInGroup.center = CGPoint(
-                    x: pieceInGroup.center.x + groupTranslation.x,
-                    y: pieceInGroup.center.y + groupTranslation.y
-                )
-            }
-
-            // Reset translation to avoid compound translation
-            sender.setTranslation(.zero, in: piece.superview)
-
-            if sender.state == .ended {
-                print("\(piece.accessibilityIdentifier ?? "Piece") dropped at position: \(piece.center)")
-
-                // Check for nearby pieces to merge
-                checkForNearbyPieces(piece)
-            }
+        guard let piece = sender.view else { return }
+        
+        // Play the puzzle touch sound when the gesture begins
+        if sender.state == .began {
+            playPuzzleTouchSound()
         }
+        
+        let translation = sender.translation(in: piece.superview)
+        
+        let group = combinedPieces[piece] ?? [piece]
+        
+        // Get the bounds of the puzzle background
+        guard let puzzleBackground = puzzleBackground else { return }
+        let puzzleBounds = puzzleBackground.bounds
+        
+        // Calculate the group's bounding box
+        var minX = CGFloat.greatestFiniteMagnitude
+        var minY = CGFloat.greatestFiniteMagnitude
+        var maxX = CGFloat.leastNormalMagnitude
+        var maxY = CGFloat.leastNormalMagnitude
+        
+        for pieceInGroup in group {
+            let pieceFrame = pieceInGroup.frame
+            minX = min(minX, pieceFrame.minX)
+            minY = min(minY, pieceFrame.minY)
+            maxX = max(maxX, pieceFrame.maxX)
+            maxY = max(maxY, pieceFrame.maxY)
+        }
+        
+        // Calculate the translation for the group as a whole
+        var groupTranslation = translation
+        
+        // Adjust translation to prevent the group from going outside the puzzle background bounds
+        if minX + translation.x < puzzleBounds.minX {
+            groupTranslation.x = puzzleBounds.minX - minX
+        } else if maxX + translation.x > puzzleBounds.maxX {
+            groupTranslation.x = puzzleBounds.maxX - maxX
+        }
+        
+        if minY + translation.y < puzzleBounds.minY {
+            groupTranslation.y = puzzleBounds.minY - minY
+        } else if maxY + translation.y > puzzleBounds.maxY {
+            groupTranslation.y = puzzleBounds.maxY - maxY
+        }
+        
+        // Move all pieces in the group together
+        for pieceInGroup in group {
+            pieceInGroup.center = CGPoint(
+                x: pieceInGroup.center.x + groupTranslation.x,
+                y: pieceInGroup.center.y + groupTranslation.y
+            )
+        }
+        
+        // Reset translation to avoid compound translation
+        sender.setTranslation(.zero, in: piece.superview)
+        
+        if sender.state == .ended {
+            print("\(piece.accessibilityIdentifier ?? "Piece") dropped at position: \(piece.center)")
+            
+            // Check for nearby pieces to merge
+            checkForNearbyPieces(piece)
+        }
+    }
     
     func playPuzzleTouchSound() {
         guard let audioSource = SCNAudioSource(fileNamed: "puzzle.mp3") else {
@@ -363,9 +363,9 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     func checkForNearbyPieces(_ currentPiece: UIView) {
         guard let currentImageView = currentPiece as? UIImageView,
               let currentImageName = currentImageView.accessibilityIdentifier else { return }
-
+        
         let currentGroup = combinedPieces[currentPiece] ?? [currentPiece]
-
+        
         // Check if a current combination already exists
         if !currentCombination.isEmpty {
             if currentCombination.count < 17 {
@@ -375,54 +375,54 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
                 return
             }
         }
-
+        
         // Iterate through all the pieces in the current group
         for pieceInCurrentGroup in currentGroup {
             if let pieceInCurrentGroupImageView = pieceInCurrentGroup as? UIImageView,
                let currentGroupImageName = pieceInCurrentGroupImageView.accessibilityIdentifier,
                let currentNeighbors = neighbors[currentGroupImageName] {
-               
+                
                 // Check for nearby neighbors for each piece in the current group
                 for (neighborName, offset) in currentNeighbors {
                     if let neighborPiece = findPiece(byName: neighborName, in: currentPiece.superview) {
                         let neighborGroup = combinedPieces[neighborPiece] ?? [neighborPiece]
-
+                        
                         // Calculate the actual distance between the piece in the current group and the neighbor piece
                         let distance = hypot(neighborPiece.center.x - pieceInCurrentGroup.center.x, neighborPiece.center.y - pieceInCurrentGroup.center.y)
-
+                        
                         // Only snap the pieces together if they are within the snapDistance
                         if distance <= snapDistance {
                             // If the neighbor belongs to a different group, find the correct pieces to align them
                             if currentGroup != neighborGroup {
                                 // Find the first piece in the current group that has a neighbor in the other group
                                 if let (currentGroupPiece, neighborGroupPiece, alignmentOffset) = findMatchingNeighborPair(currentGroup: currentGroup, neighborGroup: neighborGroup) {
-
+                                    
                                     // Calculate the alignment offset between the two groups
                                     let offsetX = currentGroupPiece.center.x + alignmentOffset.x - neighborGroupPiece.center.x
                                     let offsetY = currentGroupPiece.center.y + alignmentOffset.y - neighborGroupPiece.center.y
-
+                                    
                                     // Apply the offset to align the entire neighbor group with the current group
                                     for piece in neighborGroup {
                                         piece.center = CGPoint(x: piece.center.x + offsetX, y: piece.center.y + offsetY)
                                     }
-
+                                    
                                     // Merge the two groups into a single combined group
                                     let combinedGroup = Array(Set(currentGroup + neighborGroup))
-
+                                    
                                     // Update the combinedPieces dictionary for all pieces in the combined group
                                     for piece in combinedGroup {
                                         combinedPieces[piece] = combinedGroup
                                     }
-
+                                    
                                     // Update the current combination to reflect the new group
                                     currentCombination = combinedGroup
-
+                                    
                                     // If all pieces are combined, mark the puzzle as completed
                                     if combinedGroup.count == 17 {
                                         completedCombinations.append(combinedGroup)
                                         checkForPuzzleCompletion()
                                     }
-
+                                    
                                     print("Groups combined: \(currentImageName) and \(neighborName)")
                                     return
                                 }
@@ -529,17 +529,17 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
             })
         })
     }
-
+    
     func flipToThankYouCard(imageView: UIImageView) {
         // Create a flip animation
         UIView.transition(with: imageView, duration: 1, options: [.transitionFlipFromLeft], animations: {
             // Change the image to the "Thankyou card" image
             imageView.image = UIImage(named: "thankyou card.png")
             imageView.frame.size = CGSize(width: 450, height: 350)
-
+            
         }, completion: nil)
     }
-
+    
     func findPiece(byName name: String, in superview: UIView?) -> UIView? {
         guard let superview = superview else { return nil }
         
@@ -575,36 +575,36 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     }
     
     func toggleGlowEffect(isEnabled: Bool) {
-            if isEnabled {
-                // Load and apply the SCNTechnique for the glow effect
-                if let path = Bundle.main.path(forResource: "NodeTechnique", ofType: "plist"),
-                   let dict = NSDictionary(contentsOfFile: path) as? [String: AnyObject] {
-                    let technique = SCNTechnique(dictionary: dict)
-                    let glowColor = SCNVector3(0.8, 1.0, 0.2)
-                    technique?.setValue(NSValue(scnVector3: glowColor), forKeyPath: "glowColorSymbol")
-                    scnView?.technique = technique
+        if isEnabled {
+            // Load and apply the SCNTechnique for the glow effect
+            if let path = Bundle.main.path(forResource: "NodeTechnique", ofType: "plist"),
+               let dict = NSDictionary(contentsOfFile: path) as? [String: AnyObject] {
+                let technique = SCNTechnique(dictionary: dict)
+                let glowColor = SCNVector3(0.8, 1.0, 0.2)
+                technique?.setValue(NSValue(scnVector3: glowColor), forKeyPath: "glowColorSymbol")
+                scnView?.technique = technique
+            }
+            
+            // Loop through each puzzle piece and set the category bitmask
+            for i in 1...6 {
+                let puzzleNodeName = "Puzzle_\(i)"
+                if let puzzleNode = rootNode.childNode(withName: puzzleNodeName, recursively: true) {
+                    puzzleNode.categoryBitMask = 2
                 }
-                
-                // Loop through each puzzle piece and set the category bitmask
-                for i in 1...6 {
-                    let puzzleNodeName = "Puzzle_\(i)"
-                    if let puzzleNode = rootNode.childNode(withName: puzzleNodeName, recursively: true) {
-                        puzzleNode.categoryBitMask = 2
-                    }
-                }
-            } else {
-                // Disable the technique
-                scnView?.technique = nil
-                
-                // Reset the category bitmask if needed
-                for i in 1...6 {
-                    let puzzleNodeName = "Puzzle_\(i)"
-                    if let puzzleNode = rootNode.childNode(withName: puzzleNodeName, recursively: true) {
-                        puzzleNode.categoryBitMask = 0
-                    }
+            }
+        } else {
+            // Disable the technique
+            scnView?.technique = nil
+            
+            // Reset the category bitmask if needed
+            for i in 1...6 {
+                let puzzleNodeName = "Puzzle_\(i)"
+                if let puzzleNode = rootNode.childNode(withName: puzzleNodeName, recursively: true) {
+                    puzzleNode.categoryBitMask = 0
                 }
             }
         }
+    }
     
     func addFallingCupSound() {
         // Find the cup node
@@ -689,26 +689,26 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
                 print("Warning: Audio file '\(audioFileName)' not found")
                 return
             }
-
+            
             // Configure audio properties
             audioSource.isPositional = true
             audioSource.shouldStream = false
             audioSource.volume = volume
             audioSource.load()
             audioSource.loops = true
-
+            
             // Prepare action sequence with delay and playback
             let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: false)
             let waitAction = SCNAction.wait(duration: delay)
             let sequenceAction = SCNAction.sequence([waitAction, playAudioAction])
-
+            
             // Run the action on the node
             muffledNode.runAction(sequenceAction)
         } else {
             print("Warning: Node 'muffledRain' not found in the scene.")
         }
     }
-
+    
     func setupGestureRecognizers(for view: UIView) {
         cameraComponent.setupGestureRecognizers(for: view)
     }
