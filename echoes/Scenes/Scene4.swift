@@ -1,9 +1,4 @@
-//
-//  Scene6.swift
-//  echoes
-//
-//  Created by Pelangi Masita Wati on 21/10/24.
-//
+//  Scene4.swift
 
 import SceneKit
 import UIKit
@@ -28,6 +23,7 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
     
     init(lightNode: SCNNode) {
         GameViewController.joystickComponent.showJoystick()
+        GameViewController.joystickComponent.showJoystickTutorial()
         super.init()
         self.lightNode = lightNode
         scnView?.pointOfView = cameraNode
@@ -98,23 +94,24 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
             }
         }
         
-        //        let ambientLightNode = SCNNode()
-        //        let ambientLight = SCNLight()
-        //        ambientLight.type = .ambient
-        //        ambientLight.intensity = 500
-        //        ambientLight.color = UIColor.blue
-        //        ambientLightNode.light = ambientLight
-        //        rootNode.addChildNode(ambientLightNode)
+        // Temporary add ambient lights
+        // let ambientLightNode = SCNNode()
+        // let ambientLight = SCNLight()
+        // ambientLight.type = .ambient
+        // ambientLight.intensity = 500
+        // ambientLight.color = UIColor.blue
+        // ambientLightNode.light = ambientLight
+        // rootNode.addChildNode(ambientLightNode)
         
         self.physicsWorld.contactDelegate = self
     }
     
     // Check if the player is close to the transition trigger point
-     func checkProximityToTransition() -> Bool {
-         guard let playerPosition = playerEntity.playerNode?.position else { return false }
-         let distance = playerPosition.distance(to: transitionTriggerPosition)
-         return distance < triggerDistance
-     }
+    func checkProximityToTransition() -> Bool {
+        guard let playerPosition = playerEntity.playerNode?.position else { return false }
+        let distance = playerPosition.distance(to: transitionTriggerPosition)
+        return distance < triggerDistance
+    }
     
     func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
         guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
