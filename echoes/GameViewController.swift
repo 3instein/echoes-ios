@@ -9,7 +9,6 @@ class GameViewController: UIViewController {
     var scnView: SCNView!
     static var playerEntity: PlayerEntity!
     static var joystickComponent: VirtualJoystickComponent!
-    var scene6: Scene6!
     
     var interactButton: UIButton!
 
@@ -235,8 +234,15 @@ class GameViewController: UIViewController {
             
             if gameScene.isCabinetOpened || gameScene.isPlayingPipe {
                 GameViewController.joystickComponent.joystickView.isHidden = true
+                interactButton.isHidden = true
             } else {
                 GameViewController.joystickComponent.joystickView.isHidden = false
+            }
+            
+            if interactButton.titleLabel?.text == "Examine Pipe" && interactButton.isEnabled {
+                gameScene.isPipeClicked = true
+            } else {
+                gameScene.isPipeClicked = false
             }
         }
     }
@@ -244,11 +250,18 @@ class GameViewController: UIViewController {
     @objc func interactWithCake() {
         // Now check if the loaded scene is Scene1 and assign it to the scene1 variable
         if let loadedScene = scnView.scene as? Scene6 {
-            scene6 = loadedScene
             loadedScene.displayPuzzlePieces(on: self.view)
             loadedScene.addOpenFridgeSound()
         } else {
             print("Error: Scene6 not loaded correctly")
+        }
+        
+        if let loadedScene = scnView.scene as? Scene8 {
+            if loadedScene.isPipeClicked {
+                loadedScene.examinePipe(on: self.view)
+            }
+        } else {
+            print("Error: Scene8 not loaded correctly")
         }
     }
     
