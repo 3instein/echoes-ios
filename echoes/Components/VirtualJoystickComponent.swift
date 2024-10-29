@@ -29,6 +29,7 @@ class VirtualJoystickComponent: GKComponent {
     let joystickSize: CGFloat = 140.0
     let knobSize: CGFloat = 70.0
     var idleTimer: Timer?
+    private var hasShownCameraInstruction = false
     
     override init() {
         super.init()
@@ -49,27 +50,36 @@ class VirtualJoystickComponent: GKComponent {
         instructionLabel = UILabel()
         instructionLabel.text = "Drag the joystick to move"
         instructionLabel.textAlignment = .center
-        instructionLabel.font = UIFont.systemFont(ofSize: 14, weight: .bold)
         instructionLabel.textColor = UIColor.white
-        instructionLabel.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        instructionLabel.backgroundColor = UIColor.black.withAlphaComponent(0.4)
         instructionLabel.layer.cornerRadius = 10
         instructionLabel.clipsToBounds = true
         instructionLabel.alpha = 0.0
+        applyCustomFont(to: instructionLabel, fontSize: 14)
         
         // Set up the camera rotation instruction label in the center of the screen
         cameraInstructionLabel = UILabel()
         cameraInstructionLabel.text = "Rotate the camera to look around"
         cameraInstructionLabel.textAlignment = .center
-        cameraInstructionLabel.font = UIFont.systemFont(ofSize: 14, weight: .bold)
         cameraInstructionLabel.textColor = UIColor.white
-        cameraInstructionLabel.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        cameraInstructionLabel.backgroundColor = UIColor.black.withAlphaComponent(0.4)
         cameraInstructionLabel.layer.cornerRadius = 10
         cameraInstructionLabel.clipsToBounds = true
         cameraInstructionLabel.alpha = 0.0
+        applyCustomFont(to: cameraInstructionLabel, fontSize: 14)
     }
     
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    // Apply the custom font to a label
+    private func applyCustomFont(to label: UILabel, fontSize: CGFloat) {
+        if let customFont = UIFont(name: "SpecialElite-Regular", size: fontSize) {
+            label.font = customFont
+        } else {
+            print("Failed to load SpecialElite-Regular font.")
+        }
     }
     
     func attachToView(_ view: UIView) {
@@ -78,10 +88,10 @@ class VirtualJoystickComponent: GKComponent {
         view.addSubview(cameraInstructionLabel)
         
         // Position the move instruction label above the joystick
-        instructionLabel.frame = CGRect(x: joystickView.frame.midX - 70, y: joystickView.frame.minY - 40, width: 200, height: 30)
+        instructionLabel.frame = CGRect(x: joystickView.frame.midX - 80, y: joystickView.frame.minY - 40, width: 200, height: 30)
         
         // Position the camera instruction label at the center of the screen
-        cameraInstructionLabel.frame = CGRect(x: (view.frame.width - 200) / 2, y: view.frame.height / 2 - 20, width: 250, height: 30)
+        cameraInstructionLabel.frame = CGRect(x: (view.frame.width - 250) / 2, y: view.frame.height / 2 - 20, width: 250, height: 30)
         
         let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
         joystickView.addGestureRecognizer(panGestureRecognizer)
@@ -109,6 +119,8 @@ class VirtualJoystickComponent: GKComponent {
     }
     
     private func showCameraInstructionLabel() {
+        guard !hasShownCameraInstruction else { return }  // Show only if not displayed before
+        hasShownCameraInstruction = true
         UIView.animate(withDuration: 0.5) {
             self.cameraInstructionLabel.alpha = 1.0
         }
