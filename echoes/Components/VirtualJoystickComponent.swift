@@ -1,3 +1,5 @@
+//  VirtualJoystickComponent.swift
+
 import UIKit
 import GameplayKit
 
@@ -19,51 +21,132 @@ class VirtualJoystickComponent: GKComponent {
     static var shared = VirtualJoystickComponent()
     var joystickView: UIView!
     var joystickKnob: UIView!
+    var instructionLabel: UILabel!
+    var cameraInstructionLabel: UILabel!
     var basePosition: CGPoint = .zero
     var isTouching: Bool = false
     var direction: CGPoint = .zero
-    let joystickSize: CGFloat = 140.00 // Reduced from 150.0
-    let knobSize: CGFloat = 70.0 // Reduced from 70.0
+    let joystickSize: CGFloat = 140.0
+    let knobSize: CGFloat = 70.0
     var idleTimer: Timer?
-
+    private var hasShownCameraInstruction = false
+    
     override init() {
         super.init()
-
+        
         // Set up the joystick base view
         joystickView = UIView(frame: CGRect(x: 50, y: UIScreen.main.bounds.height - joystickSize - 50, width: joystickSize, height: joystickSize))
         joystickView.backgroundColor = UIColor(hex: "2A2DCE")
         joystickView.layer.cornerRadius = joystickSize / 2
-        joystickView.alpha = 0.3 // Always visible initially
-
+        joystickView.alpha = 0.3 // Default visibility
+        
         // Set up the joystick knob view
         joystickKnob = UIView(frame: CGRect(x: (joystickSize - knobSize) / 2, y: (joystickSize - knobSize) / 2, width: knobSize, height: knobSize))
         joystickKnob.backgroundColor = UIColor(hex: "A0F30C")
         joystickKnob.layer.cornerRadius = knobSize / 2
         joystickView.addSubview(joystickKnob)
+        
+        // Set up the joystick instruction label
+        instructionLabel = UILabel()
+        instructionLabel.text = "Drag the joystick to move"
+        instructionLabel.textAlignment = .center
+        instructionLabel.textColor = UIColor.white
+        instructionLabel.backgroundColor = UIColor.black.withAlphaComponent(0.4)
+        instructionLabel.layer.cornerRadius = 10
+        instructionLabel.clipsToBounds = true
+        instructionLabel.alpha = 0.0
+        applyCustomFont(to: instructionLabel, fontSize: 14)
+        
+        // Set up the camera rotation instruction label in the center of the screen
+        cameraInstructionLabel = UILabel()
+        cameraInstructionLabel.text = "Rotate the camera to look around"
+        cameraInstructionLabel.textAlignment = .center
+        cameraInstructionLabel.textColor = UIColor.white
+        cameraInstructionLabel.backgroundColor = UIColor.black.withAlphaComponent(0.4)
+        cameraInstructionLabel.layer.cornerRadius = 10
+        cameraInstructionLabel.clipsToBounds = true
+        cameraInstructionLabel.alpha = 0.0
+        applyCustomFont(to: cameraInstructionLabel, fontSize: 14)
     }
-
+    
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
+    // Apply the custom font to a label
+    private func applyCustomFont(to label: UILabel, fontSize: CGFloat) {
+        if let customFont = UIFont(name: "SpecialElite-Regular", size: fontSize) {
+            label.font = customFont
+        } else {
+            print("Failed to load SpecialElite-Regular font.")
+        }
+    }
+    
     func attachToView(_ view: UIView) {
         view.addSubview(joystickView)
-
+        view.addSubview(instructionLabel)
+        view.addSubview(cameraInstructionLabel)
+        
+        // Position the move instruction label above the joystick
+        instructionLabel.frame = CGRect(x: joystickView.frame.midX - 80, y: joystickView.frame.minY - 40, width: 200, height: 30)
+        
+        // Position the camera instruction label at the center of the screen
+        cameraInstructionLabel.frame = CGRect(x: (view.frame.width - 250) / 2, y: view.frame.height / 2 - 20, width: 250, height: 30)
+        
         let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
         joystickView.addGestureRecognizer(panGestureRecognizer)
     }
-
+    
+    // Show the joystick tutorial with a delay
+    func showJoystickTutorial() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+            self?.showInstructionLabel()
+        }
+    }
+    
+    private func showInstructionLabel() {
+        UIView.animate(withDuration: 0.5) {
+            self.instructionLabel.alpha = 1.0
+        }
+    }
+    
+    private func hideInstructionLabelWithDelay() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            UIView.animate(withDuration: 0.5) {
+                self.instructionLabel.alpha = 0.0
+            }
+        }
+    }
+    
+    private func showCameraInstructionLabel() {
+        guard !hasShownCameraInstruction else { return }  // Show only if not displayed before
+        hasShownCameraInstruction = true
+        UIView.animate(withDuration: 0.5) {
+            self.cameraInstructionLabel.alpha = 1.0
+        }
+    }
+    
+    private func hideCameraInstructionLabelWithDelay() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            UIView.animate(withDuration: 0.5) {
+                self.cameraInstructionLabel.alpha = 0.0
+            }
+        }
+    }
+    
     @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
         let location = gesture.location(in: joystickView)
         let offset = CGPoint(x: location.x - joystickView.bounds.midX, y: location.y - joystickView.bounds.midY)
         let distance = sqrt(offset.x * offset.x + offset.y * offset.y)
         let maxDistance = joystickSize / 2
-
+        
         switch gesture.state {
         case .began:
             isTouching = true
             resetIdleTimer()
-            animateJoystickAlpha(to: 0.5) // Make joystick fully visible
+            animateJoystickAlpha(to: 0.5)
+            hideInstructionLabelWithDelay()
+            showCameraInstructionLabel()
         case .changed:
             let limitedDistance = min(distance, maxDistance)
             let angle = atan2(offset.y, offset.x)
@@ -75,6 +158,7 @@ class VirtualJoystickComponent: GKComponent {
         case .ended, .cancelled:
             resetJoystick()
             startIdleTimer()
+            hideCameraInstructionLabelWithDelay()
         default:
             break
         }
@@ -90,24 +174,25 @@ class VirtualJoystickComponent: GKComponent {
         idleTimer?.invalidate()
         idleTimer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(handleIdleState), userInfo: nil, repeats: false)
     }
-
+    
     func resetIdleTimer() {
         idleTimer?.invalidate()
         idleTimer = nil
     }
-
+    
     @objc func handleIdleState() {
+        // Make joystick more translucent after being idle
         if !isTouching {
-            animateJoystickAlpha(to: 0.3) // Make joystick more translucent after being idle
+            animateJoystickAlpha(to: 0.3)
         }
     }
-
+    
     func animateJoystickAlpha(to alpha: CGFloat) {
         UIView.animate(withDuration: 1.0) {
             self.joystickView.alpha = alpha
         }
     }
-
+    
     // Function to hide the joystick
     func hideJoystick() {
         UIView.animate(withDuration: 0.5) {
@@ -116,7 +201,7 @@ class VirtualJoystickComponent: GKComponent {
             self.joystickView.isHidden = true
         }
     }
-
+    
     // Function to show the joystick
     func showJoystick() {
         joystickView.isHidden = false
