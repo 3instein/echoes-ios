@@ -37,6 +37,14 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     private let maxStepDelay: TimeInterval = 1.0 // Maximum delay between steps
     private var isWalking = false // Track if the player is walking
 
+    var isToilet: Bool = false {
+        didSet {
+            print("isToilet changed to \(isToilet)")
+        }
+    }
+
+    private var currentStepResource: String = "step" // Track the current step sound resource
+
     init(playerNode: SCNNode, cameraNode: SCNNode?, lightNode: SCNNode?) {
         print("movecomp init")
         self.playerNode = playerNode
@@ -46,8 +54,11 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
 
         super.init()
         
+        print("MovementComponent initialized. Current isToilet: \(isToilet)")
+
         // Load sound
         loadSounds()
+        loadStepSound(resource: currentStepResource)
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -91,6 +102,13 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
                 collisionDetected = false
             }
 
+            let targetResource = isToilet ? "toiletStep" : "step"
+            if currentStepResource != targetResource {
+                // Reload step sound with the new resource
+                currentStepResource = targetResource
+                loadStepSound(resource: currentStepResource)
+            }
+            
             let speed = movementVector.length() / deltaTime
             if speed > 0 {
                 playEchoSound()
@@ -180,6 +198,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
             lightNode.light?.intensity = self?.originalLightIntensity ?? 0 // Ensure it resets to original
         }
     }
+    
     private func loadSounds() {
         if let echoSoundURL = Bundle.main.url(forResource: "EcholocationSound", withExtension: "mp3") {
             do {
@@ -191,29 +210,21 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
         } else {
             print("Sound file not found")
         }
-
-        // Load both step sounds
-        if let stepSoundURL = Bundle.main.url(forResource: "step", withExtension: "mp3") {
+    }
+    
+    // Updated loadStepSound to accept a resource parameter
+    private func loadStepSound(resource: String) {
+        if let stepSoundURL = Bundle.main.url(forResource: resource, withExtension: "mp3") {
             do {
                 stepAudioPlayer = try AVAudioPlayer(contentsOf: stepSoundURL)
                 stepAudioPlayer?.prepareToPlay() // Prepare to play
+                print(isToilet)
+                print(resource)
             } catch {
                 print("Error loading step sound: \(error)")
             }
         } else {
             print("Sound step file not found")
-        }
-
-        // Load the toilet step sound
-        if let toiletStepSoundURL = Bundle.main.url(forResource: "toiletStep", withExtension: "mp3") {
-            do {
-                toiletStepAudioPlayer = try AVAudioPlayer(contentsOf: toiletStepSoundURL)
-                toiletStepAudioPlayer?.prepareToPlay() // Prepare to play
-            } catch {
-                print("Error loading toilet step sound: \(error)")
-            }
-        } else {
-            print("Toilet step sound file not found")
         }
     }
 
@@ -312,6 +323,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
             }
         }
     }
+    
     func movePlayer(to position: SCNVector3, duration: TimeInterval, completion: @escaping () -> Void) {
         movingProgramatically = true
         let playerNode = playerNode
