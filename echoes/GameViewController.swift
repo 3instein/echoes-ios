@@ -65,7 +65,11 @@ class GameViewController: UIViewController {
                     // Create a movement component to handle player movement, including the light node
                     let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
                     GameViewController.playerEntity.movementComponent = movementComponent
-                    
+                     
+                    //ADD FOR STEPS TOILET IN SCENE8
+                    movementComponent.isToilet = true
+                    print("In Scene 8, isToilet is \(movementComponent.isToilet)")
+
                     // Link the joystick with the movement component
                     if let movementComponent = gameScene.playerEntity.movementComponent {
                         movementComponent.joystickComponent = GameViewController.joystickComponent
