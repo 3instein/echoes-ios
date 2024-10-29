@@ -14,21 +14,22 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     var joystickComponent: VirtualJoystickComponent!
     var cameraNode: SCNNode!
     var lightNode: SCNNode!
-    
+    var necklaceNode: SCNNode!
+
     weak var scnView: SCNView?
     var playButton: UIButton?  // Store a reference to the play button
     var clueCabinetNode: SCNNode!
     var cluePipeNode: SCNNode!
-
+    
     var hasKey = true  // Track if the player has the key
     var isCabinetOpened = false  // Track if the player has the key
     var isPlayingPipe = false  // Track if the player has the key
-
+    
     let proximityDistance: Float = 100.0  // Define a proximity distance
     
     var pipeBackground: UIView?
-    var isGameCompleted: Bool = false  // Track if the game is completed
-
+    var isNecklaceObtained: Bool = false  // Track if the game is completed
+    
     var timer: Timer?
     var timeLimit: Int = 60
     var timeLabel: UILabel?
@@ -54,12 +55,12 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         "pipeclue-22": "down",
         "pipeclue-23": "down"
     ]
-
+    
     var transitionTriggerPosition = SCNVector3(2602, 559, 45)
     var triggerDistance: Float = 100
-
+    
     var correctRotationCounter: Int = 0  // Counter to track correct rotations
-
+    
     // Define a list to store the sequence of correctly rotated pipes
     var correctlyRotatedPipes: [String] = []
     var previouslyGreenPipes: Set<String> = []  // Track pipes that were previously green
@@ -73,10 +74,12 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     
     var currentPipeIndex: Int = 0 // Property to track the current pipe index
     var lastActivatedPipeIndex: Int = -1 // Track the last activated pipe index
+    
+    var isNecklaceFalling = false
 
     init(lightNode: SCNNode) {
         GameViewController.joystickComponent.showJoystick()
-
+        
         super.init()
         self.lightNode = lightNode
         scnView?.pointOfView = cameraNode
@@ -91,7 +94,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         for childNode in houseScene.rootNode.childNodes {
             rootNode.addChildNode(childNode)
         }
-        
+
         // Create a new player entity and initialize it using the house scene's root node
         playerEntity = PlayerEntity(in: rootNode, cameraNode: cameraNode, lightNode: lightNode)
         
@@ -102,7 +105,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         // Add player node to the GameScene's rootNode
         rootNode.addChildNode(playerNode)
-
+        
         // Attach the existing camera node from the player model to the scene
         cameraNode = playerNode.childNode(withName: "Camera", recursively: true)
         guard let cameraNode = cameraNode else {
@@ -120,7 +123,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         rootNode.addChildNode(lightNode)
         
         if let muffledNode = rootNode.childNode(withName: "muffledRain", recursively: true) {
-            attachAudio(to: muffledNode, audioFileName: "muffledRain.wav", volume: 1.0, delay: 0)
+            attachAudio(to: muffledNode, audioFileName: "muffledRain.wav", volume: 0.5, delay: 0)
         }
         
         if let andraParentNode = rootNode.childNode(withName: "player", recursively: true) {
@@ -137,17 +140,51 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         cluePipeNode = rootNode.childNode(withName: "pipe", recursively: true)
         
+        necklaceNode = rootNode.childNode(withName: "necklace", recursively: true)
+
         self.physicsWorld.contactDelegate = self
     }
     
+    func animateNecklaceFalling(from pipeNode: SCNNode) {
+        // Define the falling action
+        let fallDown = SCNAction.moveBy(x: 0, y: 0, z: -70.0, duration: 3.0) // Adjust the Y-offset and duration as needed
+        let wait = SCNAction.wait(duration: 3) // Optional wait time before the next action
+        let playSound = SCNAction.playAudio(SCNAudioSource(fileNamed: "fallingNecklaceWater.mp3")!, waitForCompletion: true) // Add a sound effect for dropping the necklace
+        let sequence = SCNAction.sequence([fallDown, wait, playSound])
+
+        // Run the action
+        necklaceNode.runAction(sequence)
+    }
+
+    func pipeCompleted() {
+        if currentPipeIndex == 15 {
+            print("Puzzle solved! The necklace is revealed.")
+            
+            pipeBackground?.removeFromSuperview()
+            timeLabel?.removeFromSuperview()
+            timer?.invalidate()
+            cluePipeNode.isHidden = false
+            // Set game completion flag to true
+            isNecklaceObtained = true
+            
+            // Delay to wait until the necklace finishes falling
+            DispatchQueue.main.asyncAfter(deadline: .now()) { [weak self] in
+                GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-235.327, 186.952, 0), duration: 2.0) {
+                    self?.cameraNode.look(at: self!.necklaceNode.position)
+                    self?.animateNecklaceFalling(from: self!.cluePipeNode!)
+                    self?.isPlayingPipe = false
+                }
+            }
+        }
+    }
+
     @objc func examinePipe(on view: UIView) {
         isPlayingPipe = true
-        cluePipeNode.isHidden = true
-
+        
         // Puzzle background setup
         pipeBackground = UIView()
         pipeBackground?.backgroundColor = UIColor.white.withAlphaComponent(0)
-
+        
         // Set background size
         let backgroundWidth = view.bounds.width * 0.55
         let backgroundHeight = view.bounds.height * 0.795
@@ -162,19 +199,19 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         pipeBackground?.layer.borderWidth = 0
         pipeBackground?.clipsToBounds = true
         view.addSubview(pipeBackground!)
-
+        
         // INSIDE CONTENT
         // Array to hold the pipe images
         let pipeImages = (1...24).map { "pipeclue-\($0)" }
-
+        
         // Constants for the layout
         let columns = 6
         let rows = 4
         let pipeSize: CGFloat = backgroundWidth / CGFloat(columns)  // Calculate size based on background width
-
+        
         for (index, pieceImage) in pipeImages.enumerated() {
             guard let image = UIImage(named: pieceImage) else { continue }
-
+            
             let imageView = UIImageView(image: image)
             imageView.frame = CGRect(
                 x: CGFloat(index / rows) * pipeSize, // Column positioning
@@ -185,13 +222,20 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             imageView.contentMode = .scaleAspectFit
             imageView.isUserInteractionEnabled = true
             imageView.accessibilityIdentifier = pieceImage
-
+            
             // Rotate the imageView by 90 degrees
             if pieceImage != "pipeclue-1" && pieceImage != "pipeclue-24" {
                 // Random rotation angle: 0, 90, 180, or 270 degrees (in radians)
-                let randomAngleIndex = Int.random(in: 1...3)
+                
+                var randomAngleIndex = Int.random(in: 1...3)
+                
+                if pieceImage == "pipeclue-2" || pieceImage == "pipeclue-22" || pieceImage == "pipeclue-23" {
+                    let options = [1, 3]
+                    randomAngleIndex = options.randomElement()!
+                }
+                
                 let randomRotation = CGFloat(randomAngleIndex) * (.pi / 2) // Convert to radians
-
+                
                 imageView.transform = CGAffineTransform(rotationAngle: randomRotation)
                 
                 let rotationGesture = UITapGestureRecognizer(target: self, action: #selector(rotatePipePiece(_:)))
@@ -200,10 +244,10 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             
             pipeBackground?.addSubview(imageView)
         }
-
+        
         previouslyGreenPipes.insert("pipeclue-1")
-        animatePipeToGreen(pipeName: "pipeclue-1")
-
+        //        animatePipeToGreen(pipeName: "pipeclue-1")
+        
         // Add time label to the top of the white box
         timeLabel = UILabel(frame: CGRect(
             x: pipeBackground!.frame.minX,
@@ -217,51 +261,66 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         timeLabel?.textColor = .white // Changed to black for better visibility
         updateTimeLabel() // Set the initial time
         view.addSubview(timeLabel!)
-
-        // Dismiss puzzle when clicking outside the white rectangle
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissPipe(_:)))
-        view.addGestureRecognizer(tapGesture)
-
+        
         // Start the timer
         startTimer()
+        cluePipeNode.isHidden = true
     }
-
+        
     @objc func rotatePipePiece(_ sender: UITapGestureRecognizer) {
         guard let imageView = sender.view as? UIImageView,
               let pipeName = imageView.accessibilityIdentifier else {
             return
         }
-
+        
         // Check if the pipe is already green
         if previouslyGreenPipes.contains(pipeName) {
             print("\(pipeName) is already green and cannot be rotated anymore.")
             return // Exit early if the pipe is already green
         }
-
+        
         // Rotate the imageView by 90 degrees
         UIView.animate(withDuration: 0.2) {
             imageView.transform = imageView.transform.rotated(by: .pi / 2)
         }
-
+        
         // Check if the piece has reached the correct rotation
         let currentRotation = atan2(imageView.transform.b, imageView.transform.a)
         let tolerance: CGFloat = 0.01
-
-        // If the rotation is correct, add to the sequence
-        if abs(currentRotation - 0) < tolerance {
+        
+        // Define which pipes have two correct rotations (0 and .pi)
+        let pipesWithTwoRotations: Set<String> = ["pipeclue-2", "pipeclue-22", "pipeclue-23"]
+        
+        // Check if the rotation matches one of the correct rotations
+        let isCorrectRotation: Bool
+        if pipesWithTwoRotations.contains(pipeName) {
+            isCorrectRotation = abs(currentRotation - 0) < tolerance || abs(currentRotation - .pi) < tolerance
+        } else {
+            isCorrectRotation = abs(currentRotation - 0) < tolerance
+        }
+        
+        if isCorrectRotation {
             print("\(pipeName) is correctly rotated.")
-
+            
             // Check if this pipe is the next in the fixed sequence
             if let index = fixedPipeSequence.firstIndex(of: pipeName) {
+                correctlyRotatedPipes.append(pipeName)
+                
                 // Check if the index is the next in the sequence
                 if index == lastActivatedPipeIndex + 1 {
-                    correctlyRotatedPipes.append(pipeName)
                     lastActivatedPipeIndex = index // Update last activated index
+                }
+                
+                if correctlyRotatedPipes.count >= 15 {
+                    attachAudio(to: rootNode, audioFileName: "waterNecklacePipe.mp3", volume: 1.3, delay: 0)
 
-                    // Update only the last three consecutive pipes in the correct sequence
-                    if correctlyRotatedPipes.count % 3 == 0 {
-                        updateLastThreeCorrectPipesToGreen()
+                    for correctPipes in correctlyRotatedPipes {
+                        previouslyGreenPipes.insert(correctPipes)
                     }
+                    
+                    correctlyRotatedPipes.append("pipeclue-24")
+                    // Start the animation sequence
+                    animateNextPipe(pipes: Array(correctlyRotatedPipes))
                 }
             }
         } else {
@@ -272,59 +331,61 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             }
         }
         
+        attachAudio(to: rootNode, audioFileName: "pipeMove.mp3", volume: 0.8, delay: 0)
+                
+//        print(correctlyRotatedPipes.count)
+    }
+        
+    // Function to animate the next pipe
+    private func animateNextPipe(pipes: [String]) {
+        timeLabel?.removeFromSuperview()
+
+        // Ensure we haven't animated all pipes
+        guard currentPipeIndex < pipes.count else { return }
+        
+        let pipeName = pipes[currentPipeIndex]
+        guard let subview = pipeBackground?.subviews.first(where: {
+            $0.accessibilityIdentifier == pipeName
+        }) as? UIImageView else {
+            currentPipeIndex += 1 // Move to the next pipe if this one is not found
+            animateNextPipe(pipes: pipes) // Continue to the next pipe
+            return
+        }
+        
+        // Ensure the pipe is rotated correctly
+        let currentRotation = atan2(subview.transform.b, subview.transform.a)
+        let tolerance: CGFloat = 0.01
+        
+        // Only turn green if it meets the rotation criteria and is part of the correct sequence
+        // Define which pipes have two correct rotations (0 and .pi)
+        let pipesWithTwoRotations: Set<String> = ["pipeclue-2", "pipeclue-22", "pipeclue-23"]
+        
+        // Check if the rotation matches one of the correct rotations
+        let isCorrectRotation: Bool
+        if pipesWithTwoRotations.contains(pipeName) {
+            isCorrectRotation = abs(currentRotation - 0) < tolerance || abs(currentRotation - .pi) < tolerance
+        } else {
+            isCorrectRotation = abs(currentRotation - 0) < tolerance
+        }
+        
+        if isCorrectRotation {
+            animatePipeToGreen(pipeName: pipeName)
+            // Use a timer to call animateNextPipe after the duration of the animation
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { // Adjust this duration as needed
+                self.currentPipeIndex += 1 // Move to the next pipe
+                self.animateNextPipe(pipes: pipes) // Call the next pipe animation
+            }
+        } else {
+            // If not correct, continue to the next pipe
+            currentPipeIndex += 1
+            animateNextPipe(pipes: pipes) // Continue to the next pipe
+        }
+        print("Current pipe index after animation: \(currentPipeIndex)")
+                        
         if areAllPipesCorrectlyRotated() {
             pipeCompleted()
         }
-        
-        print(previouslyGreenPipes)
     }
-
-     // Update the last three correctly rotated pipes to green
-     func updateLastThreeCorrectPipesToGreen() {
-         // Filter the last three correctly rotated pipes
-         let lastThreePipes = correctlyRotatedPipes.suffix(3) // Get last 3 pipes and reverse for correct animation order
-
-         // Reset the current index
-         currentPipeIndex = 0
-         
-         // Start the animation sequence
-         animateNextPipe(pipes: Array(lastThreePipes))
-     }
-
-     // Function to animate the next pipe
-     private func animateNextPipe(pipes: [String]) {
-         // Ensure we haven't animated all pipes
-         guard currentPipeIndex < pipes.count else { return }
-
-         let pipeName = pipes[currentPipeIndex]
-         guard let subview = pipeBackground?.subviews.first(where: {
-             $0.accessibilityIdentifier == pipeName
-         }) as? UIImageView else {
-             currentPipeIndex += 1 // Move to the next pipe if this one is not found
-             animateNextPipe(pipes: pipes) // Continue to the next pipe
-             return
-         }
-
-         // Ensure the pipe is rotated correctly
-         let correctRotation = 0
-         let currentRotation = atan2(subview.transform.b, subview.transform.a)
-         let tolerance: CGFloat = 0.01
-
-         // Only turn green if it meets the rotation criteria and is part of the correct sequence
-         if abs(currentRotation - CGFloat(correctRotation)) < tolerance {
-             animatePipeToGreen(pipeName: pipeName)
-             
-             // Use a timer to call animateNextPipe after the duration of the animation
-             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { // Adjust this duration as needed
-                 self.currentPipeIndex += 1 // Move to the next pipe
-                 self.animateNextPipe(pipes: pipes) // Call the next pipe animation
-             }
-         } else {
-             // If not correct, continue to the next pipe
-             currentPipeIndex += 1
-             animateNextPipe(pipes: pipes) // Continue to the next pipe
-         }
-     }
     
     // Modify animatePipeToGreen to accept a wipe direction
     func animatePipeToGreen(pipeName: String) {
@@ -349,18 +410,18 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         // Get the wipe direction for the current pipe
         let wipeDirection = wipeDirections[pipeName] ?? "down" // Default to "up" if not found
-
+        
         // Animate the wipe effect based on the direction
-        let wipeDuration: TimeInterval = 1.5
+        let wipeDuration: TimeInterval = 0.6
         let finalHeight: CGFloat = greenImageView.bounds.height * 2
         let finalWidth: CGFloat = greenImageView.bounds.width * 2
-
+        
         switch wipeDirection {
         case "up":
             maskLayer.frame = CGRect(x: 0, y: 0, width: greenImageView.bounds.width, height: finalHeight)
             maskLayer.backgroundColor = UIColor.black.cgColor
             greenImageView.layer.mask = maskLayer
-
+            
             let upAnimation = CABasicAnimation(keyPath: "bounds.size.height")
             upAnimation.fromValue = 0
             upAnimation.toValue = finalHeight
@@ -372,7 +433,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             maskLayer.frame = CGRect(x: 0, y: 0, width: greenImageView.bounds.width, height: 0) // Start with height 0
             maskLayer.backgroundColor = UIColor.black.cgColor
             greenImageView.layer.mask = maskLayer
-
+            
             let downAnimation = CABasicAnimation(keyPath: "bounds.size.height")
             downAnimation.fromValue = 0
             downAnimation.toValue = finalHeight
@@ -384,18 +445,18 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             maskLayer.frame = CGRect(x: 0, y: 0, width: 0, height: greenImageView.bounds.height)
             maskLayer.backgroundColor = UIColor.black.cgColor
             greenImageView.layer.mask = maskLayer
-
+            
             let leftAnimation = CABasicAnimation(keyPath: "bounds.size.width")
             leftAnimation.fromValue = 0
             leftAnimation.toValue = finalWidth
             leftAnimation.duration = wipeDuration
             leftAnimation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             maskLayer.add(leftAnimation, forKey: "wipeRight")
-
+            
         default:
             break
         }
-                
+        
         // Update the mask layer's height to the final height
         maskLayer.bounds.size.height = finalHeight
         
@@ -405,15 +466,15 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             greenImageView.removeFromSuperview() // Remove the green image view
         }
     }
-
+    
     func revertPipeToOriginal(pipeName: String) {
         guard let subview = pipeBackground?.subviews.first(where: {
             $0.accessibilityIdentifier == pipeName
         }) as? UIImageView else { return }
-
+        
         subview.image = UIImage(named: pipeName)
     }
-
+    
     func areAllPipesCorrectlyRotated() -> Bool {
         // Only check specific pipes for correct rotation
         for pipeName in wipeDirections.keys {
@@ -424,10 +485,21 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             }
             
             // Check rotation of the specified piece
-            let correctRotation = 0
             let currentRotation = atan2(subview.transform.b, subview.transform.a)
             let tolerance: CGFloat = 0.01
-            if abs(currentRotation - CGFloat(correctRotation)) >= tolerance {
+            // Define which pipes have two correct rotations (0 and .pi)
+            let pipesWithTwoRotations: Set<String> = ["pipeclue-2", "pipeclue-22", "pipeclue-23"]
+            
+            // Check if the rotation matches one of the correct rotations
+            let isCorrectRotation: Bool
+            
+            if pipesWithTwoRotations.contains(pipeName) {
+                isCorrectRotation = abs(currentRotation - 0) < tolerance || abs(currentRotation - .pi) < tolerance
+            } else {
+                isCorrectRotation = abs(currentRotation - 0) < tolerance
+            }
+            
+            if !isCorrectRotation {
                 return false
             }
         }
@@ -435,56 +507,82 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         return true // All specified pieces are correctly rotated
     }
     
-    func pipeCompleted() {
-        print("Puzzle solved! The necklace is revealed.")
-        isGameCompleted = true
-        
-        for pipeName in wipeDirections.keys {
-            previouslyGreenPipes.insert("pipeclue-24")
-            animatePipeToGreen(pipeName: pipeName)
+    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
+        guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
+            print("Warning: Audio file '\(audioFileName)' not found")
+            return
         }
-
-        animatePipeToGreen(pipeName: "pipeclue-24")
-
-        // Add logic to reveal the necklace here
-        // e.g., show a UI prompt or play an animation
+        
+        audioSource.isPositional = true
+        audioSource.shouldStream = false
+        audioSource.load()
+        audioSource.volume = volume
+        
+        // Set looping for continuous rain sound
+        if audioFileName == "muffledRain.wav" || audioFileName == "pipeNecklace.mp3" {
+            audioSource.loops = true  // This ensures the rain loops without breaking
+        }
+        
+        let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: false)
+        let waitAction = SCNAction.wait(duration: delay)
+        
+        let sequenceAction = SCNAction.sequence([waitAction, playAudioAction])
+        node.runAction(sequenceAction)
     }
+
     
     func updateProximityAndGlow(interactButton: UIButton) {
         guard let playerNode = playerEntity.playerNode else {
             print("Error: Player node not found")
             return
         }
-
+        
         // Measure distances to each clue object
         let distanceToCabinet = playerNode.position.distance(to: clueCabinetNode.position)
         let distanceToPipe = playerNode.position.distance(to: cluePipeNode.position)
+        
+        if isNecklaceObtained {
+            if distanceToCabinet < proximityDistance {
+                toggleGlowEffect(on: clueCabinetNode, isEnabled: true)
+                toggleGlowEffect(on: cluePipeNode, isEnabled: false)
 
-        // Determine which object is closer and within the proximity distance
-        if distanceToCabinet < proximityDistance && distanceToCabinet < distanceToPipe {
-            // If the cabinet is closer
-            toggleGlowEffect(on: clueCabinetNode, isEnabled: true)
-            toggleGlowEffect(on: cluePipeNode, isEnabled: false)
-            
-            // Update interact button content
-            interactButton.setTitle("Open Cabinet", for: .normal)
-            interactButton.isHidden = false
-        } else if distanceToPipe < proximityDistance {
-            // If the pipe is closer
-            toggleGlowEffect(on: cluePipeNode, isEnabled: true)
-            toggleGlowEffect(on: clueCabinetNode, isEnabled: false)
-            
-            // Update interact button content
-            interactButton.setTitle("Examine Pipe", for: .normal)
-            interactButton.isHidden = false
+                // Update interact button content
+                interactButton.setTitle("Open Cabinet", for: .normal)
+                interactButton.isHidden = false
+            }
+            else {
+                // If neither is within proximity, turn off all glows and hide the button
+                toggleGlowEffect(on: clueCabinetNode, isEnabled: false)
+                toggleGlowEffect(on: cluePipeNode, isEnabled: false)
+                interactButton.isHidden = true
+            }
         } else {
-            // If neither is within proximity, turn off all glows and hide the button
-            toggleGlowEffect(on: clueCabinetNode, isEnabled: false)
-            toggleGlowEffect(on: cluePipeNode, isEnabled: false)
-            interactButton.isHidden = true
+            // Determine which object is closer and within the proximity distance
+            if distanceToCabinet < proximityDistance && distanceToCabinet < distanceToPipe {
+                // If the cabinet is closer
+                toggleGlowEffect(on: clueCabinetNode, isEnabled: true)
+                toggleGlowEffect(on: cluePipeNode, isEnabled: false)
+                
+                // Update interact button content
+                interactButton.setTitle("Open Cabinet", for: .normal)
+                interactButton.isHidden = false
+            } else if distanceToPipe < proximityDistance {
+                // If the pipe is closer
+                toggleGlowEffect(on: cluePipeNode, isEnabled: true)
+                toggleGlowEffect(on: clueCabinetNode, isEnabled: false)
+                
+                // Update interact button content
+                interactButton.setTitle("Examine Pipe", for: .normal)
+                interactButton.isHidden = false
+            } else {
+                // If neither is within proximity, turn off all glows and hide the button
+                toggleGlowEffect(on: clueCabinetNode, isEnabled: false)
+                toggleGlowEffect(on: cluePipeNode, isEnabled: false)
+                interactButton.isHidden = true
+            }
         }
     }
-
+    
     func toggleGlowEffect(on node: SCNNode, isEnabled: Bool) {
         if isEnabled {
             node.categoryBitMask = 2 // Enable glow effect for the specified node
@@ -492,7 +590,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             node.categoryBitMask = 1 // Disable glow effect for the specified node
         }
     }
-
+    
     @objc func openCabinet() {
         // Your existing code for opening the cabinet
         isCabinetOpened = true
@@ -537,11 +635,11 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         // Create a temporary UITapGestureRecognizer
         let tapGesture = UITapGestureRecognizer()
-        dismissPipe(tapGesture) // Dismiss the puzzle using the temporary gesture recognizer
+//        dismissPipe(tapGesture) // Dismiss the puzzle using the temporary gesture recognizer
     }
     
     func triggerPipeFailedTransition() {
-        isGameCompleted = true
+        isNecklaceObtained = true
         pipeBackground?.backgroundColor = UIColor.white.withAlphaComponent(0)
         
         guard let superview = pipeBackground?.superview else { return }
@@ -588,56 +686,18 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             })
         })
     }
-
+    
     func checkGameEnd() {
         if timeLimit <= 0 {
             // Call the function to handle game failure if time runs out
             timeOut()
-//            triggerPuzzleFailedTransition()
-        } else if isGameCompleted {
+            //            triggerPuzzleFailedTransition()
+        } else if isNecklaceObtained {
             // Call the function to handle successful completion
-//            triggerPuzzleCompletionTransition()
+            //            triggerPuzzleCompletionTransition()
         }
     }
-    
-    @objc func dismissPipe(_ sender: UITapGestureRecognizer) {
-        let tapLocation = sender.location(in: pipeBackground?.superview)
-        if let pipeFrame = pipeBackground?.frame, !pipeFrame.contains(tapLocation) {
-            // Check if the game is completed before dismissing
-            if !isGameCompleted {
-                pipeBackground?.removeFromSuperview()
-                timeLabel?.removeFromSuperview()
-                isPlayingPipe = false
-                timer?.invalidate()
-                cluePipeNode.isHidden = false
-//                addCloseFridgeSound()
-            }
-        }
-    }
-    
-    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
-        guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
-            print("Warning: Audio file '\(audioFileName)' not found")
-            return
-        }
         
-        audioSource.isPositional = true
-        audioSource.shouldStream = false
-        audioSource.load()
-        audioSource.volume = volume
-        
-        // Set looping for continuous rain sound
-        if audioFileName == "muffledRain.wav" || audioFileName == "pipeNecklace.mp3" {
-            audioSource.loops = true  // This ensures the rain loops without breaking
-        }
-        
-        let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: false)
-        let waitAction = SCNAction.wait(duration: delay)
-        
-        let sequenceAction = SCNAction.sequence([waitAction, playAudioAction])
-        node.runAction(sequenceAction)
-    }
-    
     // Check if the player is close to the transition trigger point
     func checkProximityToTransition() -> Bool {
         guard let playerPosition = playerEntity.playerNode?.position else { return false }
