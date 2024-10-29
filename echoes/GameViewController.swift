@@ -263,6 +263,7 @@ class GameViewController: UIViewController {
         if let loadedScene = scnView.scene as? Scene8 {
             if loadedScene.isPipeClicked {
                 loadedScene.examinePipe(on: self.view)
+                loadedScene.animatePipeToGreen(pipeName: "pipeclue-1")
             }
         } else {
             print("Error: Scene8 not loaded correctly")

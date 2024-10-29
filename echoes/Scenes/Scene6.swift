@@ -18,7 +18,7 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     var playButton: UIButton?  // Store a reference to the play button
     
     var isPuzzleDisplayed: Bool = false
-    var isGameCompleted: Bool = false  // Track if the game is completed
+    var isPhotoObtained: Bool = false  // Track if the game is completed
     let snapDistance: CGFloat = 50.0
     
     var timer: Timer?
@@ -214,7 +214,7 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     
     // Show failure transition logic
     func triggerPuzzleFailedTransition() {
-        isGameCompleted = true
+        isPhotoObtained = true
         puzzleBackground?.backgroundColor = UIColor.white.withAlphaComponent(0)
         
         guard let superview = puzzleBackground?.superview else { return }
@@ -266,7 +266,7 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         let tapLocation = sender.location(in: puzzleBackground?.superview)
         if let puzzleFrame = puzzleBackground?.frame, !puzzleFrame.contains(tapLocation) {
             // Check if the game is completed before dismissing
-            if !isGameCompleted {
+            if !isPhotoObtained {
                 puzzleBackground?.removeFromSuperview()
                 timeLabel?.removeFromSuperview()
                 isPuzzleDisplayed = false
@@ -459,12 +459,12 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         // Check if there are either 1 complete combination with 17 pieces or 2 combinations
         if completedCombinations.count == 1 && completedCombinations[0].count == 17 {
             print("Puzzle completed with one combination!")
-            isGameCompleted = true // Mark as completed
+            isPhotoObtained = true // Mark as completed
             timer?.invalidate() // Stop the timer
             checkGameEnd() // Check the game end conditions
         } else if completedCombinations.count == 2 {
             print("Puzzle completed with two combinations!")
-            isGameCompleted = true // Mark as completed
+            isPhotoObtained = true // Mark as completed
             timer?.invalidate() // Stop the timer
             checkGameEnd(); // Check the game end conditions
         }
@@ -475,14 +475,14 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
             // Call the function to handle game failure if time runs out
             timeOut()
             triggerPuzzleFailedTransition()
-        } else if isGameCompleted {
+        } else if isPhotoObtained {
             // Call the function to handle successful completion
             triggerPuzzleCompletionTransition()
         }
     }
     
     func triggerPuzzleCompletionTransition() {
-        isGameCompleted = true
+        isPhotoObtained = true
         puzzleBackground?.backgroundColor = UIColor.white.withAlphaComponent(0)
         
         guard let superview = combinedPieces.keys.first?.superview else { return }
