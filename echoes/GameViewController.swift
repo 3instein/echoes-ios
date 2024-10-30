@@ -10,83 +10,84 @@ class GameViewController: UIViewController {
     static var playerEntity: PlayerEntity!
     static var joystickComponent: VirtualJoystickComponent!
     var scene6: Scene6!
+    var transitionButton: UIButton!
     
     var interactButton: UIButton!
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         // Set up the SCNView
         scnView = SCNView(frame: self.view.frame)
         self.view.addSubview(scnView)
-
+        
         // Configure the SceneManager with the SCNView
         SceneManager.shared.configure(with: scnView)
-
+        
         // Set up joystick component
         GameViewController.joystickComponent = VirtualJoystickComponent.shared
         GameViewController.joystickComponent.attachToView(self.view)
         
         // Load the initial game scene
-        SceneManager.shared.loadScene2()
-
-        // Set up the PlayerEntity
-        if let gameScene = self.scnView.scene as? Scene2 {
-            GameViewController.playerEntity = gameScene.playerEntity
-
-            // Create a movement component to handle player movement, including the light node
-            let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
-            GameViewController.playerEntity.movementComponent = movementComponent
-            
-            GameViewController.joystickComponent.hideJoystick()
-
-            // Link the joystick with the movement component
-            if let movementComponent = gameScene.playerEntity.movementComponent {
-                movementComponent.joystickComponent = GameViewController.joystickComponent
-                scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
-            }
-
-            // Set up fog properties for the scene
-            gameScene.fogStartDistance = 25.0   // Increase the start distance
-            gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
-            gameScene.fogDensityExponent = 0.2  // Reduce density to make the fog less thick
-            gameScene.fogColor = UIColor.black
-
-            gameScene.setupGestureRecognizers(for: self.scnView)
-        }
+        //        SceneManager.shared.loadScene2()
+        //
+        //        // Set up the PlayerEntity
+        //        if let gameScene = self.scnView.scene as? Scene2 {
+        //            GameViewController.playerEntity = gameScene.playerEntity
+        //
+        //            // Create a movement component to handle player movement, including the light node
+        //            let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
+        //            GameViewController.playerEntity.movementComponent = movementComponent
+        //
+        //            GameViewController.joystickComponent.hideJoystick()
+        //
+        //            // Link the joystick with the movement component
+        //            if let movementComponent = gameScene.playerEntity.movementComponent {
+        //                movementComponent.joystickComponent = GameViewController.joystickComponent
+        //                scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
+        //            }
+        //
+        //            // Set up fog properties for the scene
+        //            gameScene.fogStartDistance = 25.0   // Increase the start distance
+        //            gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
+        //            gameScene.fogDensityExponent = 0.2  // Reduce density to make the fog less thick
+        //            gameScene.fogColor = UIColor.black
+        //
+        //            gameScene.setupGestureRecognizers(for: self.scnView)
+        //        }
         
-        GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 30.0) {
-            DispatchQueue.main.async {
-                // Load Scene3 after the movement finishes
-                SceneManager.shared.loadScene3()
-                
-                if let gameScene = self.scnView.scene as? Scene3 {
-                    GameViewController.playerEntity = gameScene.playerEntity
+        //        GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 20.0) {
+        //            DispatchQueue.main.async {
+        //                // Load Scene3 after the movement finishes
+        //                SceneManager.shared.loadScene3()
+        //
+        //                if let gameScene = self.scnView.scene as? Scene3 {
+        //                    GameViewController.playerEntity = gameScene.playerEntity
+        //
+        //                    // Create a movement component to handle player movement, including the light node
+        //                    let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
+        //                    GameViewController.playerEntity.movementComponent = movementComponent
+        //
+        //                    // Link the joystick with the movement component
+        //                    if let movementComponent = gameScene.playerEntity.movementComponent {
+        //                        movementComponent.joystickComponent = GameViewController.joystickComponent
+        //                        self.scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
+        //                    }
+        //
+        //                    // Set up fog properties for the scene
+        //                    gameScene.fogStartDistance = 25.0   // Increase the start distance
+        //                    gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
+        //                    gameScene.fogDensityExponent = 0.2  // Reduce density to make the fog less thick
+        //                    gameScene.fogColor = UIColor.black
+        //
+        //                    gameScene.setupGestureRecognizers(for: self.scnView)
+        //                }
+        //            }
+        //        }
         
-                    // Create a movement component to handle player movement, including the light node
-                    let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
-                    GameViewController.playerEntity.movementComponent = movementComponent
+        transitionToScene9()
         
-                    // Link the joystick with the movement component
-                    if let movementComponent = gameScene.playerEntity.movementComponent {
-                        movementComponent.joystickComponent = GameViewController.joystickComponent
-                        self.scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
-                    }
-        
-                    // Set up fog properties for the scene
-                    gameScene.fogStartDistance = 25.0   // Increase the start distance
-                    gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
-                    gameScene.fogDensityExponent = 0.2  // Reduce density to make the fog less thick
-                    gameScene.fogColor = UIColor.black
-        
-                    gameScene.setupGestureRecognizers(for: self.scnView)
-                }
-            }
-        }
-
-        // Configure the SCNView
         scnView.allowsCameraControl = false
-//        scnView.showsStatistics = true
         scnView.backgroundColor = UIColor.black
         
         // Create and configure the interaction button
@@ -109,110 +110,173 @@ class GameViewController: UIViewController {
         // Start the update loop
         let displayLink = CADisplayLink(target: self, selector: #selector(updateScene))
         displayLink.add(to: .main, forMode: .default)
-    }
-
-    @objc func updateScene() {
-            GameViewController.playerEntity?.movementComponent?.update(deltaTime: 0.016)
-            
-            if let gameScene = scnView.scene as? Scene4 {
-                // Check if the player is near the transition point
-                if gameScene.checkProximityToTransition() {
-                    // Load Scene3 after the movement finishes
-                    SceneManager.shared.loadScene5()
-                    
-                    if let gameScene = self.scnView.scene as? Scene5 {
-                        GameViewController.playerEntity = gameScene.playerEntity
-                        
-                        // Create a movement component to handle player movement, including the light node
-                        let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
-                        GameViewController.playerEntity.movementComponent = movementComponent
-                        
-//                        GameViewController.playerEntity.movementComponent?.resetMovementAndLight()
-
-                        // Link the joystick with the movement component
-                        if let movementComponent = gameScene.playerEntity.movementComponent {
-                            movementComponent.joystickComponent = GameViewController.joystickComponent
-                            self.scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
-                        }
-                        
-                        // Set up fog properties for the scene
-                        gameScene.fogStartDistance = 25.0   // Increase the start distance
-                        gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
-                        gameScene.fogDensityExponent = 0.3  // Reduce density to make the fog less thick
-                        gameScene.fogColor = UIColor.black
-                        
-                        gameScene.setupGestureRecognizers(for: self.scnView)
-                    }
-                }
-            }
-
-            if let gameScene = scnView.scene as? Scene5 {
-                // Check if the player is near the transition point
-                if gameScene.checkProximityToTransition() {
-                    // Load Scene6 after the movement finishes
-                    SceneManager.shared.loadScene6()
-                    
-                    if let gameScene = self.scnView.scene as? Scene6 {
-                        GameViewController.playerEntity = gameScene.playerEntity
-                        
-                        
-                        // Create a movement component to handle player movement, including the light node
-                        let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
-                        GameViewController.playerEntity.movementComponent = movementComponent
-                        
-                        // Link the joystick with the movement component
-                        if let movementComponent = gameScene.playerEntity.movementComponent {
-                            movementComponent.joystickComponent = GameViewController.joystickComponent
-                            self.scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
-                        }
-                        
-                        // Set up fog properties for the scene
-                        gameScene.fogStartDistance = 25.0   // Increase the start distance
-                        gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
-                        gameScene.fogDensityExponent = 0.5  // Reduce density to make the fog less thick
-                        gameScene.fogColor = UIColor.black
-                        
-                        gameScene.setupGestureRecognizers(for: self.scnView)
-                    }
-                }
-            }
         
-        if let gameScene = scnView.scene as? Scene6 {
-            // Loop through each puzzle piece
-            for i in 1...6 {
-                let puzzleNodeName = "Puzzle_\(i)"
-                if let puzzleNode = gameScene.rootNode.childNode(withName: puzzleNodeName, recursively: true) {
-                    // Set the category bitmask for post-processing
-                    puzzleNode.categoryBitMask = 2
+        //        func didDisplayThankYouCard() {
+        //            // Handle the transition to Scene9 after the thank you card has been displayed
+        //            transitionToScene9()
+        //        }
+        //
+        func transitionToScene9() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) {
+                SceneManager.shared.loadScene9()
+                
+                // Verify if scnView and the scene were loaded correctly
+                guard let scene = self.scnView.scene as? Scene9 else {
+                    print("Error: Scene9 did not load correctly or scnView is nil.")
+                    return
                 }
-            }
-            
-            // Load and apply the SCNTechnique for the glow effect
-            if let path = Bundle.main.path(forResource: "NodeTechnique", ofType: "plist"),
-               let dict = NSDictionary(contentsOfFile: path) as? [String: AnyObject] {
-                let technique = SCNTechnique(dictionary: dict)
-
-                // Optionally set a custom color for the glow
-                let glowColor = SCNVector3(0.0, 1.0, 1.0)  // Cyan outline
-                technique?.setValue(NSValue(scnVector3: glowColor), forKeyPath: "glowColorSymbol")
-
-                scnView.technique = technique
-            }
-        }
-
-
-        
-            // Check proximity to the cake
-            if let gameScene = scnView.scene as? Scene6 {
-                gameScene.checkProximityToCake(interactButton: interactButton)  // Pass the button to the check
-                if gameScene.isPuzzleDisplayed {
-                    GameViewController.joystickComponent.joystickView.isHidden = true
+                
+                // Ensure playerEntity is available
+                if let playerEntity = scene.playerEntity,
+                   let playerNode = playerEntity.playerNode,
+                   let cameraNode = scene.cameraNode,
+                   let lightNode = scene.lightNode {
+                    
+                    GameViewController.playerEntity = playerEntity
+                    
+                    // Set up movement component
+                    let movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode)
+                    GameViewController.playerEntity.movementComponent = movementComponent
+                    
+                    // Link joystick component to the movement component
+                    movementComponent.joystickComponent = GameViewController.joystickComponent
+                    self.scnView.scene?.physicsWorld.contactDelegate = movementComponent
+                    
+                    // Set up gesture recognizers if needed
+                    scene.setupGestureRecognizers(for: self.scnView)
                 } else {
-                    GameViewController.joystickComponent.joystickView.isHidden = false
+                    print("Error: Required components (playerEntity, playerNode, cameraNode, lightNode) are nil in Scene9.")
                 }
             }
         }
-
+        
+    }
+    
+    //    @objc func transitionToScene9() {
+    //        SceneManager.shared.loadScene9()
+    //        guard let gameScene = scnView.scene as? Scene9 else {
+    //            print("Error: Scene9 did not load correctly.")
+    //            return
+    //        }
+    //
+    //        GameViewController.playerEntity = gameScene.playerEntity
+    //
+    //        // Set up the movement component if needed
+    //        let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode)
+    //        GameViewController.playerEntity.movementComponent = movementComponent
+    //
+    //        // Link joystick component to the movement component
+    //        if let movementComponent = gameScene.playerEntity.movementComponent {
+    //            movementComponent.joystickComponent = GameViewController.joystickComponent
+    //            scnView.scene?.physicsWorld.contactDelegate = movementComponent
+    //        }
+    //
+    //        // Additional scene-specific setup if needed
+    //        gameScene.setupGestureRecognizers(for: scnView)
+    //    }
+    
+    
+    @objc func updateScene() {
+        GameViewController.playerEntity?.movementComponent?.update(deltaTime: 0.016)
+        
+        //        if let gameScene = scnView.scene as? Scene4 {
+        //            // Check if the player is near the transition point
+        //            if gameScene.checkProximityToTransition() {
+        //                // Load Scene3 after the movement finishes
+        //                SceneManager.shared.loadScene5()
+        //
+        //                if let gameScene = self.scnView.scene as? Scene5 {
+        //                    GameViewController.playerEntity = gameScene.playerEntity
+        //
+        //                    // Create a movement component to handle player movement, including the light node
+        //                    let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
+        //                    GameViewController.playerEntity.movementComponent = movementComponent
+        //
+        //                    //                        GameViewController.playerEntity.movementComponent?.resetMovementAndLight()
+        //
+        //                    // Link the joystick with the movement component
+        //                    if let movementComponent = gameScene.playerEntity.movementComponent {
+        //                        movementComponent.joystickComponent = GameViewController.joystickComponent
+        //                        self.scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
+        //                    }
+        //
+        //                    // Set up fog properties for the scene
+        //                    gameScene.fogStartDistance = 25.0   // Increase the start distance
+        //                    gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
+        //                    gameScene.fogDensityExponent = 0.3  // Reduce density to make the fog less thick
+        //                    gameScene.fogColor = UIColor.black
+        //
+        //                    gameScene.setupGestureRecognizers(for: self.scnView)
+        //                }
+        //            }
+        //        }
+        //
+        //        if let gameScene = scnView.scene as? Scene5 {
+        //            // Check if the player is near the transition point
+        //            if gameScene.checkProximityToTransition() {
+        //                // Load Scene6 after the movement finishes
+        //                SceneManager.shared.loadScene6()
+        //
+        //                if let gameScene = self.scnView.scene as? Scene6 {
+        //                    GameViewController.playerEntity = gameScene.playerEntity
+        //
+        //
+        //                    // Create a movement component to handle player movement, including the light node
+        //                    let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
+        //                    GameViewController.playerEntity.movementComponent = movementComponent
+        //
+        //                    // Link the joystick with the movement component
+        //                    if let movementComponent = gameScene.playerEntity.movementComponent {
+        //                        movementComponent.joystickComponent = GameViewController.joystickComponent
+        //                        self.scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
+        //                    }
+        //
+        //                    // Set up fog properties for the scene
+        //                    gameScene.fogStartDistance = 25.0   // Increase the start distance
+        //                    gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
+        //                    gameScene.fogDensityExponent = 0.5  // Reduce density to make the fog less thick
+        //                    gameScene.fogColor = UIColor.black
+        //
+        //                    gameScene.setupGestureRecognizers(for: self.scnView)
+        //                }
+        //            }
+        //        }
+        //
+        //        if let gameScene = scnView.scene as? Scene6 {
+        //            // Loop through each puzzle piece
+        //            for i in 1...6 {
+        //                let puzzleNodeName = "Puzzle_\(i)"
+        //                if let puzzleNode = gameScene.rootNode.childNode(withName: puzzleNodeName, recursively: true) {
+        //                    // Set the category bitmask for post-processing
+        //                    puzzleNode.categoryBitMask = 2
+        //                }
+        //            }
+        //
+        //            // Load and apply the SCNTechnique for the glow effect
+        //            if let path = Bundle.main.path(forResource: "NodeTechnique", ofType: "plist"),
+        //               let dict = NSDictionary(contentsOfFile: path) as? [String: AnyObject] {
+        //                let technique = SCNTechnique(dictionary: dict)
+        //
+        //                // Optionally set a custom color for the glow
+        //                let glowColor = SCNVector3(0.0, 1.0, 1.0)  // Cyan outline
+        //                technique?.setValue(NSValue(scnVector3: glowColor), forKeyPath: "glowColorSymbol")
+        //
+        //                scnView.technique = technique
+        //            }
+        //        }
+        //
+        //        // Check proximity to the cake
+        //        if let gameScene = scnView.scene as? Scene6 {
+        //            gameScene.checkProximityToCake(interactButton: interactButton)  // Pass the button to the check
+        //            if gameScene.isPuzzleDisplayed {
+        //                GameViewController.joystickComponent.joystickView.isHidden = true
+        //            } else {
+        //                GameViewController.joystickComponent.joystickView.isHidden = false
+        //            }
+        //        }
+    }
+    
+    
     @objc func interactWithCake() {
         // Now check if the loaded scene is Scene1 and assign it to the scene1 variable
         if let loadedScene = scnView.scene as? Scene6 {
@@ -230,10 +294,10 @@ class GameViewController: UIViewController {
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-
+        
         // Update the frame of scnView
         scnView.frame = self.view.bounds
-
+        
         // Update joystick position
         GameViewController.joystickComponent.joystickView.frame = CGRect(
             x: 50,
@@ -242,20 +306,20 @@ class GameViewController: UIViewController {
             height: GameViewController.joystickComponent.joystickSize
         )
     }
-
+    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         GameViewController.joystickComponent.joystickView.removeFromSuperview()
     }
-
+    
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
         return .landscape
     }
-
+    
     override var shouldAutorotate: Bool {
         return true
     }
-
+    
     override var prefersStatusBarHidden: Bool {
         return true
     }

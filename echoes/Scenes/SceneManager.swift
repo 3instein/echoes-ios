@@ -87,4 +87,15 @@ class SceneManager {
         scnView?.scene = scene6
         currentScene = scene6
     }
+    
+    func loadScene9() {
+        guard let lightNode = lightNode else {
+            print("Error: Light node is not initialized.")
+            return
+        }
+        let scene9 = Scene9(lightNode: lightNode)
+        scnView?.scene = scene9
+        currentScene = scene9
+    }
+
 }

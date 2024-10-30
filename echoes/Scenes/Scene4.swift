@@ -107,6 +107,7 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
         //        rootNode.addChildNode(ambientLightNode)
         
         self.physicsWorld.contactDelegate = self
+        addCandleLightEffects(around: playerNode)
     }
     
     // Check if the player is close to the transition trigger point
@@ -147,6 +148,57 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
         cameraComponent.setupGestureRecognizers(for: view)
     }
     
+    func addCandleLightEffects(around node: SCNNode) {
+        // Updated candle positions to create a larger, circular arrangement around the player
+        let candlePositions = [
+            SCNVector3(x: 1.0, y: 0, z: 1.0),
+            SCNVector3(x: -1.0, y: 0, z: 1.0),
+            SCNVector3(x: 1.0, y: 0, z: -1.0),
+            SCNVector3(x: -1.0, y: 0, z: -1.0)
+        ]
+        
+        for position in candlePositions {
+            let candleNode = SCNNode()
+            candleNode.position = position
+
+            // Create a candle cylinder geometry for a realistic candle appearance
+            let candleGeometry = SCNCylinder(radius: 0.07, height: 0.3)
+            candleGeometry.firstMaterial?.diffuse.contents = UIColor.white
+            let candleVisualNode = SCNNode(geometry: candleGeometry)
+            candleVisualNode.position = SCNVector3(0, 0.15, 0)
+            candleNode.addChildNode(candleVisualNode)
+            
+            // Add a small flame on top of the candle using a sphere
+            let flameGeometry = SCNSphere(radius: 0.02)
+            flameGeometry.firstMaterial?.diffuse.contents = UIColor.orange
+            let flameNode = SCNNode(geometry: flameGeometry)
+            flameNode.position = SCNVector3(0, 0.3, 0) // Position at the top of the candle
+            candleNode.addChildNode(flameNode)
+            
+            // Candlelight setup with a flickering effect
+            let candleLight = SCNLight()
+            candleLight.type = .omni
+            candleLight.intensity = 600
+            candleLight.color = UIColor.orange
+            candleNode.light = candleLight
+            
+            node.addChildNode(candleNode)
+            
+            // Flickering effect with slight intensity changes to mimic realistic candlelight
+            let flickerAction = SCNAction.sequence([
+                SCNAction.customAction(duration: 0.1) { _,_ in candleLight.intensity = 550 },
+                SCNAction.wait(duration: 0.05),
+                SCNAction.customAction(duration: 0.1) { _,_ in candleLight.intensity = 620 },
+                SCNAction.wait(duration: 0.05),
+                SCNAction.customAction(duration: 0.1) { _,_ in candleLight.intensity = 600 }
+            ])
+            let repeatFlicker = SCNAction.repeatForever(flickerAction)
+            candleNode.runAction(repeatFlicker)
+        }
+    }
+
+
+
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         // Add any additional setup for the scene here
