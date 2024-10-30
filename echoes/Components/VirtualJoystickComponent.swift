@@ -48,7 +48,7 @@ class VirtualJoystickComponent: GKComponent {
         
         // Set up the joystick instruction label
         instructionLabel = UILabel()
-        instructionLabel.text = "Drag the joystick to move"
+        instructionLabel.text = "Drag to move"
         instructionLabel.textAlignment = .center
         instructionLabel.textColor = UIColor.white
         instructionLabel.backgroundColor = UIColor.black.withAlphaComponent(0.4)
@@ -88,10 +88,16 @@ class VirtualJoystickComponent: GKComponent {
         view.addSubview(cameraInstructionLabel)
         
         // Position the move instruction label above the joystick
-        instructionLabel.frame = CGRect(x: joystickView.frame.midX - 80, y: joystickView.frame.minY - 40, width: 200, height: 30)
+        instructionLabel.frame = CGRect(x: joystickView.frame.midX - 55, y: joystickView.frame.minY - 40, width: 110, height: 25)
         
-        // Position the camera instruction label at the center of the screen
-        cameraInstructionLabel.frame = CGRect(x: (view.frame.width - 250) / 2, y: view.frame.height / 2 - 20, width: 250, height: 30)
+        // Position the camera instruction label above the center of the screen
+        let offsetFromTop: CGFloat = 170
+        cameraInstructionLabel.frame = CGRect(
+            x: (view.frame.width - 250) / 2,
+            y: view.frame.height / 2 - offsetFromTop,
+            width: 255,
+            height: 25
+        )
         
         let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
         joystickView.addGestureRecognizer(panGestureRecognizer)
@@ -111,7 +117,7 @@ class VirtualJoystickComponent: GKComponent {
     }
     
     private func hideInstructionLabelWithDelay() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
             UIView.animate(withDuration: 0.5) {
                 self.instructionLabel.alpha = 0.0
             }
@@ -127,7 +133,7 @@ class VirtualJoystickComponent: GKComponent {
     }
     
     private func hideCameraInstructionLabelWithDelay() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
             UIView.animate(withDuration: 0.5) {
                 self.cameraInstructionLabel.alpha = 0.0
             }
