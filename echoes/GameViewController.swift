@@ -96,11 +96,13 @@ class GameViewController: UIViewController {
         interactButton = UIButton(type: .system)
         interactButton.setTitle("Play", for: .normal)
         // Load and apply the custom font for buttons
-        if let customFont = UIFont(name: "SpecialElite-Regular", size: 16) {
+        if let customFont = UIFont(name: "SpecialElite-Regular", size: 14) {
             interactButton.titleLabel?.font = customFont
         } else {
             print("Failed to load SpecialElite-Regular font.")
         }
+        interactButton.titleLabel?.numberOfLines = -1
+        interactButton.titleLabel?.textAlignment = .center
         interactButton.backgroundColor = UIColor.white.withAlphaComponent(0.7)
         interactButton.setTitleColor(.blue, for: .normal)
         interactButton.layer.cornerRadius = 15
@@ -212,17 +214,19 @@ class GameViewController: UIViewController {
         
         //SCENE 8
         if let gameScene = scnView.scene as? Scene8 {
-            if let cabinetNode = gameScene.rootNode.childNode(withName: "smallCabinet", recursively: true) {
+            let cabinetNodeName = "smallCabinet"
+            if let cabinetNode = gameScene.rootNode.childNode(withName: cabinetNodeName, recursively: true) {
                 // Set the category bitmask for post-processing
                 cabinetNode.categoryBitMask = 2
             }
             
-            if let pipeNode = gameScene.rootNode.childNode(withName: "pipe", recursively: true) {
+            let pipeNodeName = "pipe_1"
+            if let pipeNode = gameScene.rootNode.childNode(withName: pipeNodeName, recursively: true) {
                 // Set the category bitmask for post-processing
                 pipeNode.categoryBitMask = 2
             }
             
-            // Load and apply the SCNTechnique for the glow effect
+//             Load and apply the SCNTechnique for the glow effect
             if let path = Bundle.main.path(forResource: "NodeTechnique", ofType: "plist"),
                let dict = NSDictionary(contentsOfFile: path) as? [String: AnyObject] {
                 let technique = SCNTechnique(dictionary: dict)
@@ -236,17 +240,17 @@ class GameViewController: UIViewController {
             
             gameScene.updateProximityAndGlow(interactButton: interactButton)
             
-            if gameScene.isCabinetOpened || gameScene.isPlayingPipe {
+            if interactButton.titleLabel?.text == "Examine Pipe" && interactButton.isTouchInside {
+                gameScene.isPipeClicked = true
+            } else if interactButton.titleLabel?.text == "Open Cabinet" && interactButton.isTouchInside {
+                gameScene.isCabinetOpened = true
+            }
+
+            if gameScene.isPlayingPipe || (!gameScene.isCabinetDone && gameScene.isCabinetOpened) {
                 GameViewController.joystickComponent.joystickView.isHidden = true
                 interactButton.isHidden = true
-            } else {
+            } else if !gameScene.isCabinetOpened || (gameScene.isCabinetOpened && !gameScene.isPlayingPipe) {
                 GameViewController.joystickComponent.joystickView.isHidden = false
-            }
-            
-            if interactButton.titleLabel?.text == "Examine Pipe" && interactButton.isEnabled {
-                gameScene.isPipeClicked = true
-            } else {
-                gameScene.isPipeClicked = false
             }
             
             if gameScene.isNecklaceFalling {
@@ -272,6 +276,10 @@ class GameViewController: UIViewController {
             if loadedScene.isPipeClicked {
                 loadedScene.examinePipe(on: self.view)
                 loadedScene.animatePipeToGreen(pipeName: "pipeclue-1")
+            }
+            
+            if loadedScene.isCabinetOpened && !loadedScene.isCabinetDone {
+                loadedScene.openCabinet()
             }
         } else {
             print("Error: Scene8 not loaded correctly")

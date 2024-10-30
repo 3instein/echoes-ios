@@ -12,10 +12,12 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     var playerEntity: PlayerEntity!
     var cameraComponent: CameraComponent!
     var joystickComponent: VirtualJoystickComponent!
+    var echolocationComponent: EcholocationComponent?
+
     var cameraNode: SCNNode!
     var lightNode: SCNNode!
     var necklaceNode: SCNNode!
-
+    
     weak var scnView: SCNView?
     
     var playButton: UIButton?  // Store a reference to the play button
@@ -24,9 +26,11 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     
     var hasKey = true  // Track if the player has the key
     var isCabinetOpened = false  // Track if the player has the key
+    var isCabinetDone = false  // Track if the player has the key
+
     var isPlayingPipe = false  // Track if the player has the key
     
-    let proximityDistance: Float = 100.0  // Define a proximity distance
+    let proximityDistance: Float = 180.0  // Define a proximity distance
     
     var pipeBackground: UIView?
     var isNecklaceObtained: Bool = false  // Track if the game is completed
@@ -42,7 +46,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     }()
     
     var timer: Timer?
-    var timeLimit: Int = 60
+    var timeLimit: Int = 10
     private var timeLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .center
@@ -142,22 +146,22 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         rootNode.addChildNode(lightNode)
         
         if let muffledNode = rootNode.childNode(withName: "muffledRain", recursively: true) {
-            attachAudio(to: muffledNode, audioFileName: "muffledRain.wav", volume: 0.5, delay: 0)
+            attachAudio(to: muffledNode, audioFileName: "muffledRain.wav", volume: 0.5, delay: 0, echolocationComponent: echolocationComponent)
         }
         
         if let andraParentNode = rootNode.childNode(withName: "player", recursively: true) {
             if let andraNode = andraParentNode.childNode(withName: "s8-andra1", recursively: false) {
-                attachAudio(to: andraNode, audioFileName: "s8-andra1.mp3", volume: 500, delay: 5)
+                attachAudio(to: andraNode, audioFileName: "s8-andra1.mp3", volume: 500, delay: 2, echolocationComponent: echolocationComponent)
             }
         }
         
-        if let pipeNode = rootNode.childNode(withName: "pipe", recursively: true) {
-            attachAudio(to: pipeNode, audioFileName: "pipeNecklace.mp3", volume: 0.3, delay: 2)
+        if let pipeNode = rootNode.childNode(withName: "pipe_3", recursively: true) {
+            attachAudio(to: pipeNode, audioFileName: "pipeNecklace.mp3", volume: 0.3, delay: 2, echolocationComponent: echolocationComponent)
         }
         
-        clueCabinetNode = rootNode.childNode(withName: "smallCabinet", recursively: true)
+        clueCabinetNode = rootNode.childNode(withName: "smallCabinetBody", recursively: true)
         
-        cluePipeNode = rootNode.childNode(withName: "pipe", recursively: true)
+        cluePipeNode = rootNode.childNode(withName: "pipe_1", recursively: true)
         
         necklaceNode = rootNode.childNode(withName: "necklace", recursively: true)
         
@@ -167,77 +171,8 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         applyCustomFont(to: necklaceLabel, fontSize: 14)
     }
     
-    // Apply the custom font to a label
-    private func applyCustomFont(to label: UILabel, fontSize: CGFloat) {
-        if let customFont = UIFont(name: "SpecialElite-Regular", size: fontSize) {
-            label.font = customFont
-        } else {
-            print("Failed to load SpecialElite-Regular font.")
-        }
-    }
-    
-    func animateNecklaceFalling(from pipeNode: SCNNode) {
-        // Define the falling action
-        let fallDown = SCNAction.moveBy(x: 0, y: 0, z: -70.0, duration: 3.0) // Adjust the Y-offset and duration as needed
-        let wait = SCNAction.wait(duration: 3) // Optional wait time before the next action
-        let playSound = SCNAction.playAudio(SCNAudioSource(fileNamed: "fallingNecklaceWater.mp3")!, waitForCompletion: true) // Add a sound effect for dropping the necklace
-        let sequence = SCNAction.sequence([fallDown, wait, playSound])
-
-        // Run the action
-        necklaceNode.runAction(sequence)
-        
-        isNecklaceFalling = true
-    }
-
-    func displayNecklaceObtainedLabel(on view: UIView) {
-        necklaceLabel.text = isNecklaceObtained ? "Kirana's necklace is obtained" : "Try again!"
-        view.addSubview(necklaceLabel)
-
-        // Position the camera instruction label above the center of the screen
-        let offsetFromTop: CGFloat = 170
-        necklaceLabel.frame = CGRect(
-            x: (view.bounds.width - 250) / 2,
-            y: (view.bounds.height) / 2 - offsetFromTop,
-             width: 255,
-             height: 25
-         )
-        // Fade in the label
-        UIView.animate(withDuration: 0.5) {
-            self.necklaceLabel.alpha = 1.0
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-            UIView.animate(withDuration: 0.5) {
-                self.necklaceLabel.alpha = 0.0
-            }
-        }
-    }
-    
-    func pipeCompleted() {
-        if currentPipeIndex == 15 {
-            print("Puzzle solved! The necklace is revealed.")
-            
-            pipeBackground?.removeFromSuperview()
-            timeLabel.removeFromSuperview()
-            timer?.invalidate()
-            cluePipeNode.isHidden = false
-            // Set game completion flag to true
-            isNecklaceObtained = true
-            
-            // Delay to wait until the necklace finishes falling
-            DispatchQueue.main.asyncAfter(deadline: .now()) { [weak self] in
-                GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-235.327, 186.952, 0), duration: 2.0) {
-                    self?.cameraNode.look(at: self!.necklaceNode.position)
-                    self?.animateNecklaceFalling(from: self!.cluePipeNode!)
-                    self?.isPlayingPipe = false
-                }
-            }
-        } else {
-            
-        }
-    }
-
     @objc func examinePipe(on view: UIView) {
+        isPipeFailed = false
         isPlayingPipe = true
         
         // Puzzle background setup
@@ -250,7 +185,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         pipeBackground?.frame = CGRect(
             x: (view.bounds.width - backgroundWidth) / 2,
-            y: (view.bounds.height - backgroundHeight) / 2 + 20,
+            y: (view.bounds.height - backgroundHeight) / 2,
             width: backgroundWidth,
             height: backgroundHeight
         )
@@ -305,14 +240,16 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         }
         
         previouslyGreenPipes.insert("pipeclue-1")
-        //        animatePipeToGreen(pipeName: "pipeclue-1")
         
-        // Add time label to the top of the white box
+        // Restart the timer
+        timer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(updateTime), userInfo: nil, repeats: true)
+        
+        // Place the time label to the right of pipeBackground
         timeLabel = UILabel(frame: CGRect(
-            x: pipeBackground!.frame.minX,
-            y: pipeBackground!.frame.minY - 60, // Position slightly above the white box
-            width: backgroundWidth,
-            height: 50
+            x: pipeBackground!.frame.maxX + 10,  // Position to the right of pipeBackground with a small padding
+            y: pipeBackground!.frame.minY / 2,       // Align vertically with the top of pipeBackground
+            width: 100,                          // Set width for the label
+            height: 50                           // Set height for the label
         ))
         
         timeLabel.textAlignment = .center
@@ -323,9 +260,16 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         // Start the timer
         startTimer()
-        cluePipeNode.isHidden = true
+        // Loop through each puzzle piece
+        for i in 1...8 {
+            let pipeNodeName = "pipe_\(i)"
+            if let pipeNode = rootNode.childNode(withName: pipeNodeName, recursively: true) {
+                // Set the category bitmask for post-processing
+                pipeNode.isHidden = true
+            }
+        }
     }
-        
+    
     @objc func rotatePipePiece(_ sender: UITapGestureRecognizer) {
         guard let imageView = sender.view as? UIImageView,
               let pipeName = imageView.accessibilityIdentifier else {
@@ -380,8 +324,8 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
                 }
                 
                 if correctlyRotatedPipes.count >= 15 {
-                    attachAudio(to: rootNode, audioFileName: "waterNecklacePipe.mp3", volume: 1.3, delay: 0)
-
+                    attachAudio(to: rootNode, audioFileName: "waterNecklacePipe.mp3", volume: 1.3, delay: 0, echolocationComponent: echolocationComponent)
+                    
                     for correctPipes in correctlyRotatedPipes {
                         previouslyGreenPipes.insert(correctPipes)
                     }
@@ -399,15 +343,13 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             }
         }
         
-        attachAudio(to: rootNode, audioFileName: "pipeMove.mp3", volume: 0.8, delay: 0)
-                
-//        print(correctlyRotatedPipes.count)
+        attachAudio(to: rootNode, audioFileName: "pipeMove.mp3", volume: 0.8, delay: 0, echolocationComponent: echolocationComponent)
     }
-        
+    
     // Function to animate the next pipe
     private func animateNextPipe(pipes: [String]) {
         timeLabel.removeFromSuperview()
-
+        
         // Ensure we haven't animated all pipes
         guard currentPipeIndex < pipes.count else { return }
         
@@ -449,7 +391,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             animateNextPipe(pipes: pipes) // Continue to the next pipe
         }
         print("Current pipe index after animation: \(currentPipeIndex)")
-                        
+        
         if areAllPipesCorrectlyRotated() {
             pipeCompleted()
         }
@@ -575,7 +517,250 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         return true // All specified pieces are correctly rotated
     }
     
-    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
+    func animateNecklaceFalling(from pipeNode: SCNNode) {
+        let moveLeft = SCNAction.moveBy(x: 10.0, y: 0, z: 0, duration: 2.0) // Adjust the x-offset and duration as needed
+        // Define the falling action
+        let fallDown = SCNAction.moveBy(x: 0, y: 0, z: -50.0, duration: 3.0) // Adjust the Y-offset and duration as needed
+        let wait = SCNAction.wait(duration: 3) // Optional wait time before the next action
+        let playSound = SCNAction.playAudio(SCNAudioSource(fileNamed: "fallingNecklace.mp3")!, waitForCompletion: false) // Add a sound effect for dropping the necklace
+        let sequence = SCNAction.sequence([moveLeft, fallDown, wait, playSound])
+        
+        // Run the action
+        necklaceNode.runAction(sequence)
+    }
+    
+    func pipeCompleted() {
+        if currentPipeIndex == 15 {
+            print("Puzzle solved! The necklace is revealed.")
+            
+            pipeBackground?.removeFromSuperview()
+            timeLabel.removeFromSuperview()
+            timer?.invalidate()
+            
+            // Loop through each puzzle piece
+            for i in 1...8 {
+                let pipeNodeName = "pipe_\(i)"
+                if let pipeNode = rootNode.childNode(withName: pipeNodeName, recursively: true) {
+                    // Set the category bitmask for post-processing
+                    pipeNode.isHidden = false
+                }
+            }
+            
+            // Delay to wait until the necklace finishes falling
+            DispatchQueue.main.asyncAfter(deadline: .now()) { [weak self] in
+                GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-272.92, 406.476, -80), duration: 2.0) {
+                    self?.cameraNode.look(at: self!.necklaceNode.position)
+                    self?.animateNecklaceFalling(from: self!.cluePipeNode!)
+                }
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+                GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-272.92, 406.476, 25), duration: 2.0) {
+                    self?.isPlayingPipe = false
+                    self?.isNecklaceFalling = true
+                    self?.isNecklaceObtained = true
+                }
+            }
+        }
+    }
+        
+    func updateProximityAndGlow(interactButton: UIButton) {
+        guard let playerNode = playerEntity.playerNode, let cluePipeNode = cluePipeNode, let clueCabinetNode = clueCabinetNode else {
+            print("Error: Player node or Cake node not found")
+            return
+        }
+        
+        // Measure distances to each clue object
+        let distanceToCabinet = playerNode.position.distance(to: clueCabinetNode.position)
+        let distanceToPipe = playerNode.position.distance(to: cluePipeNode.position)
+        
+        if !isCabinetOpened {
+            if distanceToCabinet < proximityDistance {
+                // If the pipe is closer
+                toggleGlowEffect(on: clueCabinetNode, isEnabled: true)
+                toggleGlowEffect(on: cluePipeNode, isEnabled: false)
+                
+                // Update interact button content
+                interactButton.setTitle("Open Cabinet", for: .normal)
+                interactButton.isHidden = false
+            } else {
+                // If neither is within proximity, turn off all glows and hide the button
+                toggleGlowEffect(on: clueCabinetNode, isEnabled: false)
+                toggleGlowEffect(on: cluePipeNode, isEnabled: false)
+                
+                interactButton.isHidden = true
+            }
+        } else if isNecklaceObtained {
+            // If neither is within proximity, turn off all glows and hide the button
+            toggleGlowEffect(on: clueCabinetNode, isEnabled: false)
+            toggleGlowEffect(on: cluePipeNode, isEnabled: false)
+            
+            interactButton.isHidden = true
+            GameViewController.joystickComponent.joystickView.isHidden = false
+        } else {
+            if distanceToPipe < proximityDistance {
+                toggleGlowEffect(on: cluePipeNode, isEnabled: true)
+                toggleGlowEffect(on: clueCabinetNode, isEnabled: false)
+
+                // Update interact button content
+                interactButton.setTitle("Examine Pipe", for: .normal)
+                interactButton.isHidden = false
+            } else {
+                // If neither is within proximity, turn off all glows and hide the button
+                toggleGlowEffect(on: clueCabinetNode, isEnabled: false)
+                toggleGlowEffect(on: cluePipeNode, isEnabled: false)
+                
+                interactButton.isHidden = true
+            }
+        }
+    }
+    
+    func toggleGlowEffect(on node: SCNNode, isEnabled: Bool) {
+        if isEnabled {
+            node.categoryBitMask = 2 // Enable glow effect for the specified node
+
+            if node == clueCabinetNode! {
+                let cabinetNodeName = "smallCabinetDoor"
+                if let cabinetNode = rootNode.childNode(withName: cabinetNodeName, recursively: true) {
+                    // Set the category bitmask for post-processing
+                    cabinetNode.categoryBitMask = 2
+                }
+            } else {
+                // Loop through each puzzle piece
+                for i in 2...8 {
+                    let pipeNodeName = "pipe_\(i)"
+                    if let pipeNode = rootNode.childNode(withName: pipeNodeName, recursively: true) {
+                        // Set the category bitmask for post-processing
+                        pipeNode.categoryBitMask = 2
+                    }
+                }
+            }
+        } else {
+            // Disable the technique
+            scnView?.technique = nil
+            node.categoryBitMask = 1 // Disable glow effect for the specified node
+            
+            if node == clueCabinetNode! {
+                let cabinetNodeName = "smallCabinetDoor"
+                if let cabinetNode = rootNode.childNode(withName: cabinetNodeName, recursively: true) {
+                    // Set the category bitmask for post-processing
+                    cabinetNode.categoryBitMask = 1
+                }
+            } else {
+                // Loop through each puzzle piece
+                for i in 2...8 {
+                    let pipeNodeName = "pipe_\(i)"
+                    if let pipeNode = rootNode.childNode(withName: pipeNodeName, recursively: true) {
+                        // Set the category bitmask for post-processing
+                        pipeNode.categoryBitMask = 1
+                    }
+                }
+            }
+        }
+    }
+    
+    @objc func openCabinet() {
+        // Your existing code for opening the cabinet
+        isCabinetOpened = true
+        GameViewController.joystickComponent.joystickView.isHidden = true
+
+        attachAudio(to: playerEntity.playerNode!, audioFileName: "s8-andra2.mp3", volume: 50, delay: 4, echolocationComponent: echolocationComponent)
+        
+        // Delay to wait until the necklace finishes falling
+        DispatchQueue.main.asyncAfter(deadline: .now()) { [weak self] in
+            GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-410.945, 508.707, 25.0), duration: 2.5) {
+                self?.cameraNode.look(at: self!.clueCabinetNode.position)
+            }
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 11.0) {
+            self.isCabinetDone = true
+            GameViewController.joystickComponent.joystickView.isHidden = false
+        }
+    }
+    
+    func startTimer() {
+        applyCustomFont(to: timeLabel, fontSize: 24)
+        
+        timer?.invalidate() // Reset any existing timer
+        timer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(updateTime), userInfo: nil, repeats: true)
+    }
+    
+    @objc func updateTime() {
+        timeLimit -= 1
+        updateTimeLabel()
+                
+        if timeLimit <= 0 {
+            timer?.invalidate()
+        }
+    }
+    
+    func updateTimeLabel() {
+        if timeLimit > 0 {
+            let minutes = timeLimit / 60
+            let seconds = timeLimit % 60
+            timeLabel.text = String(format: "%02d:%02d", minutes, seconds)
+        } else {
+            timeLabel.text = "Time's Up!"
+            triggerPipeFailedTransition() // Implement your failure transition logic here
+        }
+    }
+    
+    func triggerPipeFailedTransition() {
+        print("Puzzle failed!")
+        
+        pipeBackground?.removeFromSuperview()
+        timeLabel.removeFromSuperview()
+        // Invalidate the existing timer if it's running
+        timer?.invalidate()
+        
+        // Reset the time limit to the starting value
+        timeLimit = 30 // Set this to the initial time limit you want
+        
+        // Loop through each puzzle piece
+        for i in 1...8 {
+            let pipeNodeName = "pipe_\(i)"
+            if let pipeNode = rootNode.childNode(withName: pipeNodeName, recursively: true) {
+                // Set the category bitmask for post-processing
+                pipeNode.isHidden = false
+            }
+        }
+
+        isNecklaceObtained = false
+        isPlayingPipe = false
+        isPipeFailed = true
+        currentPipeIndex = 0
+        correctRotationCounter = 0  // Counter to track correct rotations
+        correctlyRotatedPipes = []
+        previouslyGreenPipes = []  // Track pipes that were previously green
+        lastActivatedPipeIndex = -1 // Track the last activated pipe index
+    }
+    
+    func displayNecklaceObtainedLabel(on view: UIView) {
+        necklaceLabel.text = isNecklaceObtained ? "Kirana's necklace is obtained" : "You failed! Try again."
+        view.addSubview(necklaceLabel)
+        
+        // Position the camera instruction label above the center of the screen
+        let offsetFromTop: CGFloat = 170
+        necklaceLabel.frame = CGRect(
+            x: (view.bounds.width - 250) / 2,
+            y: (view.bounds.height) / 2 - offsetFromTop,
+            width: 255,
+            height: 25
+        )
+        // Fade in the label
+        UIView.animate(withDuration: 0.5) {
+            self.necklaceLabel.alpha = 1.0
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+            UIView.animate(withDuration: 0.5) {
+                self.necklaceLabel.alpha = 0.0
+            }
+        }
+    }
+    
+    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval, echolocationComponent: EcholocationComponent?) {
         guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
             print("Warning: Audio file '\(audioFileName)' not found")
             return
@@ -596,148 +781,19 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         let sequenceAction = SCNAction.sequence([waitAction, playAudioAction])
         node.runAction(sequenceAction)
+        
+        echolocationComponent?.activateFlash()
     }
     
-    func updateProximityAndGlow(interactButton: UIButton) {
-        guard let playerNode = playerEntity.playerNode else {
-            print("Error: Player node not found")
-            return
-        }
-        
-        // Measure distances to each clue object
-        let distanceToCabinet = playerNode.position.distance(to: clueCabinetNode.position)
-        let distanceToPipe = playerNode.position.distance(to: cluePipeNode.position)
-        
-        if isNecklaceObtained {
-            if distanceToCabinet < proximityDistance {
-                toggleGlowEffect(on: clueCabinetNode, isEnabled: true)
-                toggleGlowEffect(on: cluePipeNode, isEnabled: false)
-
-                // Update interact button content
-                interactButton.setTitle("Open Cabinet", for: .normal)
-                interactButton.isHidden = false
-            }
-            else {
-                // If neither is within proximity, turn off all glows and hide the button
-                toggleGlowEffect(on: clueCabinetNode, isEnabled: false)
-                toggleGlowEffect(on: cluePipeNode, isEnabled: false)
-                interactButton.isHidden = true
-            }
+    // Apply the custom font to a label
+    private func applyCustomFont(to label: UILabel, fontSize: CGFloat) {
+        if let customFont = UIFont(name: "SpecialElite-Regular", size: fontSize) {
+            label.font = customFont
         } else {
-            // Determine which object is closer and within the proximity distance
-            if distanceToCabinet < proximityDistance && distanceToCabinet < distanceToPipe {
-                // If the cabinet is closer
-                toggleGlowEffect(on: clueCabinetNode, isEnabled: true)
-                toggleGlowEffect(on: cluePipeNode, isEnabled: false)
-                
-                // Update interact button content
-                interactButton.setTitle("Open Cabinet", for: .normal)
-                interactButton.isHidden = false
-            } else if distanceToPipe < proximityDistance {
-                // If the pipe is closer
-                toggleGlowEffect(on: cluePipeNode, isEnabled: true)
-                toggleGlowEffect(on: clueCabinetNode, isEnabled: false)
-                
-                // Update interact button content
-                interactButton.setTitle("Examine Pipe", for: .normal)
-                interactButton.isHidden = false
-            } else {
-                // If neither is within proximity, turn off all glows and hide the button
-                toggleGlowEffect(on: clueCabinetNode, isEnabled: false)
-                toggleGlowEffect(on: cluePipeNode, isEnabled: false)
-                interactButton.isHidden = true
-            }
+            print("Failed to load SpecialElite-Regular font.")
         }
     }
     
-    func toggleGlowEffect(on node: SCNNode, isEnabled: Bool) {
-        if isEnabled {
-            node.categoryBitMask = 2 // Enable glow effect for the specified node
-        } else {
-            node.categoryBitMask = 1 // Disable glow effect for the specified node
-        }
-    }
-    
-    @objc func openCabinet() {
-        // Your existing code for opening the cabinet
-        isCabinetOpened = true
-        attachAudio(to: clueCabinetNode!, audioFileName: "toiletOpenCabinet.mp3", volume: 50, delay: 0)
-        attachAudio(to: playerEntity.playerNode!, audioFileName: "s8-andra2.mp3", volume: 50, delay: 5)
-        
-        // code bwh buat suarae yg opencabinet ilang soale d hide
-        //        clueCabinetNode.isHidden = true
-    }
-    
-    func startTimer() {
-        applyCustomFont(to: timeLabel, fontSize: 24)
-
-        timer?.invalidate() // Reset any existing timer
-        timer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(updateTime), userInfo: nil, repeats: true)
-    }
-    
-    @objc func updateTime() {
-        timeLimit -= 1
-        updateTimeLabel()
-        
-        checkGameEnd() // Check if the game should end
-        
-        if timeLimit <= 0 {
-            timer?.invalidate()
-        }
-    }
-    
-    func updateTimeLabel() {
-        if timeLimit > 0 {
-            let minutes = timeLimit / 60
-            let seconds = timeLimit % 60
-            timeLabel.text = String(format: "%02d:%02d", minutes, seconds)
-        } else {
-            timeLabel.text = "Time's Up!"
-            timeOut()
-        }
-    }
-    
-    func timeOut() {
-        print("You failed!")
-        // Show failure transition here
-        triggerPipeFailedTransition() // Implement your failure transition logic here
-        
-        // Create a temporary UITapGestureRecognizer
-        let tapGesture = UITapGestureRecognizer()
-//        dismissPipe(tapGesture) // Dismiss the puzzle using the temporary gesture recognizer
-    }
-    
-    func triggerPipeFailedTransition() {
-        print("Puzzle failed!")
-        
-        pipeBackground?.removeFromSuperview()
-        timeLabel.removeFromSuperview()
-        // Invalidate the existing timer if it's running
-        timer?.invalidate()
-        
-        // Reset the time limit to the starting value
-        timeLimit = 60 // Set this to the initial time limit you want
-        
-        // Restart the timer
-        timer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(updateTime), userInfo: nil, repeats: true)
-
-        cluePipeNode.isHidden = false
-        isNecklaceObtained = false
-        isPlayingPipe = false
-        isPipeFailed = true
-    }
-    
-    func checkGameEnd() {
-        if timeLimit <= 0 {
-            // Call the function to handle game failure if time runs out
-            timeOut()
-            //            triggerPuzzleFailedTransition()
-        } else if isNecklaceObtained {
-            // Call the function to handle successful completion
-            //            triggerPuzzleCompletionTransition()
-        }
-    }
-        
     // Check if the player is close to the transition trigger point
     func checkProximityToTransition() -> Bool {
         guard let playerPosition = playerEntity.playerNode?.position else { return false }
