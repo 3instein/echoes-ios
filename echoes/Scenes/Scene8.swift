@@ -17,6 +17,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     var necklaceNode: SCNNode!
 
     weak var scnView: SCNView?
+    
     var playButton: UIButton?  // Store a reference to the play button
     var clueCabinetNode: SCNNode!
     var cluePipeNode: SCNNode!
@@ -30,15 +31,32 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     var pipeBackground: UIView?
     var isNecklaceObtained: Bool = false  // Track if the game is completed
     
+    // Define the label for displaying the message
+    private let necklaceLabel: UILabel = {
+        let label = UILabel()
+        label.textAlignment = .center
+        label.textColor = UIColor.white
+        label.clipsToBounds = true
+        label.alpha = 0.0
+        return label
+    }()
+    
     var timer: Timer?
     var timeLimit: Int = 60
-    var timeLabel: UILabel?
+    private var timeLabel: UILabel = {
+        let label = UILabel()
+        label.textAlignment = .center
+        label.textColor = UIColor.white
+        label.clipsToBounds = true
+        label.alpha = 0.0
+        return label
+    }()
     
     var isPipeClicked = false
     
     var rotatingPipeNode: SCNNode?  // Node for the rotating pipe
     
-    let wipeDirections: [String: String] = [
+    var wipeDirections: [String: String] = [
         "pipeclue-2": "down",
         "pipeclue-3": "down",
         "pipeclue-7": "right",
@@ -76,13 +94,14 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     var lastActivatedPipeIndex: Int = -1 // Track the last activated pipe index
     
     var isNecklaceFalling = false
-
+    var isPipeFailed = false
+    
     init(lightNode: SCNNode) {
         GameViewController.joystickComponent.showJoystick()
         
         super.init()
         self.lightNode = lightNode
-        scnView?.pointOfView = cameraNode
+        //        scnView?.pointOfView = cameraNode
         
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "scene8.scn") else {
@@ -94,7 +113,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         for childNode in houseScene.rootNode.childNodes {
             rootNode.addChildNode(childNode)
         }
-
+        
         // Create a new player entity and initialize it using the house scene's root node
         playerEntity = PlayerEntity(in: rootNode, cameraNode: cameraNode, lightNode: lightNode)
         
@@ -141,8 +160,20 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         cluePipeNode = rootNode.childNode(withName: "pipe", recursively: true)
         
         necklaceNode = rootNode.childNode(withName: "necklace", recursively: true)
-
+        
         self.physicsWorld.contactDelegate = self
+        
+        // Apply font to necklaceLabel safely
+        applyCustomFont(to: necklaceLabel, fontSize: 14)
+    }
+    
+    // Apply the custom font to a label
+    private func applyCustomFont(to label: UILabel, fontSize: CGFloat) {
+        if let customFont = UIFont(name: "SpecialElite-Regular", size: fontSize) {
+            label.font = customFont
+        } else {
+            print("Failed to load SpecialElite-Regular font.")
+        }
     }
     
     func animateNecklaceFalling(from pipeNode: SCNNode) {
@@ -154,14 +185,40 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
 
         // Run the action
         necklaceNode.runAction(sequence)
+        
+        isNecklaceFalling = true
     }
 
+    func displayNecklaceObtainedLabel(on view: UIView) {
+        necklaceLabel.text = isNecklaceObtained ? "Kirana's necklace is obtained" : "Try again!"
+        view.addSubview(necklaceLabel)
+
+        // Position the camera instruction label above the center of the screen
+        let offsetFromTop: CGFloat = 170
+        necklaceLabel.frame = CGRect(
+            x: (view.bounds.width - 250) / 2,
+            y: (view.bounds.height) / 2 - offsetFromTop,
+             width: 255,
+             height: 25
+         )
+        // Fade in the label
+        UIView.animate(withDuration: 0.5) {
+            self.necklaceLabel.alpha = 1.0
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            UIView.animate(withDuration: 0.5) {
+                self.necklaceLabel.alpha = 0.0
+            }
+        }
+    }
+    
     func pipeCompleted() {
         if currentPipeIndex == 15 {
             print("Puzzle solved! The necklace is revealed.")
             
             pipeBackground?.removeFromSuperview()
-            timeLabel?.removeFromSuperview()
+            timeLabel.removeFromSuperview()
             timer?.invalidate()
             cluePipeNode.isHidden = false
             // Set game completion flag to true
@@ -175,6 +232,8 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
                     self?.isPlayingPipe = false
                 }
             }
+        } else {
+            
         }
     }
 
@@ -256,11 +315,11 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             height: 50
         ))
         
-        timeLabel?.textAlignment = .center
-        timeLabel?.font = UIFont.boldSystemFont(ofSize: 24) // Bigger font size
-        timeLabel?.textColor = .white // Changed to black for better visibility
+        timeLabel.textAlignment = .center
+        timeLabel.font = UIFont.boldSystemFont(ofSize: 24) // Bigger font size
+        timeLabel.textColor = .white // Changed to black for better visibility
         updateTimeLabel() // Set the initial time
-        view.addSubview(timeLabel!)
+        view.addSubview(timeLabel)
         
         // Start the timer
         startTimer()
@@ -297,6 +356,15 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             isCorrectRotation = abs(currentRotation - 0) < tolerance || abs(currentRotation - .pi) < tolerance
         } else {
             isCorrectRotation = abs(currentRotation - 0) < tolerance
+        }
+        
+        // Handle the special pieces (2, 22, 23) to reverse wipe direction at 180 degrees
+        if abs(currentRotation - .pi) < tolerance, ["pipeclue-2", "pipeclue-22", "pipeclue-23"].contains(pipeName) {
+            // Reverse the wipe direction if rotation is 180 degrees
+            if let currentDirection = wipeDirections[pipeName] {
+                wipeDirections[pipeName] = (currentDirection == "up" || currentDirection == "down") ? (currentDirection == "up" ? "down" : "up") : (currentDirection == "left" ? "right" : "left")
+                print("Wipe direction for \(pipeName) is now \(wipeDirections[pipeName] ?? "unknown")")
+            }
         }
         
         if isCorrectRotation {
@@ -338,7 +406,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
     // Function to animate the next pipe
     private func animateNextPipe(pipes: [String]) {
-        timeLabel?.removeFromSuperview()
+        timeLabel.removeFromSuperview()
 
         // Ensure we haven't animated all pipes
         guard currentPipeIndex < pipes.count else { return }
@@ -529,7 +597,6 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         let sequenceAction = SCNAction.sequence([waitAction, playAudioAction])
         node.runAction(sequenceAction)
     }
-
     
     func updateProximityAndGlow(interactButton: UIButton) {
         guard let playerNode = playerEntity.playerNode else {
@@ -602,6 +669,8 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     }
     
     func startTimer() {
+        applyCustomFont(to: timeLabel, fontSize: 24)
+
         timer?.invalidate() // Reset any existing timer
         timer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(updateTime), userInfo: nil, repeats: true)
     }
@@ -621,9 +690,9 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         if timeLimit > 0 {
             let minutes = timeLimit / 60
             let seconds = timeLimit % 60
-            timeLabel?.text = String(format: "%02d:%02d", minutes, seconds)
+            timeLabel.text = String(format: "%02d:%02d", minutes, seconds)
         } else {
-            timeLabel?.text = "Time's Up!"
+            timeLabel.text = "Time's Up!"
             timeOut()
         }
     }
@@ -639,52 +708,23 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     }
     
     func triggerPipeFailedTransition() {
-        isNecklaceObtained = true
-        pipeBackground?.backgroundColor = UIColor.white.withAlphaComponent(0)
+        print("Puzzle failed!")
         
-        guard let superview = pipeBackground?.superview else { return }
+        pipeBackground?.removeFromSuperview()
+        timeLabel.removeFromSuperview()
+        // Invalidate the existing timer if it's running
+        timer?.invalidate()
         
-        // Get the center of the screen
-        let screenCenter = CGPoint(x: superview.bounds.midX, y: superview.bounds.midY)
+        // Reset the time limit to the starting value
+        timeLimit = 60 // Set this to the initial time limit you want
         
-        timeLabel?.isHidden = true
-        
-        // Create an imageView for the completed puzzle image
-        let fullPipeImageView = UIImageView(image: UIImage(named: "failed card.png"))
-        fullPipeImageView.frame.size = CGSize(width: 450, height: 350)
-        fullPipeImageView.contentMode = .scaleAspectFit
-        fullPipeImageView.alpha = 0  // Start with hidden image
-        superview.addSubview(fullPipeImageView)
-        
-        // Animate each piece to the center of the screen
-        UIView.animate(withDuration: 0.5, delay: 0, options: [.curveEaseInOut], animations: {
-            for piece in self.pipeBackground?.subviews ?? [] {
-                if let imageView = piece as? UIImageView {
-                    imageView.center = screenCenter  // Move each piece to the center
-                    imageView.alpha = 0  // Fade out the pieces
-                }
-            }
-        }, completion: { _ in
-            // Remove all individual pieces from the view after animation
-            for piece in self.pipeBackground?.subviews ?? [] {
-                if let imageView = piece as? UIImageView {
-                    imageView.removeFromSuperview()
-                }
-            }
-            
-            // Set initial properties for the fullPuzzleImageView
-            fullPipeImageView.alpha = 0  // Start with the image hidden
-            fullPipeImageView.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)  // Start small
-            
-            // Center the image on the screen
-            fullPipeImageView.center = screenCenter
-            
-            // Fade in the full puzzle image after the pieces are removed
-            UIView.animate(withDuration: 2.0, delay: 0, usingSpringWithDamping: 0.5, initialSpringVelocity: 0.5, options: [.curveEaseInOut], animations: {
-                fullPipeImageView.alpha = 1
-                fullPipeImageView.transform = CGAffineTransform.identity
-            })
-        })
+        // Restart the timer
+        timer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(updateTime), userInfo: nil, repeats: true)
+
+        cluePipeNode.isHidden = false
+        isNecklaceObtained = false
+        isPlayingPipe = false
+        isPipeFailed = true
     }
     
     func checkGameEnd() {
