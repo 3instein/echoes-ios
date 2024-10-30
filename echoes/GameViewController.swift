@@ -248,6 +248,14 @@ class GameViewController: UIViewController {
             } else {
                 gameScene.isPipeClicked = false
             }
+            
+            if gameScene.isNecklaceFalling {
+                gameScene.displayNecklaceObtainedLabel(on: self.view)
+                gameScene.isNecklaceFalling = false
+            } else if gameScene.isPipeFailed {
+                gameScene.displayNecklaceObtainedLabel(on: self.view)
+                gameScene.isPipeFailed = false
+            }
         }
     }
     
