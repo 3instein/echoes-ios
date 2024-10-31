@@ -87,11 +87,13 @@ class GameViewController: UIViewController, Scene2Delegate {
     }
     
     func transitionToScene4() {
-        // Show joystick immediately to avoid delay
-        GameViewController.joystickComponent.joystickView.isHidden = false
-        
         // Load Scene4 after Scene2 finishes
         SceneManager.shared.loadScene4()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            GameViewController.joystickComponent.showJoystick()
+        }
+        GameViewController.joystickComponent.showJoystickTutorial()
         
         // Temporarily reset the background color to clear (prevents black background flash)
         scnView.backgroundColor = UIColor.clear
@@ -118,7 +120,7 @@ class GameViewController: UIViewController, Scene2Delegate {
             gameScene.setupGestureRecognizers(for: self.scnView)
             
             // After scene loads, set the background back to black
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                 self.scnView.backgroundColor = UIColor.black
             }
         }

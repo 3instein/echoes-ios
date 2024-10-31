@@ -6,7 +6,6 @@ import UIKit
 class Scene4: SCNScene, SCNPhysicsContactDelegate {
     var playerEntity: PlayerEntity!
     var cameraComponent: CameraComponent!
-    var joystickComponent: VirtualJoystickComponent!
     var cameraNode: SCNNode!
     var lightNode: SCNNode!
     var combinedPieces: [UIView: [UIView]] = [:]  // Dictionary that tracks combined pieces
@@ -22,15 +21,13 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
     let triggerDistance: Float = 100.0
     
     init(lightNode: SCNNode) {
-        GameViewController.joystickComponent.showJoystick()
-        GameViewController.joystickComponent.showJoystickTutorial()
         super.init()
         self.lightNode = lightNode
         scnView?.pointOfView = cameraNode
         
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "Scene4.scn") else {
-            print("Warning: House scene 'Scene 4.scn' not found")
+            print("Warning: House scene 'Scene4.scn' not found")
             return
         }
         
