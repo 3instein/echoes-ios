@@ -11,9 +11,11 @@ class Scene2: SCNScene {
     weak var delegate: Scene2Delegate?
     
     var playerEntity: PlayerEntity!
+    var doorEntity: NPCEntity?
+    var grandmaEntity: NPCEntity?
     var cameraNode: SCNNode!
-    var cameraComponent: CameraComponent!
     var lightNode: SCNNode!
+    var cameraComponent: CameraComponent!
     var doorNode: SCNNode?
     var grandmaNode: SCNNode?
     var scnView: SCNView?
@@ -32,8 +34,8 @@ class Scene2: SCNScene {
         super.init()
         self.lightNode = lightNode
         
-        guard let combinedScene = SCNScene(named: "scene3.scn") else {
-            print("Warning: Scene named 'scene3.scn' not found")
+        guard let combinedScene = SCNScene(named: "scene2.scn") else {
+            print("Warning: Scene named 'scene2.scn' not found")
             return
         }
         
@@ -77,7 +79,6 @@ class Scene2: SCNScene {
             return
         }
         
-        // Optional adjustments to the camera if needed
         cameraNode.camera?.fieldOfView = 75
         cameraNode.camera?.automaticallyAdjustsZRange = false
         
@@ -85,6 +86,24 @@ class Scene2: SCNScene {
         cameraComponent = CameraComponent(cameraNode: cameraNode)
         cameraComponent.lockCamera()
         rootNode.addChildNode(lightNode)
+        
+        // Set up echolocation components for Grandma and Door
+        setupNPCEntities()
+    }
+    
+    func setupNPCEntities() {
+        if let doorNode = doorNode {
+            doorEntity = NPCEntity(npcNode: doorNode, lightNode: lightNode)
+        }
+        
+        if let grandmaNode = grandmaNode {
+            grandmaEntity = NPCEntity(npcNode: grandmaNode, lightNode: lightNode)
+        }
+    }
+    
+    func activateEcholocation() {
+        doorEntity?.activateEcholocation()
+        grandmaEntity?.activateEcholocation()
     }
     
     func attachAmbientSounds() {
@@ -127,6 +146,9 @@ class Scene2: SCNScene {
     
     func beginDoorAndGrandmaSequence() {
         isCutscenePlaying = true
+        // Activate echolocation for Grandma and Door during cutscene
+        activateEcholocation()
+        
         let delayAction = SCNAction.wait(duration: 0.5)
         let sequence = SCNAction.sequence([delayAction, SCNAction.run { [weak self] _ in
             self?.openDoor {
