@@ -119,9 +119,10 @@ class GameViewController: UIViewController {
     @objc func updateScene() {
         GameViewController.playerEntity?.movementComponent?.update(deltaTime: 0.016)
         
-        if let gameScene = scnView.scene as? Scene4 {
-            // Check if the player is near the transition point
-            if gameScene.checkProximityToTransition() {
+        if let gameScene = scnView.scene as? Scene8 {
+            // Check if the player is near the transition
+            
+            if gameScene.isJumpscareDone && gameScene.checkProximityToTransition() {
                 // Load Scene3 after the movement finishes
                 SceneManager.shared.loadScene5()
                 
@@ -131,9 +132,7 @@ class GameViewController: UIViewController {
                     // Create a movement component to handle player movement, including the light node
                     let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
                     GameViewController.playerEntity.movementComponent = movementComponent
-                    
-                    //                        GameViewController.playerEntity.movementComponent?.resetMovementAndLight()
-                    
+                                        
                     // Link the joystick with the movement component
                     if let movementComponent = gameScene.playerEntity.movementComponent {
                         movementComponent.joystickComponent = GameViewController.joystickComponent
@@ -214,6 +213,34 @@ class GameViewController: UIViewController {
         
         //SCENE 8
         if let gameScene = scnView.scene as? Scene8 {
+            // Check if the player is near the transition point
+//            if gameScene.isJumpscareDone && gameScene.checkProximityToTransition() {
+//                // Load Scene3 after the movement finishes
+//                SceneManager.shared.loadScene5()
+//                
+//                if let gameScene = self.scnView.scene as? Scene5 {
+//                    GameViewController.playerEntity = gameScene.playerEntity
+//                    
+//                    // Create a movement component to handle player movement, including the light node
+//                    let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
+//                    GameViewController.playerEntity.movementComponent = movementComponent
+//                                        
+//                    // Link the joystick with the movement component
+//                    if let movementComponent = gameScene.playerEntity.movementComponent {
+//                        movementComponent.joystickComponent = GameViewController.joystickComponent
+//                        self.scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
+//                    }
+//                    
+//                    // Set up fog properties for the scene
+//                    gameScene.fogStartDistance = 25.0   // Increase the start distance
+//                    gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
+//                    gameScene.fogDensityExponent = 0.3  // Reduce density to make the fog less thick
+//                    gameScene.fogColor = UIColor.black
+//                    
+//                    gameScene.setupGestureRecognizers(for: self.scnView)
+//                }
+//            }
+
             let cabinetNodeName = "smallCabinet"
             if let cabinetNode = gameScene.rootNode.childNode(withName: cabinetNodeName, recursively: true) {
                 // Set the category bitmask for post-processing
@@ -226,7 +253,6 @@ class GameViewController: UIViewController {
                 pipeNode.categoryBitMask = 2
             }
             
-//             Load and apply the SCNTechnique for the glow effect
             if let path = Bundle.main.path(forResource: "NodeTechnique", ofType: "plist"),
                let dict = NSDictionary(contentsOfFile: path) as? [String: AnyObject] {
                 let technique = SCNTechnique(dictionary: dict)
@@ -246,10 +272,10 @@ class GameViewController: UIViewController {
                 gameScene.isCabinetOpened = true
             }
 
-            if gameScene.isPlayingPipe || (!gameScene.isCabinetDone && gameScene.isCabinetOpened) {
+            if gameScene.isPlayingPipe || (!gameScene.isCabinetDone && gameScene.isCabinetOpened) || gameScene.isDollJumpscare {
                 GameViewController.joystickComponent.joystickView.isHidden = true
                 interactButton.isHidden = true
-            } else if !gameScene.isCabinetOpened || (gameScene.isCabinetOpened && !gameScene.isPlayingPipe) {
+            } else if !gameScene.isCabinetOpened || (gameScene.isCabinetOpened && !gameScene.isPlayingPipe) || (!gameScene.isDollJumpscare && gameScene.isNecklaceObtained) {
                 GameViewController.joystickComponent.joystickView.isHidden = false
             }
             
