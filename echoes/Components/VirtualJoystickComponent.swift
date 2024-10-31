@@ -25,40 +25,39 @@ class VirtualJoystickComponent: GKComponent {
     let joystickSize: CGFloat = 140.00 // Reduced from 150.0
     let knobSize: CGFloat = 70.0 // Reduced from 70.0
     var idleTimer: Timer?
-
+    
     override init() {
         super.init()
-
+        
         // Set up the joystick base view
         joystickView = UIView(frame: CGRect(x: 50, y: UIScreen.main.bounds.height - joystickSize - 50, width: joystickSize, height: joystickSize))
-        joystickView.backgroundColor = UIColor(hex: "2A2DCE")
+        joystickView.backgroundColor = UIColor(hex: "3C3EBB")
         joystickView.layer.cornerRadius = joystickSize / 2
-        joystickView.alpha = 0.3 // Always visible initially
-
+        
         // Set up the joystick knob view
         joystickKnob = UIView(frame: CGRect(x: (joystickSize - knobSize) / 2, y: (joystickSize - knobSize) / 2, width: knobSize, height: knobSize))
-        joystickKnob.backgroundColor = UIColor(hex: "A0F30C")
+        joystickKnob.backgroundColor = UIColor(hex: "4B4EE8")
         joystickKnob.layer.cornerRadius = knobSize / 2
         joystickView.addSubview(joystickKnob)
     }
-
+    
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
     func attachToView(_ view: UIView) {
         view.addSubview(joystickView)
-
+        
         let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
         joystickView.addGestureRecognizer(panGestureRecognizer)
     }
-
+    
     @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
         let location = gesture.location(in: joystickView)
         let offset = CGPoint(x: location.x - joystickView.bounds.midX, y: location.y - joystickView.bounds.midY)
         let distance = sqrt(offset.x * offset.x + offset.y * offset.y)
         let maxDistance = joystickSize / 2
-
+        
         switch gesture.state {
         case .began:
             isTouching = true
@@ -92,24 +91,24 @@ class VirtualJoystickComponent: GKComponent {
         idleTimer?.invalidate()
         idleTimer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(handleIdleState), userInfo: nil, repeats: false)
     }
-
+    
     func resetIdleTimer() {
         idleTimer?.invalidate()
         idleTimer = nil
     }
-
+    
     @objc func handleIdleState() {
         if !isTouching {
             animateJoystickAlpha(to: 0.3) // Make joystick more translucent after being idle
         }
     }
-
+    
     func animateJoystickAlpha(to alpha: CGFloat) {
         UIView.animate(withDuration: 1.0) {
             self.joystickView.alpha = alpha
         }
     }
-
+    
     // Function to hide the joystick
     func hideJoystick() {
         UIView.animate(withDuration: 0.5) {
@@ -118,7 +117,7 @@ class VirtualJoystickComponent: GKComponent {
             self.joystickView.isHidden = true
         }
     }
-
+    
     // Function to show the joystick
     func showJoystick() {
         joystickView.isHidden = false
