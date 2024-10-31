@@ -245,11 +245,12 @@ class Scene2: SCNScene {
             blackOverlay.alpha = 0
             scnView.addSubview(blackOverlay)
             
-            UIView.animate(withDuration: 2.0) {
+            UIView.animate(withDuration: 2.0, animations: {
                 blackOverlay.alpha = 1.0
-            } completion: { _ in
+            }, completion: { _ in
+                blackOverlay.removeFromSuperview() // Remove overlay after fade
                 print("Fade to black complete")
-            }
+            })
         }
     }
     
