@@ -222,6 +222,15 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             
             // Delay to wait until the necklace finishes falling
             DispatchQueue.main.asyncAfter(deadline: .now()) { [weak self] in
+                
+                // Ensure the camera's Euler angles are aligned to avoid a crooked view
+                let eulerAngles = self?.cameraNode.eulerAngles
+                self?.cameraNode.eulerAngles = SCNVector3(
+                    (self?.roundedAngle(eulerAngles!.x * 180 / .pi))! * .pi / 180,
+                    (self?.roundedAngle(eulerAngles!.y * 180 / .pi))! * .pi / 180,
+                    (self?.roundedAngle(eulerAngles!.z * 180 / .pi))! * .pi / 180
+                )
+                
                 GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-272.92, 406.476, -80), duration: 3.0) {
                     self?.cameraNode.look(at: self!.necklaceNode.position)
 
@@ -236,8 +245,15 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
                 }
             }
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 9.5) { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10.5) { [weak self] in
                 self?.cameraNode.camera?.fieldOfView = 75  // Adjust this value for closer zoom
+                // Ensure the camera's Euler angles are aligned to avoid a crooked view
+                let eulerAngles = self?.cameraNode.eulerAngles
+                self?.cameraNode.eulerAngles = SCNVector3(
+                    (self?.roundedAngle(eulerAngles!.x * 180 / .pi))! * .pi / 180,
+                    (self?.roundedAngle(eulerAngles!.y * 180 / .pi))! * .pi / 180,
+                    (self?.roundedAngle(eulerAngles!.z * 180 / .pi))! * .pi / 180
+                )
 
                 GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-272.92, 406.476, 25), duration: 2.0) {
 
@@ -251,17 +267,35 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         }
     }
     
+    func roundedAngle(_ angle: Float) -> Float {
+        // Define the set of target angles
+        let targets: [Float] = [-180, -90, 0, 90, 180]
+        
+        // Find the closest target angle
+        return targets.min(by: { abs($0 - angle) < abs($1 - angle) }) ?? angle
+    }
+    
     func jumpscareDoll() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
             self?.dollNode.isHidden = false
             self?.isDollJumpscare = true
 
+            // Ensure the camera's Euler angles are aligned to avoid a crooked view
+            let eulerAngles = self?.cameraNode.eulerAngles
+            self?.cameraNode.eulerAngles = SCNVector3(
+                (self?.roundedAngle(eulerAngles!.x * 180 / .pi))! * .pi / 180,
+                (self?.roundedAngle(eulerAngles!.y * 180 / .pi))! * .pi / 180,
+                (self?.roundedAngle(eulerAngles!.z * 180 / .pi))! * .pi / 180
+            )
+            
             self?.cameraNode.look(at: self!.dollNode.position)
             
             self?.attachAudio(to: self!.dollNode!, audioFileName: "jumpscare1.wav", volume: 50.0, delay: 0, echolocationComponent: self?.echolocationComponent)
 
-            self?.attachAudio(to: self!.dollNode!, audioFileName: "dollToilet.mp3", volume: 20.0, delay: 0.8, echolocationComponent: self?.echolocationComponent)
+            self?.attachAudio(to: self!.dollNode!, audioFileName: "doll2.mp3", volume: 30.0, delay: 0.8, echolocationComponent: self?.echolocationComponent)
 
+            self?.attachAudio(to: self!.dollNode!, audioFileName: "whisperJumpscare.mp3", volume: 10.0, delay: 2.0, echolocationComponent: self?.echolocationComponent)
+            
             GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-293, 501.033, -30), duration: 0.2) {
                 self?.cameraNode.look(at: self!.dollNode.position)
                 // Animate zooming in by adjusting the camera's field of view
@@ -275,9 +309,16 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 15.0) { [weak self] in
             self?.cameraNode.camera?.fieldOfView = 75  // Default value for normal view
 
+            // Ensure the camera's Euler angles are aligned to avoid a crooked view
+            let eulerAngles = self?.cameraNode.eulerAngles
+            self?.cameraNode.eulerAngles = SCNVector3(
+                (self?.roundedAngle(eulerAngles!.x * 180 / .pi))! * .pi / 180,
+                (self?.roundedAngle(eulerAngles!.y * 180 / .pi))! * .pi / 180,
+                (self?.roundedAngle(eulerAngles!.z * 180 / .pi))! * .pi / 180
+            )
+            
             GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-293, 501.033, 30), duration: 1.5) {
                 self?.isDollJumpscare = false
-                self?.dollNode.isHidden = true
                 self?.toiletDoorCloseNode.isHidden = true
                 self?.toiletDoorOpenNode.isHidden = false
                 self?.isJumpscareDone = true
@@ -295,17 +336,41 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         audioSource.shouldStream = false
         audioSource.load()
         audioSource.volume = volume
-        
-        // Set looping for continuous rain sound
+
+        // Set looping for specific audio files if needed
         if audioFileName == "muffledRain.wav" || audioFileName == "pipeNecklace.mp3" || audioFileName == "pipeAfterOut.wav" {
-            audioSource.loops = true  // This ensures the rain loops without breaking
+            audioSource.loops = true
+        }
+
+        // Create a new node to attach the audio and position it
+        let audioNode = SCNNode()
+        node.addChildNode(audioNode)
+
+        // Play audio with delay
+        let playAudioAction = SCNAction.sequence([
+            SCNAction.wait(duration: delay),
+            SCNAction.playAudio(audioSource, waitForCompletion: false)
+        ])
+        
+        // Check if this is the whisperJumpscare sound for surrounding effect
+        if audioFileName == "whisperJumpscare.mp3" {
+            // Define the radius of the circular path
+            let radius: Float = 1.5
+            let duration: TimeInterval = 4.0  // Duration for one full circle
+
+            // Circular movement effect
+            let circularMovement = SCNAction.customAction(duration: duration) { node, elapsedTime in
+                let angle = Float(elapsedTime / duration) * 2 * Float.pi
+                node.position = SCNVector3(radius * cos(angle), 0, radius * sin(angle))
+            }
+            let repeatCircularMovement = SCNAction.repeatForever(circularMovement)
+            
+            // Apply the circular motion action to the audioNode
+            audioNode.runAction(repeatCircularMovement)
         }
         
-        let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: false)
-        let waitAction = SCNAction.wait(duration: delay)
-        
-        let sequenceAction = SCNAction.sequence([waitAction, playAudioAction])
-        node.runAction(sequenceAction)
+        // Play the audio
+        audioNode.runAction(playAudioAction)
         
         echolocationComponent?.activateFlash()
     }
@@ -791,6 +856,14 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         DispatchQueue.main.asyncAfter(deadline: .now()) { [weak self] in
             GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-402.985, 501, 30.0), duration: 2.5) {
+                // Ensure the camera's Euler angles are aligned to avoid a crooked view
+                let eulerAngles = self?.cameraNode.eulerAngles
+                self?.cameraNode.eulerAngles = SCNVector3(
+                    (self?.roundedAngle(eulerAngles!.x * 180 / .pi))! * .pi / 180,
+                    (self?.roundedAngle(eulerAngles!.y * 180 / .pi))! * .pi / 180,
+                    (self?.roundedAngle(eulerAngles!.z * 180 / .pi))! * .pi / 180
+                )
+                
                 SCNTransaction.begin()
                 SCNTransaction.animationDuration = 2.0
                 self?.cameraNode.camera?.fieldOfView = 50  // Adjust this value for closer zoom
@@ -803,6 +876,14 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 11.0) {
             self.cameraNode.camera?.fieldOfView = 75  // Adjust this value for closer zoom
 
+            // Ensure the camera's Euler angles are aligned to avoid a crooked view
+            let eulerAngles = self.cameraNode.eulerAngles
+            self.cameraNode.eulerAngles = SCNVector3(
+                (self.roundedAngle(eulerAngles.x * 180 / .pi)) * .pi / 180,
+                (self.roundedAngle(eulerAngles.y * 180 / .pi)) * .pi / 180,
+                (self.roundedAngle(eulerAngles.z * 180 / .pi)) * .pi / 180
+            )
+            
             GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-376.371, 516, 30.0), duration: 2.0) {
                 self.isCabinetDone = true
                 GameViewController.joystickComponent.joystickView.isHidden = false
@@ -904,11 +985,14 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     
     // Check if the player is close to the transition trigger point
     func checkProximityToTransition() -> Bool {
-        guard let playerPosition = playerEntity.playerNode?.position else { return false }
-        let distance = playerPosition.distance(to: transitionTriggerPosition)
-        print("player:", playerPosition)
-        print("distance:", distance)
-        return distance < triggerDistance
+        guard let playerNode = playerEntity.playerNode else { return false }
+        
+        // Calculate the distance to the transition trigger
+        let distance = playerNode.position.distance(to: transitionTriggerPosition)
+        print("player position:", playerNode.position)
+        print("distance to trigger:", distance)
+        
+        return false
     }
     
     func setupGestureRecognizers(for view: UIView) {
