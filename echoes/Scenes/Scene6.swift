@@ -1,12 +1,16 @@
 import SceneKit
 import UIKit
-
+//TAMBAHIN NODE doorClose & doorOpen, sesuaiin api sama titik di depan kamar
 class Scene6: SCNScene, SCNPhysicsContactDelegate {
     var playerEntity: PlayerEntity!
     var cameraComponent: CameraComponent!
     var joystickComponent: VirtualJoystickComponent!
+    
     var cameraNode: SCNNode!
     var lightNode: SCNNode!
+    var toiletDoorCloseNode: SCNNode!
+    var toiletDoorOpenNode: SCNNode!
+    
     var combinedPieces: [UIView: [UIView]] = [:]  // Dictionary that tracks combined pieces
     var completedCombinations: [[UIView]] = []  // Track completed combinations
     
@@ -17,13 +21,22 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     var puzzleBackground: UIView?
     var playButton: UIButton?  // Store a reference to the play button
     
-    var isPuzzleDisplayed: Bool = false
+    var isPlayingPuzzle: Bool = false
     var isPhotoObtained: Bool = false  // Track if the game is completed
+    var isCodeDone: Bool = false  // Track if the game is completed
+
     let snapDistance: CGFloat = 50.0
     
     var timer: Timer?
     var timeLimit: Int = 210 // 5-minute timer
-    var timeLabel: UILabel?
+    private var timeLabel: UILabel = {
+        let label = UILabel()
+        label.textAlignment = .center
+        label.textColor = UIColor.white
+        label.clipsToBounds = true
+        label.alpha = 0.0
+        return label
+    }()
     
     var hasGroupedTwoPieces = false  // Track if two pieces have been grouped
     var currentCombination: [UIView] = [] // Initialize currentCombination if not already done
@@ -47,6 +60,22 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         "puzzle_piece_16.png": ["puzzle_piece_11.png": CGPoint(x: -45, y: -40), "puzzle_piece_12.png": CGPoint(x: 20, y: -20)],
         "puzzle_piece_17.png": ["puzzle_piece_13.png": CGPoint(x: -75, y: -30), "puzzle_piece_14.png": CGPoint(x: -30, y: -25)]
     ]
+    
+    // Define the label for displaying the message
+    private let puzzleLabel: UILabel = {
+        let label = UILabel()
+        label.textAlignment = .center
+        label.textColor = UIColor.white
+        label.clipsToBounds = true
+        label.alpha = 0.0
+        return label
+    }()
+    
+    var isPuzzleFailed = false
+    
+    //GANTI LAGI KE TITIK DI DEPAN KAMAR KIRANA
+    let transitionTriggerPosition = SCNVector3(307, -493, 103.106)
+    let triggerDistance: Float = 80.0
     
     init(lightNode: SCNNode) {
         super.init()
@@ -93,11 +122,20 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         // Find Obj_Cake_003 node in the scene
         objCakeNode = rootNode.childNode(withName: "Puzzle_3", recursively: true)
         
+        toiletDoorOpenNode = rootNode.childNode(withName: "toiletDoorOpen", recursively: true)
+        
+        toiletDoorCloseNode = rootNode.childNode(withName: "toiletDoorClose", recursively: true)
+        
         addFallingCupSound()
         addSpoonSound()
         addBackgroundSound(audioFileName: "muffledRain.wav")  // Add this line to play background sound
         
+        toiletDoorOpenNode.isHidden = true
+        
         self.physicsWorld.contactDelegate = self
+        
+        // Apply font to necklaceLabel safely
+        applyCustomFont(to: puzzleLabel, fontSize: 14)
     }
     
     func displayPuzzlePieces(on view: UIView) {
@@ -112,8 +150,10 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         
         // Puzzle background setup
         puzzleBackground = UIView()
-        puzzleBackground?.backgroundColor = UIColor.white.withAlphaComponent(0.8)
+        puzzleBackground?.backgroundColor = UIColor.black.withAlphaComponent(0.4)
+        
         let backgroundSize = CGSize(width: view.bounds.width * 0.6, height: view.bounds.height * 0.7)
+        
         puzzleBackground?.frame = CGRect(
             x: (view.bounds.width - backgroundSize.width) / 2,
             y: (view.bounds.height - backgroundSize.height) / 2,
@@ -124,17 +164,6 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         puzzleBackground?.layer.borderWidth = 0
         puzzleBackground?.clipsToBounds = true
         view.addSubview(puzzleBackground!)
-        
-        // Add time label to the top of the white box
-        timeLabel = UILabel(frame: CGRect(
-            x: puzzleBackground!.frame.minX,
-            y: puzzleBackground!.frame.minY - 50, // Position slightly above the white box
-            width: backgroundSize.width, height: 50))
-        timeLabel?.textAlignment = .center
-        timeLabel?.font = UIFont.boldSystemFont(ofSize: 24) // Bigger font size
-        timeLabel?.textColor = .white
-        updateTimeLabel() // Set the initial time
-        view.addSubview(timeLabel!)
         
         // Add puzzle pieces to the background
         for pieceImage in pieceImages {
@@ -165,17 +194,41 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
             puzzleBackground?.addSubview(imageView)
         }
         
-        isPuzzleDisplayed = true
+        isPlayingPuzzle = true
         
-        // Dismiss puzzle when clicking outside the white rectangle
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissPuzzle(_:)))
-        view.addGestureRecognizer(tapGesture)
+        // Restart the timer
+        timer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(updateTime), userInfo: nil, repeats: true)
+        
+        // Place the time label to the right of pipeBackground
+        timeLabel = UILabel(frame: CGRect(
+            x: puzzleBackground!.frame.maxX + 10,  // Position to the right of pipeBackground with a small padding
+            y: puzzleBackground!.frame.minY / 2,       // Align vertically with the top of pipeBackground
+            width: 100,                          // Set width for the label
+            height: 50                           // Set height for the label
+        ))
+        
+        timeLabel.textAlignment = .center
+        timeLabel.font = UIFont.boldSystemFont(ofSize: 24) // Bigger font size
+        timeLabel.textColor = .white // Changed to black for better visibility
+        updateTimeLabel() // Set the initial time
+        view.addSubview(timeLabel)
         
         // Start the timer
         startTimer()
+        
+        // Loop through each puzzle piece
+        for i in 1...6 {
+            let puzzleNodeName = "Puzzle_\(i)"
+            if let puzzleNode = rootNode.childNode(withName: puzzleNodeName, recursively: true) {
+                // Set the category bitmask for post-processing
+                puzzleNode.isHidden = true
+            }
+        }
     }
     
     func startTimer() {
+        applyCustomFont(to: timeLabel, fontSize: 24)
+
         timer?.invalidate() // Reset any existing timer
         timer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(updateTime), userInfo: nil, repeats: true)
     }
@@ -184,7 +237,13 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         timeLimit -= 1
         updateTimeLabel()
         
-        checkGameEnd() // Check if the game should end
+        if timeLimit <= 0 {
+            // Call the function to handle game failure if time runs out
+            triggerPuzzleFailedTransition()
+        } else if isPhotoObtained {
+            // Call the function to handle successful completion
+            triggerPuzzleCompletionTransition()
+        }
         
         if timeLimit <= 0 {
             timer?.invalidate()
@@ -195,84 +254,70 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         if timeLimit > 0 {
             let minutes = timeLimit / 60
             let seconds = timeLimit % 60
-            timeLabel?.text = String(format: "%02d:%02d", minutes, seconds)
+            timeLabel.text = String(format: "%02d:%02d", minutes, seconds)
         } else {
-            timeLabel?.text = "Time's Up!"
-            timeOut()
+            timeLabel.text = "Time's Up!"
+            triggerPuzzleFailedTransition()
+        }
+    }
+
+    func triggerPuzzleFailedTransition() {
+        print("Puzzle failed!")
+        
+        puzzleBackground?.removeFromSuperview()
+        timeLabel.removeFromSuperview()
+        // Invalidate the existing timer if it's running
+        timer?.invalidate()
+        
+        // Reset the time limit to the starting value
+        timeLimit = 210 // Set this to the initial time limit you want
+        
+        // Loop through each puzzle piece
+        for i in 1...6 {
+            let puzzleNodeName = "Puzzle_\(i)"
+            if let puzzleNode = rootNode.childNode(withName: puzzleNodeName, recursively: true) {
+                // Set the category bitmask for post-processing
+                puzzleNode.isHidden = false
+            }
+        }
+
+        isPhotoObtained = false
+        isPlayingPuzzle = false
+        isPuzzleFailed = true
+        hasGroupedTwoPieces = false  // Track if two pieces have been grouped
+        currentCombination = [] // Initialize currentCombination if not already done
+    }
+
+    func displayPhotoObtainedLabel(on view: UIView) {
+        puzzleLabel.text = isPhotoObtained ? "Kirana's photo is obtained" : "You failed! Try again."
+        view.addSubview(puzzleLabel)
+        
+        // Position the camera instruction label above the center of the screen
+        let offsetFromTop: CGFloat = 170
+        puzzleLabel.frame = CGRect(
+            x: (view.bounds.width - 250) / 2,
+            y: (view.bounds.height) / 2 - offsetFromTop,
+            width: 255,
+            height: 25
+        )
+        // Fade in the label
+        UIView.animate(withDuration: 0.5) {
+            self.puzzleLabel.alpha = 1.0
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+            UIView.animate(withDuration: 0.5) {
+                self.puzzleLabel.alpha = 0.0
+            }
         }
     }
     
-    func timeOut() {
-        print("You failed!")
-        // Show failure transition here
-        triggerPuzzleFailedTransition() // Implement your failure transition logic here
-        
-        // Create a temporary UITapGestureRecognizer
-        let tapGesture = UITapGestureRecognizer()
-        dismissPuzzle(tapGesture) // Dismiss the puzzle using the temporary gesture recognizer
-    }
-    
-    // Show failure transition logic
-    func triggerPuzzleFailedTransition() {
-        isPhotoObtained = true
-        puzzleBackground?.backgroundColor = UIColor.white.withAlphaComponent(0)
-        
-        guard let superview = puzzleBackground?.superview else { return }
-        
-        // Get the center of the screen
-        let screenCenter = CGPoint(x: superview.bounds.midX, y: superview.bounds.midY)
-        
-        timeLabel?.isHidden = true
-        
-        // Create an imageView for the completed puzzle image
-        let fullPuzzleImageView = UIImageView(image: UIImage(named: "failed card.png"))
-        fullPuzzleImageView.frame.size = CGSize(width: 450, height: 350)
-        fullPuzzleImageView.contentMode = .scaleAspectFit
-        fullPuzzleImageView.alpha = 0  // Start with hidden image
-        superview.addSubview(fullPuzzleImageView)
-        
-        // Animate each piece to the center of the screen
-        UIView.animate(withDuration: 0.5, delay: 0, options: [.curveEaseInOut], animations: {
-            for piece in self.puzzleBackground?.subviews ?? [] {
-                if let imageView = piece as? UIImageView {
-                    imageView.center = screenCenter  // Move each piece to the center
-                    imageView.alpha = 0  // Fade out the pieces
-                }
-            }
-        }, completion: { _ in
-            // Remove all individual pieces from the view after animation
-            for piece in self.puzzleBackground?.subviews ?? [] {
-                if let imageView = piece as? UIImageView {
-                    imageView.removeFromSuperview()
-                }
-            }
-            
-            // Set initial properties for the fullPuzzleImageView
-            fullPuzzleImageView.alpha = 0  // Start with the image hidden
-            fullPuzzleImageView.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)  // Start small
-            
-            // Center the image on the screen
-            fullPuzzleImageView.center = screenCenter
-            
-            // Fade in the full puzzle image after the pieces are removed
-            UIView.animate(withDuration: 2.0, delay: 0, usingSpringWithDamping: 0.5, initialSpringVelocity: 0.5, options: [.curveEaseInOut], animations: {
-                fullPuzzleImageView.alpha = 1
-                fullPuzzleImageView.transform = CGAffineTransform.identity
-            })
-        })
-    }
-    
-    @objc func dismissPuzzle(_ sender: UITapGestureRecognizer) {
-        let tapLocation = sender.location(in: puzzleBackground?.superview)
-        if let puzzleFrame = puzzleBackground?.frame, !puzzleFrame.contains(tapLocation) {
-            // Check if the game is completed before dismissing
-            if !isPhotoObtained {
-                puzzleBackground?.removeFromSuperview()
-                timeLabel?.removeFromSuperview()
-                isPuzzleDisplayed = false
-                timer?.invalidate()
-                addCloseFridgeSound()
-            }
+    // Apply the custom font to a label
+    private func applyCustomFont(to label: UILabel, fontSize: CGFloat) {
+        if let customFont = UIFont(name: "SpecialElite-Regular", size: fontSize) {
+            label.font = customFont
+        } else {
+            print("Failed to load SpecialElite-Regular font.")
         }
     }
     
@@ -461,34 +506,23 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
             print("Puzzle completed with one combination!")
             isPhotoObtained = true // Mark as completed
             timer?.invalidate() // Stop the timer
-            checkGameEnd() // Check the game end conditions
-        } else if completedCombinations.count == 2 {
-            print("Puzzle completed with two combinations!")
-            isPhotoObtained = true // Mark as completed
-            timer?.invalidate() // Stop the timer
-            checkGameEnd(); // Check the game end conditions
-        }
-    }
-    
-    func checkGameEnd() {
-        if timeLimit <= 0 {
-            // Call the function to handle game failure if time runs out
-            timeOut()
-            triggerPuzzleFailedTransition()
-        } else if isPhotoObtained {
-            // Call the function to handle successful completion
-            triggerPuzzleCompletionTransition()
+            timeLabel.removeFromSuperview()
+
+            if timeLimit <= 0 {
+                // Call the function to handle game failure if time runs out
+                triggerPuzzleFailedTransition()
+            } else if isPhotoObtained {
+                // Call the function to handle successful completion
+                triggerPuzzleCompletionTransition()
+            }
         }
     }
     
     func triggerPuzzleCompletionTransition() {
-        isPhotoObtained = true
         puzzleBackground?.backgroundColor = UIColor.white.withAlphaComponent(0)
         
         guard let superview = combinedPieces.keys.first?.superview else { return }
-        
-        timeLabel?.removeFromSuperview()
-        
+                
         // Get the center of the screen
         let screenCenter = CGPoint(x: superview.bounds.midX, y: superview.bounds.midY)
         
@@ -523,23 +557,50 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
                 fullPuzzleImageView.transform = CGAffineTransform.identity
             }, completion: { finished in
                 // Automatically flip the puzzle image to the "Thank you" card after 3 seconds
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                    self.flipToThankYouCard(imageView: fullPuzzleImageView)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    self.flipToCodeCard(imageView: fullPuzzleImageView)
+                    self.addBlueFireAnimationNode()
+                    self.isPhotoObtained = true
                 }
             })
         })
     }
     
-    func flipToThankYouCard(imageView: UIImageView) {
+    func flipToCodeCard(imageView: UIImageView) {
         // Create a flip animation
         UIView.transition(with: imageView, duration: 1, options: [.transitionFlipFromLeft], animations: {
             // Change the image to the "Thankyou card" image
-            imageView.image = UIImage(named: "thankyou card.png")
+            imageView.image = UIImage(named: "backPuzzleCode.png")
             imageView.frame.size = CGSize(width: 450, height: 350)
             
         }, completion: nil)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+            self.puzzleBackground?.removeFromSuperview()
+            self.isPlayingPuzzle = false
+            self.isCodeDone = true
+            self.toiletDoorCloseNode.isHidden = true
+            self.toiletDoorOpenNode.isHidden = false
+        }
     }
     
+    private func addBlueFireAnimationNode() {
+        // Create the fire particle system
+        let fireParticleSystem = SCNParticleSystem(named: "smoothFire.scnp", inDirectory: nil)
+        
+        // Create a new SCNNode for the fire effect
+        let fireNode = SCNNode()
+        fireNode.position = transitionTriggerPosition
+        
+        // Attach the particle system to the fire node
+        fireNode.addParticleSystem(fireParticleSystem!)
+        
+        scnView?.antialiasingMode = .multisampling4X // Apply anti-aliasing for smoother visuals
+
+        // Add the fire node to the scene
+        rootNode.addChildNode(fireNode)
+    }
+
     func findPiece(byName name: String, in superview: UIView?) -> UIView? {
         guard let superview = superview else { return nil }
         
@@ -564,12 +625,12 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         let distance = playerNode.position.distance(to: objCakeNode.position)
         
         // If the player is within proximity, show the button and enable the glow
-        if isPuzzleDisplayed == true || distance > proximityDistance {
+        if isPlayingPuzzle == true || isPhotoObtained == true || distance > proximityDistance {
             interactButton.isHidden = true // Hide the button
             toggleGlowEffect(isEnabled: false)
-        } else {
+        } else if distance < proximityDistance && isPhotoObtained == false && isCodeDone == false {
+            interactButton.setTitle("Arrange photo", for: .normal)
             interactButton.isHidden = false // Show the button
-            isPuzzleDisplayed = false
             toggleGlowEffect(isEnabled: true)
         }
     }

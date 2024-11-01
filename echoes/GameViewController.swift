@@ -66,10 +66,6 @@ class GameViewController: UIViewController {
                     let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
                     GameViewController.playerEntity.movementComponent = movementComponent
                      
-                    //ADD FOR STEPS TOILET IN SCENE8
-                    movementComponent.isToilet = true
-                    print("In Scene 8, isToilet is \(movementComponent.isToilet)")
-
                     // Link the joystick with the movement component
                     if let movementComponent = gameScene.playerEntity.movementComponent {
                         movementComponent.joystickComponent = GameViewController.joystickComponent
@@ -85,6 +81,33 @@ class GameViewController: UIViewController {
                     gameScene.setupGestureRecognizers(for: self.scnView)
                 }
             }
+        }
+    
+        //SCENE 8
+        if let gameScene = self.scnView.scene as? Scene8 {
+            GameViewController.playerEntity = gameScene.playerEntity
+            
+            // Create a movement component to handle player movement, including the light node
+            let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
+            GameViewController.playerEntity.movementComponent = movementComponent
+             
+            //ADD FOR STEPS TOILET IN SCENE8
+            movementComponent.isToilet = true
+            print("In Scene 8, isToilet is \(movementComponent.isToilet)")
+
+            // Link the joystick with the movement component
+            if let movementComponent = gameScene.playerEntity.movementComponent {
+                movementComponent.joystickComponent = GameViewController.joystickComponent
+                self.scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
+            }
+            
+            // Set up fog properties for the scene
+            gameScene.fogStartDistance = 25.0   // Increase the start distance
+            gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
+            gameScene.fogDensityExponent = 0.2  // Reduce density to make the fog less thick
+            gameScene.fogColor = UIColor.black
+            
+            gameScene.setupGestureRecognizers(for: self.scnView)
         }
         
         // Configure the SCNView
@@ -118,21 +141,21 @@ class GameViewController: UIViewController {
     
     @objc func updateScene() {
         GameViewController.playerEntity?.movementComponent?.update(deltaTime: 0.016)
-        
-        if let gameScene = scnView.scene as? Scene8 {
-            // Check if the player is near the transition
-            
-            if gameScene.isJumpscareDone && gameScene.checkProximityToTransition() {
-                // Load Scene3 after the movement finishes
+                
+        if let gameScene = scnView.scene as? Scene4 {
+            // Check if the player is near the transition point
+            if gameScene.checkProximityToTransition() {
+                // Load Scene6 after the movement finishes
                 SceneManager.shared.loadScene5()
                 
                 if let gameScene = self.scnView.scene as? Scene5 {
                     GameViewController.playerEntity = gameScene.playerEntity
                     
+                    
                     // Create a movement component to handle player movement, including the light node
                     let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
                     GameViewController.playerEntity.movementComponent = movementComponent
-                                        
+                    
                     // Link the joystick with the movement component
                     if let movementComponent = gameScene.playerEntity.movementComponent {
                         movementComponent.joystickComponent = GameViewController.joystickComponent
@@ -142,7 +165,7 @@ class GameViewController: UIViewController {
                     // Set up fog properties for the scene
                     gameScene.fogStartDistance = 25.0   // Increase the start distance
                     gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
-                    gameScene.fogDensityExponent = 0.3  // Reduce density to make the fog less thick
+                    gameScene.fogDensityExponent = 0.5  // Reduce density to make the fog less thick
                     gameScene.fogColor = UIColor.black
                     
                     gameScene.setupGestureRecognizers(for: self.scnView)
@@ -158,7 +181,6 @@ class GameViewController: UIViewController {
                 
                 if let gameScene = self.scnView.scene as? Scene6 {
                     GameViewController.playerEntity = gameScene.playerEntity
-                    
                     
                     // Create a movement component to handle player movement, including the light node
                     let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
@@ -204,21 +226,30 @@ class GameViewController: UIViewController {
             }
             
             gameScene.checkProximityToCake(interactButton: interactButton)  // Pass the button to the check
-            if gameScene.isPuzzleDisplayed {
+            
+            if gameScene.isPlayingPuzzle {
                 GameViewController.joystickComponent.joystickView.isHidden = true
             } else {
                 GameViewController.joystickComponent.joystickView.isHidden = false
+            }
+            
+            if gameScene.isPhotoObtained && gameScene.isCodeDone {
+                gameScene.displayPhotoObtainedLabel(on: self.view)
+                gameScene.isPhotoObtained = false
+            } else if gameScene.isPuzzleFailed {
+                gameScene.displayPhotoObtainedLabel(on: self.view)
+                gameScene.isPuzzleFailed = false
             }
         }
         
         //SCENE 8
         if let gameScene = scnView.scene as? Scene8 {
             // Check if the player is near the transition point
-//            if gameScene.isJumpscareDone && gameScene.checkProximityToTransition() {
-//                // Load Scene3 after the movement finishes
-//                SceneManager.shared.loadScene5()
-//                
-//                if let gameScene = self.scnView.scene as? Scene5 {
+            if gameScene.isJumpscareDone && gameScene.checkProximityToTransition() {
+                // Load Scene9 after the movement finishes
+//                SceneManager.shared.loadScene9()
+//
+//                if let gameScene = self.scnView.scene as? Scene9 {
 //                    GameViewController.playerEntity = gameScene.playerEntity
 //                    
 //                    // Create a movement component to handle player movement, including the light node
@@ -239,7 +270,7 @@ class GameViewController: UIViewController {
 //                    
 //                    gameScene.setupGestureRecognizers(for: self.scnView)
 //                }
-//            }
+            }
 
             let cabinetNodeName = "smallCabinet"
             if let cabinetNode = gameScene.rootNode.childNode(withName: cabinetNodeName, recursively: true) {
