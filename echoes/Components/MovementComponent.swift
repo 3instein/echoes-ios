@@ -183,7 +183,6 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
 
     private func decreaseLightIntensity() {
         guard let lightNode = lightNode else { return }
-        print("decreasing")
 
         // Decrease light intensity smoothly
         let decreaseAction = SCNAction.customAction(duration: lightDecreaseDuration) { node, elapsedTime in
