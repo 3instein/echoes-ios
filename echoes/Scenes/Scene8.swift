@@ -12,7 +12,6 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     var playerEntity: PlayerEntity!
     var cameraComponent: CameraComponent!
     var joystickComponent: VirtualJoystickComponent!
-    var echolocationComponent: EcholocationComponent?
 
     var cameraNode: SCNNode!
     var lightNode: SCNNode!
@@ -49,7 +48,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     }()
     
     var timer: Timer?
-    var timeLimit: Int = 45
+    var timeLimit: Int = 35
     private var timeLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .center
@@ -151,17 +150,17 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         rootNode.addChildNode(lightNode)
         
         if let muffledNode = rootNode.childNode(withName: "muffledRain", recursively: true) {
-            attachAudio(to: muffledNode, audioFileName: "muffledRain.wav", volume: 0.5, delay: 0, echolocationComponent: echolocationComponent)
+            attachAudio(to: muffledNode, audioFileName: "muffledRain.wav", volume: 0.5, delay: 0)
         }
         
         if let andraParentNode = rootNode.childNode(withName: "player", recursively: true) {
             if let andraNode = andraParentNode.childNode(withName: "s8-andra1", recursively: false) {
-                attachAudio(to: andraNode, audioFileName: "s8-andra1.mp3", volume: 500, delay: 2, echolocationComponent: echolocationComponent)
+                attachAudio(to: andraNode, audioFileName: "s8-andra1.mp3", volume: 5, delay: 2)
             }
         }
         
         if let pipeNode = rootNode.childNode(withName: "pipe_3", recursively: true) {
-            attachAudio(to: pipeNode, audioFileName: "pipeNecklace.mp3", volume: 0.3, delay: 2, echolocationComponent: echolocationComponent)
+            attachAudio(to: pipeNode, audioFileName: "pipeNecklace.mp3", volume: 0.3, delay: 2)
         }
         
         clueCabinetNode = rootNode.childNode(withName: "smallCabinetBody", recursively: true)
@@ -176,6 +175,8 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         toiletDoorCloseNode = rootNode.childNode(withName: "toiletDoorClose", recursively: true)
 
+        attachAudio(to: toiletDoorCloseNode, audioFileName: "door_close.mp3", volume: 0.5, delay: 0.2)
+
         dollNode.isHidden = true
         
         toiletDoorOpenNode.isHidden = true
@@ -184,23 +185,6 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         // Apply font to necklaceLabel safely
         applyCustomFont(to: necklaceLabel, fontSize: 14)
-    }
-    
-    private func addBlueFireAnimationNode() {
-        // Create the fire particle system
-        let fireParticleSystem = SCNParticleSystem(named: "smoothFire.scnp", inDirectory: nil)
-        
-        // Create a new SCNNode for the fire effect
-        let fireNode = SCNNode()
-        fireNode.position = transitionTriggerPosition
-        
-        // Attach the particle system to the fire node
-        fireNode.addParticleSystem(fireParticleSystem!)
-        
-        scnView?.antialiasingMode = .multisampling4X // Apply anti-aliasing for smoother visuals
-
-        // Add the fire node to the scene
-        rootNode.addChildNode(fireNode)
     }
     
     func pipeCompleted() {
@@ -222,13 +206,14 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             
             // Delay to wait until the necklace finishes falling
             DispatchQueue.main.asyncAfter(deadline: .now()) { [weak self] in
+                guard let cameraNode = self?.cameraNode else { return }
                 
-                // Ensure the camera's Euler angles are aligned to avoid a crooked view
-                let eulerAngles = self?.cameraNode.eulerAngles
-                self?.cameraNode.eulerAngles = SCNVector3(
-                    (self?.roundedAngle(eulerAngles!.x * 180 / .pi))! * .pi / 180,
-                    (self?.roundedAngle(eulerAngles!.y * 180 / .pi))! * .pi / 180,
-                    (self?.roundedAngle(eulerAngles!.z * 180 / .pi))! * .pi / 180
+                // Get current Euler angles and only adjust X and Z axes
+                let eulerAngles = cameraNode.eulerAngles
+                cameraNode.eulerAngles = SCNVector3(
+                    (self?.roundedAngle(eulerAngles.x * 180 / .pi) ?? 0) * .pi / 180, // Round X-axis
+                    eulerAngles.y, // Keep Y-axis unchanged
+                    (self?.roundedAngle(eulerAngles.z * 180 / .pi) ?? 0) * .pi / 180  // Round Z-axis
                 )
                 
                 GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-272.92, 406.476, -80), duration: 3.0) {
@@ -239,21 +224,14 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
                     self?.cameraNode.camera?.fieldOfView = 50  // Adjust this value for closer zoom
                     SCNTransaction.commit()
 
-                    self?.attachAudio(to: self!.cluePipeNode!, audioFileName: "pipeAfterOut.wav", volume: 0.4, delay: 0, echolocationComponent: self?.echolocationComponent)
+                    self?.attachAudio(to: self!.cluePipeNode!, audioFileName: "pipeAfterOut.wav", volume: 0.4, delay: 0)
 
                     self?.animateNecklaceFalling(from: self!.cluePipeNode!)
                 }
             }
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 10.5) { [weak self] in
-                self?.cameraNode.camera?.fieldOfView = 75  // Adjust this value for closer zoom
-                // Ensure the camera's Euler angles are aligned to avoid a crooked view
-                let eulerAngles = self?.cameraNode.eulerAngles
-                self?.cameraNode.eulerAngles = SCNVector3(
-                    (self?.roundedAngle(eulerAngles!.x * 180 / .pi))! * .pi / 180,
-                    (self?.roundedAngle(eulerAngles!.y * 180 / .pi))! * .pi / 180,
-                    (self?.roundedAngle(eulerAngles!.z * 180 / .pi))! * .pi / 180
-                )
+            DispatchQueue.main.asyncAfter(deadline: .now() + 11.5) { [weak self] in
+                self?.cameraNode.camera?.fieldOfView = 75
 
                 GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-272.92, 406.476, 25), duration: 2.0) {
 
@@ -262,7 +240,10 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
                 self?.isNecklaceFalling = true
                 self?.isNecklaceObtained = true
                 self?.jumpscareDoll()
-                self?.addBlueFireAnimationNode()
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) { [weak self] in
+                    self?.addBlueFireAnimationNode()
+                }
             }
         }
     }
@@ -279,22 +260,14 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
             self?.dollNode.isHidden = false
             self?.isDollJumpscare = true
-
-            // Ensure the camera's Euler angles are aligned to avoid a crooked view
-            let eulerAngles = self?.cameraNode.eulerAngles
-            self?.cameraNode.eulerAngles = SCNVector3(
-                (self?.roundedAngle(eulerAngles!.x * 180 / .pi))! * .pi / 180,
-                (self?.roundedAngle(eulerAngles!.y * 180 / .pi))! * .pi / 180,
-                (self?.roundedAngle(eulerAngles!.z * 180 / .pi))! * .pi / 180
-            )
             
             self?.cameraNode.look(at: self!.dollNode.position)
             
-            self?.attachAudio(to: self!.dollNode!, audioFileName: "jumpscare1.wav", volume: 50.0, delay: 0, echolocationComponent: self?.echolocationComponent)
+            self?.attachAudio(to: self!.dollNode!, audioFileName: "jumpscare1.wav", volume: 40.0, delay: 0)
 
-            self?.attachAudio(to: self!.dollNode!, audioFileName: "doll2.mp3", volume: 30.0, delay: 0.8, echolocationComponent: self?.echolocationComponent)
+            self?.attachAudio(to: self!.dollNode!, audioFileName: "doll2.wav", volume: 4.5, delay: 1.0)
 
-            self?.attachAudio(to: self!.dollNode!, audioFileName: "whisperJumpscare.mp3", volume: 10.0, delay: 2.0, echolocationComponent: self?.echolocationComponent)
+            self?.attachAudio(to: self!.dollNode!, audioFileName: "whisperJumpscare.mp3", volume: 1.0, delay: 3.0)
             
             GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-293, 501.033, -30), duration: 0.2) {
                 self?.cameraNode.look(at: self!.dollNode.position)
@@ -309,12 +282,14 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 15.0) { [weak self] in
             self?.cameraNode.camera?.fieldOfView = 75  // Default value for normal view
 
-            // Ensure the camera's Euler angles are aligned to avoid a crooked view
-            let eulerAngles = self?.cameraNode.eulerAngles
-            self?.cameraNode.eulerAngles = SCNVector3(
-                (self?.roundedAngle(eulerAngles!.x * 180 / .pi))! * .pi / 180,
-                (self?.roundedAngle(eulerAngles!.y * 180 / .pi))! * .pi / 180,
-                (self?.roundedAngle(eulerAngles!.z * 180 / .pi))! * .pi / 180
+            guard let cameraNode = self?.cameraNode else { return }
+            
+            // Get current Euler angles and only adjust X and Z axes
+            let eulerAngles = cameraNode.eulerAngles
+            cameraNode.eulerAngles = SCNVector3(
+                (self?.roundedAngle(eulerAngles.x * 180 / .pi) ?? 0) * .pi / 180, // Round X-axis
+                eulerAngles.y, // Keep Y-axis unchanged
+                (self?.roundedAngle(eulerAngles.z * 180 / .pi) ?? 0) * .pi / 180  // Round Z-axis
             )
             
             GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-293, 501.033, 30), duration: 1.5) {
@@ -326,7 +301,27 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         }
     }
     
-    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval, echolocationComponent: EcholocationComponent?) {
+    private func addBlueFireAnimationNode() {
+        // Create the fire particle system
+        let fireParticleSystem = SCNParticleSystem(named: "smoothFire.scnp", inDirectory: nil)
+        
+        // Create a new SCNNode for the fire effect
+        let fireNode = SCNNode()
+        fireNode.position = transitionTriggerPosition
+        
+        // Attach the particle system to the fire node
+        fireNode.addParticleSystem(fireParticleSystem!)
+        
+        scnView?.antialiasingMode = .multisampling4X // Apply anti-aliasing for smoother visuals
+
+        // Add the fire node to the scene
+        rootNode.addChildNode(fireNode)
+        
+        attachAudio(to: fireNode, audioFileName: "door_close.mp3", volume: 0.5, delay: 0.2)
+
+    }
+    
+    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
         guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
             print("Warning: Audio file '\(audioFileName)' not found")
             return
@@ -371,8 +366,6 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         // Play the audio
         audioNode.runAction(playAudioAction)
-        
-        echolocationComponent?.activateFlash()
     }
 
     @objc func examinePipe(on view: UIView) {
@@ -543,7 +536,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
                 }
                 
                 if correctlyRotatedPipes.count >= 15 {
-                    attachAudio(to: rootNode, audioFileName: "waterNecklacePipe.mp3", volume: 1.3, delay: 0, echolocationComponent: echolocationComponent)
+                    attachAudio(to: rootNode, audioFileName: "waterNecklacePipe.mp3", volume: 1.3, delay: 0)
                     
                     for correctPipes in correctlyRotatedPipes {
                         previouslyGreenPipes.insert(correctPipes)
@@ -562,7 +555,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             }
         }
         
-        attachAudio(to: rootNode, audioFileName: "pipeMove.mp3", volume: 0.8, delay: 0, echolocationComponent: echolocationComponent)
+        attachAudio(to: rootNode, audioFileName: "pipeMove.mp3", volume: 0.8, delay: 0)
         
         print(correctlyRotatedPipes.count)
 
@@ -749,7 +742,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         // Run the action
         necklaceNode.runAction(sequence)
         
-        attachAudio(to: playerEntity.playerNode!, audioFileName: "s8-andra4.mp3", volume: 50, delay: 0, echolocationComponent: echolocationComponent)
+        attachAudio(to: playerEntity.playerNode!, audioFileName: "s8-andra4.mp3", volume: 5, delay: 0)
     }
             
     func updateProximityAndGlow(interactButton: UIButton) {
@@ -852,16 +845,18 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         isCabinetOpened = true
         GameViewController.joystickComponent.joystickView.isHidden = true
 
-        attachAudio(to: playerEntity.playerNode!, audioFileName: "s8-andra2.mp3", volume: 50, delay: 4, echolocationComponent: echolocationComponent)
+        attachAudio(to: playerEntity.playerNode!, audioFileName: "s8-andra2.mp3", volume: 5, delay: 4)
         
         DispatchQueue.main.asyncAfter(deadline: .now()) { [weak self] in
             GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-402.985, 501, 30.0), duration: 2.5) {
-                // Ensure the camera's Euler angles are aligned to avoid a crooked view
-                let eulerAngles = self?.cameraNode.eulerAngles
-                self?.cameraNode.eulerAngles = SCNVector3(
-                    (self?.roundedAngle(eulerAngles!.x * 180 / .pi))! * .pi / 180,
-                    (self?.roundedAngle(eulerAngles!.y * 180 / .pi))! * .pi / 180,
-                    (self?.roundedAngle(eulerAngles!.z * 180 / .pi))! * .pi / 180
+                guard let cameraNode = self?.cameraNode else { return }
+                
+                // Get current Euler angles and only adjust X and Z axes
+                let eulerAngles = cameraNode.eulerAngles
+                cameraNode.eulerAngles = SCNVector3(
+                    (self?.roundedAngle(eulerAngles.x * 180 / .pi) ?? 0) * .pi / 180, // Round X-axis
+                    eulerAngles.y, // Keep Y-axis unchanged
+                    (self?.roundedAngle(eulerAngles.z * 180 / .pi) ?? 0) * .pi / 180  // Round Z-axis
                 )
                 
                 SCNTransaction.begin()
@@ -876,19 +871,21 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 11.0) {
             self.cameraNode.camera?.fieldOfView = 75  // Adjust this value for closer zoom
 
-            // Ensure the camera's Euler angles are aligned to avoid a crooked view
-            let eulerAngles = self.cameraNode.eulerAngles
-            self.cameraNode.eulerAngles = SCNVector3(
-                (self.roundedAngle(eulerAngles.x * 180 / .pi)) * .pi / 180,
-                (self.roundedAngle(eulerAngles.y * 180 / .pi)) * .pi / 180,
-                (self.roundedAngle(eulerAngles.z * 180 / .pi)) * .pi / 180
+            guard let cameraNode = self.cameraNode else { return }
+            
+            // Get current Euler angles and only adjust X and Z axes
+            let eulerAngles = cameraNode.eulerAngles
+            cameraNode.eulerAngles = SCNVector3(
+                (self.roundedAngle(eulerAngles.x * 180 / .pi) ?? 0) * .pi / 180, // Round X-axis
+                eulerAngles.y, // Keep Y-axis unchanged
+                (self.roundedAngle(eulerAngles.z * 180 / .pi) ?? 0) * .pi / 180  // Round Z-axis
             )
             
             GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-376.371, 516, 30.0), duration: 2.0) {
                 self.isCabinetDone = true
                 GameViewController.joystickComponent.joystickView.isHidden = false
-                self.attachAudio(to: self.cluePipeNode, audioFileName: "pipeNecklace.mp3", volume: 1.0, delay: 0, echolocationComponent: self.echolocationComponent)
-                self.attachAudio(to: self.playerEntity.playerNode!, audioFileName: "s8-andra3.mp3", volume: 50, delay: 2, echolocationComponent: self.echolocationComponent)
+                self.attachAudio(to: self.cluePipeNode, audioFileName: "pipeNecklace.mp3", volume: 1.0, delay: 0)
+                self.attachAudio(to: self.playerEntity.playerNode!, audioFileName: "s8-andra3.mp3", volume: 5, delay: 2)
             }
         }
     }
@@ -929,7 +926,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         timer?.invalidate()
         
         // Reset the time limit to the starting value
-        timeLimit = 45 // Set this to the initial time limit you want
+        timeLimit = 35 // Set this to the initial time limit you want
         
         // Loop through each puzzle piece
         for i in 1...8 {
@@ -992,7 +989,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         print("player position:", playerNode.position)
         print("distance to trigger:", distance)
         
-        return false
+        return distance < triggerDistance
     }
     
     func setupGestureRecognizers(for view: UIView) {
