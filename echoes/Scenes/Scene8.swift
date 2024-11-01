@@ -101,7 +101,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     var isDollJumpscare = false
     var isJumpscareDone = false
     
-    let transitionTriggerPosition = SCNVector3(-169.992, 461.627, 100)
+    let transitionTriggerPosition = SCNVector3(34.188, 503, 103.106)
     let triggerDistance: Float = 80.0
     
     init(lightNode: SCNNode) {
@@ -109,7 +109,6 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         super.init()
         self.lightNode = lightNode
-        //        scnView?.pointOfView = cameraNode
         
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "scene8.scn") else {
@@ -316,9 +315,6 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
 
         // Add the fire node to the scene
         rootNode.addChildNode(fireNode)
-        
-        attachAudio(to: fireNode, audioFileName: "door_close.mp3", volume: 0.5, delay: 0.2)
-
     }
     
     func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
@@ -461,6 +457,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         // Start the timer
         startTimer()
+        
         // Loop through each puzzle piece
         for i in 1...8 {
             let pipeNodeName = "pipe_\(i)"
@@ -848,7 +845,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         attachAudio(to: playerEntity.playerNode!, audioFileName: "s8-andra2.mp3", volume: 5, delay: 4)
         
         DispatchQueue.main.asyncAfter(deadline: .now()) { [weak self] in
-            GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-402.985, 501, 30.0), duration: 2.5) {
+            GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-426.711, 513, 30.0), duration: 2.5) {
                 guard let cameraNode = self?.cameraNode else { return }
                 
                 // Get current Euler angles and only adjust X and Z axes
@@ -881,7 +878,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
                 (self.roundedAngle(eulerAngles.z * 180 / .pi) ?? 0) * .pi / 180  // Round Z-axis
             )
             
-            GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-376.371, 516, 30.0), duration: 2.0) {
+            GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-385.957, 511, 30.0), duration: 2.0) {
                 self.isCabinetDone = true
                 GameViewController.joystickComponent.joystickView.isHidden = false
                 self.attachAudio(to: self.cluePipeNode, audioFileName: "pipeNecklace.mp3", volume: 1.0, delay: 0)
