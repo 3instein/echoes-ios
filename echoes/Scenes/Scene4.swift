@@ -23,8 +23,8 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
     var isGameCompleted: Bool = false  // Track if the game is completed
     let snapDistance: CGFloat = 50.0
     
-    let transitionTriggerPosition = SCNVector3(28, 62, 65)
-    let triggerDistance: Float = 100.0
+    let transitionTriggerPosition = SCNVector3(28.603, 494, 103.106)
+    let triggerDistance: Float = 80.0
     
     init(lightNode: SCNNode) {
         GameViewController.joystickComponent.showJoystick()
@@ -33,7 +33,7 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
         scnView?.pointOfView = cameraNode
         
         // Load the house scene from the Scenes folder
-        guard let houseScene = SCNScene(named: "Scene4.scn") else {
+        guard let houseScene = SCNScene(named: "Scene4-baru.scn") else {
             print("Warning: House scene 'Scene 4.scn' not found")
             return
         }
