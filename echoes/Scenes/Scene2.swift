@@ -79,7 +79,7 @@ class Scene2: SCNScene {
             return
         }
         
-        cameraNode.camera?.fieldOfView = 75
+        cameraNode.camera?.fieldOfView = 45
         cameraNode.camera?.automaticallyAdjustsZRange = false
         
         // Camera component to handle the camera logic
@@ -163,6 +163,9 @@ class Scene2: SCNScene {
     func openDoor(completion: @escaping () -> Void) {
         guard let doorNode = doorNode, let doorOpenSound = doorOpenSound else { return }
         
+        // Trigger echolocation for door opening
+        doorEntity?.activateEcholocation()
+        
         let openDoorAction = SCNAction.rotateBy(x: 0, y: 0, z: .pi / 2, duration: doorOpenDuration)
         openDoorAction.timingMode = .easeInEaseOut
         let playSoundAction = SCNAction.playAudio(doorOpenSound, waitForCompletion: false)
@@ -175,6 +178,9 @@ class Scene2: SCNScene {
     
     func moveGrandma(completion: @escaping () -> Void) {
         guard let grandmaNode = grandmaNode else { return }
+        
+        // Trigger echolocation for grandma's movement
+        grandmaEntity?.activateEcholocation()
         
         let moveAction = SCNAction.move(to: grandmaMovePosition, duration: 2.5)
         
@@ -201,9 +207,26 @@ class Scene2: SCNScene {
             return
         }
         
-        playDialogueSequence([(andraGreetingsSound, 5.0), (grandmaGreetingsSound, 8.0)]) {
-            self.playDoorCloseSoundAndFadeToBlack()
-        }
+        // Create a temporary light node with a bluish tint for the dialogue sequence
+        let temporaryLightNode = SCNNode()
+        let temporaryLight = SCNLight()
+        temporaryLight.type = .omni
+        temporaryLight.intensity = 7500
+        temporaryLight.color = UIColor(red: 0.5, green: 0.5, blue: 1.0, alpha: 1.0)
+        temporaryLightNode.light = temporaryLight
+        
+        // Position above the player and grandma
+        temporaryLightNode.position = SCNVector3(x: 0, y: -18, z: 10)
+        rootNode.addChildNode(temporaryLightNode)
+        
+        let delayBetweenDialogues: TimeInterval = 1.0
+        playDialogueSequence([(andraGreetingsSound, 5.0)], completion: {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delayBetweenDialogues) {
+                self.playDialogueSequence([(grandmaGreetingsSound, 8.0)], completion: {
+                    self.playDoorCloseSoundAndFadeToBlack()
+                })
+            }
+        })
     }
     
     func playAudioSource(_ audioSource: SCNAudioSource?, volume: Float, completion: @escaping () -> Void) {
