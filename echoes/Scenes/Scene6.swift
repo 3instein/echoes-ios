@@ -1,6 +1,7 @@
 import SceneKit
 import UIKit
-//TAMBAHIN NODE doorClose & doorOpen, sesuaiin api sama titik di depan kamar
+
+//TAMBAHIN NODE doorClose & doorOpen, sesuaiin api sama titik di depan kamar, tambahin node "doll" di file .scn
 class Scene6: SCNScene, SCNPhysicsContactDelegate {
     var playerEntity: PlayerEntity!
     var cameraComponent: CameraComponent!
@@ -8,8 +9,9 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     
     var cameraNode: SCNNode!
     var lightNode: SCNNode!
-    var toiletDoorCloseNode: SCNNode!
-    var toiletDoorOpenNode: SCNNode!
+    var doorCloseNode: SCNNode!
+    var doorOpenNode: SCNNode!
+    var dollNode: SCNNode!
     
     var combinedPieces: [UIView: [UIView]] = [:]  // Dictionary that tracks combined pieces
     var completedCombinations: [[UIView]] = []  // Track completed combinations
@@ -73,6 +75,8 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     
     var isPuzzleFailed = false
     
+    var isDollJumpscare = false
+    
     //GANTI LAGI KE TITIK DI DEPAN KAMAR KIRANA
     let transitionTriggerPosition = SCNVector3(307, -493, 103.106)
     let triggerDistance: Float = 80.0
@@ -105,7 +109,7 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         
         // Attach the existing camera node from the player model to the scene
         cameraNode = playerNode.childNode(withName: "Camera", recursively: true)
-        guard let cameraNode = cameraNode else {
+        guard let cameraONode = cameraNode else {
             print("Warning: Camera node named 'Camera' not found in Player model")
             return
         }
@@ -122,22 +126,100 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         // Find Obj_Cake_003 node in the scene
         objCakeNode = rootNode.childNode(withName: "Puzzle_3", recursively: true)
         
-        toiletDoorOpenNode = rootNode.childNode(withName: "toiletDoorOpen", recursively: true)
+//        doorOpenNode = rootNode.childNode(withName: "doorOpen", recursively: true)
+//        
+//        doorCloseNode = rootNode.childNode(withName: "doorClose", recursively: true)
         
-        toiletDoorCloseNode = rootNode.childNode(withName: "toiletDoorClose", recursively: true)
+        dollNode = rootNode.childNode(withName: "doll", recursively: true)
         
         addFallingCupSound()
         addSpoonSound()
         addBackgroundSound(audioFileName: "muffledRain.wav")  // Add this line to play background sound
         
-        toiletDoorOpenNode.isHidden = true
-        
+//        doorOpenNode.isHidden = true
+
+        dollNode.isHidden = true
         self.physicsWorld.contactDelegate = self
         
         // Apply font to necklaceLabel safely
         applyCustomFont(to: puzzleLabel, fontSize: 14)
+        
+        jumpscareDoll()
     }
     
+    func jumpscareDoll() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+            self?.isDollJumpscare = true
+            self?.dollNode.isHidden = false
+            
+            self?.cameraNode.look(at: self!.dollNode.position)
+            
+            self?.attachAudio(to: self!.dollNode!, audioFileName: "jumpscare3.wav", volume: 40.0, delay: 0)
+
+            self?.attachAudio(to: self!.dollNode!, audioFileName: "doll1.wav", volume: 4.5, delay: 1.0)
+            
+            GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(210.803, -160, -30), duration: 0.2) {
+                self?.cameraNode.look(at: self!.dollNode.position)
+                // Animate zooming in by adjusting the camera's field of view
+                SCNTransaction.begin()
+                SCNTransaction.animationDuration = 0.2
+                self?.cameraNode.camera?.fieldOfView = 25  // Adjust this value for closer zoom
+                SCNTransaction.commit()
+            }
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 13.0) { [weak self] in
+            self?.cameraNode.camera?.fieldOfView = 75  // Default value for normal view
+
+            guard let cameraNode = self?.cameraNode else { return }
+            
+            // Get current Euler angles and only adjust X and Z axes
+            let eulerAngles = cameraNode.eulerAngles
+            cameraNode.eulerAngles = SCNVector3(
+                (self?.roundedAngle(eulerAngles.x * 180 / .pi) ?? 0) * .pi / 180, // Round X-axis
+                eulerAngles.y, // Keep Y-axis unchanged
+                (self?.roundedAngle(eulerAngles.z * 180 / .pi) ?? 0) * .pi / 180  // Round Z-axis
+            )
+            
+            GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(210.803, -160, 30), duration: 1.5) {
+                self?.isDollJumpscare = false
+            }
+        }
+    }
+    
+    func roundedAngle(_ angle: Float) -> Float {
+        // Define the set of target angles
+        let targets: [Float] = [-180, -90, 0, 90, 180]
+        
+        // Find the closest target angle
+        return targets.min(by: { abs($0 - angle) < abs($1 - angle) }) ?? angle
+    }
+    
+    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
+        guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
+            print("Warning: Audio file '\(audioFileName)' not found")
+            return
+        }
+        
+        audioSource.isPositional = true
+        audioSource.shouldStream = false
+        audioSource.load()
+        audioSource.volume = volume
+
+        // Create a new node to attach the audio and position it
+        let audioNode = SCNNode()
+        node.addChildNode(audioNode)
+
+        // Play audio with delay
+        let playAudioAction = SCNAction.sequence([
+            SCNAction.wait(duration: delay),
+            SCNAction.playAudio(audioSource, waitForCompletion: false)
+        ])
+        
+        // Play the audio
+        audioNode.runAction(playAudioAction)
+    }
+
     func displayPuzzlePieces(on view: UIView) {
         let pieceImages = [
             "puzzle_piece_1.png", "puzzle_piece_2.png", "puzzle_piece_3.png",
@@ -579,8 +661,8 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
             self.puzzleBackground?.removeFromSuperview()
             self.isPlayingPuzzle = false
             self.isCodeDone = true
-            self.toiletDoorCloseNode.isHidden = true
-            self.toiletDoorOpenNode.isHidden = false
+//            self.doorCloseNode.isHidden = true
+//            self.doorOpenNode.isHidden = false
         }
     }
     

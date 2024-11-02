@@ -57,9 +57,9 @@ class GameViewController: UIViewController {
         GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 3.0) {
             DispatchQueue.main.async {
                 // Load Scene3 after the movement finishes
-                SceneManager.shared.loadScene8()
+                SceneManager.shared.loadScene4()
                 
-                if let gameScene = self.scnView.scene as? Scene8 {
+                if let gameScene = self.scnView.scene as? Scene4 {
                     GameViewController.playerEntity = gameScene.playerEntity
                     
                     // Create a movement component to handle player movement, including the light node
@@ -227,7 +227,7 @@ class GameViewController: UIViewController {
             
             gameScene.checkProximityToCake(interactButton: interactButton)  // Pass the button to the check
             
-            if gameScene.isPlayingPuzzle {
+            if gameScene.isPlayingPuzzle || gameScene.isDollJumpscare {
                 GameViewController.joystickComponent.joystickView.isHidden = true
             } else {
                 GameViewController.joystickComponent.joystickView.isHidden = false
