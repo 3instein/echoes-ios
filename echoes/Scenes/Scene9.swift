@@ -9,6 +9,7 @@ import SceneKit
 import UIKit
 
 class Scene9: SCNScene, SCNPhysicsContactDelegate {
+    var stepSound: SCNAudioSource!
     var playerEntity: PlayerEntity!
     var cameraComponent: CameraComponent!
     var joystickComponent: VirtualJoystickComponent!
@@ -17,11 +18,13 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
     
     weak var scnView: SCNView?
     var playButton: UIButton?
-
-    let transitionTriggerPosition = SCNVector3(62.983, 98.335, 29.035)
-    let triggerDistance: Float = 100.0
     
-    init(lightNode: SCNNode) {
+    let transitionTriggerPosition = SCNVector3(0, 0, 0);
+    let triggerDistance: Float = 100.0
+    let fourthTargetPosition = SCNVector3(-239.248, 81.08, 35.81)
+    
+    init(lightNode: SCNNode, scnView: SCNView) {
+        self.scnView = scnView
         GameViewController.joystickComponent.showJoystick()
         super.init()
         self.lightNode = lightNode
@@ -32,7 +35,7 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
         }
         
         setupPlayerEntityAndMovementComponent()
-        scnView?.pointOfView = cameraNode
+        scnView.pointOfView = cameraNode
         
         for childNode in houseScene.rootNode.childNodes {
             rootNode.addChildNode(childNode)
@@ -58,6 +61,7 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
         
         rootNode.addChildNode(lightNode)
         
+        // Load sounds and other setup
         if let woodNode = rootNode.childNode(withName: "woodenFloor", recursively: false) {
             attachAudio(to: woodNode, audioFileName: "woodenFloor.wav", volume: 0.7, delay: 0)
         }
@@ -71,31 +75,184 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.startPlayerMovement()
         }
+        
+        guard let lightRainNode = rootNode.childNode(withName: "outsideRain", recursively: true) else {
+            print("Warning: LightRain node named 'lightRain' not found in house model")
+            return
+        }
+        
+        attachAudio(to: lightRainNode, audioFileName: "outsideRain.wav", volume: 0.5, delay: 0)
+        
+        stepSound = SCNAudioSource(fileNamed: "step.mp3")
+        if stepSound == nil {
+            print("Error: step.mp3 file not found.")
+        } else {
+            stepSound.shouldStream = false
+            stepSound.isPositional = false
+            stepSound.volume = 1.0
+            stepSound.load()
+        }
+        
+        addBlueFireAnimationNode()
     }
 
-    private func playKiranaSound(on node: SCNNode) {
+    func joystickMoved() {
+        playStepSound()
+    }
+    
+    private func playKiranaSound1(on node: SCNNode, completion: (() -> Void)? = nil) {
         guard let kiranaSound = SCNAudioSource(fileNamed: "s9-kirana1.wav") else {
             print("Error: Audio file 's9-kirana1.wav' not found")
             return
         }
-
+        
         kiranaSound.shouldStream = false
         kiranaSound.isPositional = true
         kiranaSound.volume = 1.0
         kiranaSound.load()
-
+        
         print("Audio loaded successfully, preparing to play 's9-kirana1.wav'")
         
         let playKiranaAction = SCNAction.playAudio(kiranaSound, waitForCompletion: true)
-        
-        // After the audio completes, show the button
         let completionAction = SCNAction.run { _ in
-            print("Audio 's9-kirana1.wav' playback finished. Showing button.")
-            self.showButton()
+            print("Audio 's9-kirana1.wav' playback finished.")
+            completion?()  // Call the completion handler if provided
         }
         
         let sequenceAction = SCNAction.sequence([playKiranaAction, completionAction])
         node.runAction(sequenceAction)
+    }
+    
+    private func performJumpscare() {
+        guard let grandmaNode = rootNode.childNode(withName: "grandma", recursively: true),
+              let cameraNode = self.cameraNode else {
+            print("Error: Grandma or camera node not found in Scene9")
+            return
+        }
+        
+        // Spotlight on grandma's face for jumpscare
+        let spotlight = SCNLight()
+        spotlight.type = .spot
+        spotlight.intensity = 1500
+        spotlight.spotInnerAngle = 30
+        spotlight.spotOuterAngle = 60
+        spotlight.color = UIColor.white
+        spotlight.castsShadow = true
+        
+        let spotlightNode = SCNNode()
+        spotlightNode.light = spotlight
+        spotlightNode.position = SCNVector3(grandmaNode.position.x, grandmaNode.position.y, grandmaNode.position.z)
+        spotlightNode.look(at: grandmaNode.position)
+        
+        grandmaNode.addChildNode(spotlightNode)
+        
+        // Rotate camera and zoom in for jumpscare effect
+        let lookAtAction = SCNAction.rotateTo(
+            x: CGFloat(180),
+            y: CGFloat(grandmaNode.position.y),
+            z: CGFloat(grandmaNode.position.z),
+            duration: 1.0
+        )
+        let zoomInAction = SCNAction.move(by: SCNVector3(0, 0, -1.5), duration: 0.5)
+        let jumpscareSequence = SCNAction.sequence([lookAtAction, zoomInAction])
+        cameraNode.runAction(jumpscareSequence)
+        
+        // After jumpscare, remove effects and play new sound
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            self.stopBackgroundSound()
+            self.playAndraSound()
+        }
+    }
+
+    // Function to stop the background sound
+    private func stopBackgroundSound() {
+        if let backgroundNode = rootNode.childNode(withName: "backgroundSound", recursively: true) {
+            backgroundNode.removeAllAudioPlayers()
+            print("Background sound stopped.")
+        }
+    }
+
+    // Function to play s9-andra.wav sound, followed by s9-reza2.wav
+    private func playAndraSound() {
+        guard let andraSound = SCNAudioSource(fileNamed: "s9-andra.wav") else {
+            print("Error: Audio file 's9-andra.wav' not found")
+            return
+        }
+
+        andraSound.shouldStream = false
+        andraSound.isPositional = true
+        andraSound.volume = 1.0
+        andraSound.load()
+
+        print("Audio loaded successfully, preparing to play 's9-andra.wav'")
+        
+        let playAndraAction = SCNAction.playAudio(andraSound, waitForCompletion: true)
+        let playReza2Action = SCNAction.run { [weak self] _ in
+            self?.playReza2Sound()  // Play s9-reza2.wav after andra finishes
+        }
+
+        let sequence = SCNAction.sequence([playAndraAction, playReza2Action])
+        cameraNode.runAction(sequence)
+    }
+
+    // Function to play s9-reza2.wav sound
+    private func playReza2Sound() {
+        guard let reza2Sound = SCNAudioSource(fileNamed: "s9-reza2.wav") else {
+            print("Error: Audio file 's9-reza2.wav' not found")
+            return
+        }
+
+        reza2Sound.shouldStream = false
+        reza2Sound.isPositional = true
+        reza2Sound.volume = 1.0
+        reza2Sound.load()
+
+        print("Audio loaded successfully, preparing to play 's9-reza2.wav'")
+        
+        let playReza2Action = SCNAction.playAudio(reza2Sound, waitForCompletion: true)
+        let completionAction = SCNAction.run { [weak self] _ in
+            print("Audio 's9-reza2.wav' playback finished.")
+            self?.showButton()  // Show button after audio completes
+        }
+
+        let sequenceAction = SCNAction.sequence([playReza2Action, completionAction])
+        cameraNode.runAction(sequenceAction)
+    }
+    
+    private func playBackground(on node: SCNNode) {
+        guard let backgroundSound = SCNAudioSource(fileNamed: "ritualBackground.wav") else {
+            print("Error: Audio file 'ritualBackground.wav' not found")
+            return
+        }
+        
+        backgroundSound.shouldStream = false
+        backgroundSound.isPositional = true
+        backgroundSound.volume = 1.0
+        backgroundSound.loops = true
+        backgroundSound.load()
+        
+        print("Audio loaded successfully, preparing to play 'ritualBackground.wav'")
+        
+        let playBackgroundAction = SCNAction.playAudio(backgroundSound, waitForCompletion: false)
+        node.runAction(playBackgroundAction)
+    }
+    
+    private func playRain(on node: SCNNode) {
+        guard let backgroundSound = SCNAudioSource(fileNamed: "outsiderRain.wav") else {
+            print("Error: Audio file 'outsideRain.wav' not found")
+            return
+        }
+        
+        backgroundSound.shouldStream = false
+        backgroundSound.isPositional = true
+        backgroundSound.volume = 1.0
+        backgroundSound.loops = true
+        backgroundSound.load()
+        
+        print("Audio loaded successfully, preparing to play 'ritualBackground.wav'")
+        
+        let playBackgroundAction = SCNAction.playAudio(backgroundSound, waitForCompletion: false)
+        node.runAction(playBackgroundAction)
     }
     
     private func setupPlayerEntityAndMovementComponent() {
@@ -124,47 +281,71 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
             return
         }
         
-        let firstTargetPosition = SCNVector3(240.705, 148.812, 30.403)
-        let secondTargetPosition = SCNVector3(295.243, 392.056, 33.859)
+        let firstTargetPosition = SCNVector3(184.505, 516.979, 35.809)
+        let secondTargetPosition = SCNVector3(211.776, 778.045, 35.809)
+        let thirdTargetPosition = SCNVector3(211.776, 778.045, -15.809)
+        let fourthTargetPosition = SCNVector3(-239.248, 81.08, 35.81)
         
+        // Move to the first target position
         movementComponent.movePlayer(to: firstTargetPosition, duration: 10.0) {
             print("Player has reached the first target position.")
+            self.playStepSound() // Play step sound at the start of each movement
             
-            movementComponent.movePlayer(to: secondTargetPosition, duration: 10.0) {
+            // Move to the second target position
+            movementComponent.movePlayer(to: secondTargetPosition, duration: 5.0) {
                 print("Player has reached the second target position.")
+                self.playStepSound() // Play step sound at the start of each movement
                 
-                // Start the blink effect and fade-in animation
-                self.scnView?.alpha = 0
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                // Move to the third target position
+                movementComponent.movePlayer(to: thirdTargetPosition, duration: 5.0) {
+                    print("Player has reached the third target position.")
+                    self.playStepSound() // Play step sound at the start of each movement
                     
-                    UIView.animate(withDuration: 0.5, animations: {
-                        self.scnView?.alpha = 1
-                    }) { _ in
-                        // Add candle light effects around the player
-                        if let playerNode = self.playerEntity.playerNode {
-                            self.addCandleLightEffects(around: playerNode)
+                    self.scnView?.alpha = 0
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                        UIView.animate(withDuration: 0.5, animations: {
+                            self.scnView?.alpha = 1
+                        }) { _ in
+                            if let playerNode = self.playerEntity.playerNode {
+                                self.addCandleLightEffects(around: playerNode)
+                            }
+                            
+                            print("Checking if kiranaNode1 exists for playback.")
+                            if let kiranaNode1 = self.rootNode.childNode(withName: "s9-kirana1", recursively: true) {
+                                self.playKiranaSound1(on: kiranaNode1) {
+                                    self.moveGrandma()
+                                    
+                                    print("Playing background sound.")
+                                    if let backgroundNode = self.rootNode.childNode(withName: "backgroundSound", recursively: true) {
+                                        self.playBackground(on: backgroundNode)
+                                        
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                                            print("Checking if kiranaNode2 exists for playback.")
+                                            if let kiranaNode2 = self.rootNode.childNode(withName: "s9-kirana2", recursively: false) {
+                                                self.playKiranaSound2(on: kiranaNode2)
+                                            } else {
+                                                print("Error: kiranaNode2 not found in the scene.")
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                print("Error: kiranaNode1 not found in the scene.")
+                            }
                         }
-                        
-                        // Play kirana sound after candles are lit
-                        if let kiranaNode = self.rootNode.childNode(withName: "s9-kirana1", recursively: true) {
-                            self.playKiranaSound(on: kiranaNode)
-                        }
-                        
-                        // Move Grandma after the candle effect
-                        self.moveGrandma()
                     }
                 }
             }
         }
     }
-
+    
     private func moveGrandma() {
         guard let grandmaNode = rootNode.childNode(withName: "grandma", recursively: true) else {
             print("Error: Grandma node not found in Scene9")
             return
         }
         
-        let grandmaTargetPosition = SCNVector3(174.379, 377.979, 32.562)
+        let grandmaTargetPosition = SCNVector3(141.743, 767.443, 22.355)
         let moveDuration: TimeInterval = 5.0
         
         let moveAction = SCNAction.move(to: grandmaTargetPosition, duration: moveDuration)
@@ -173,11 +354,11 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
         }
     }
     
-     func checkProximityToTransition() -> Bool {
-         guard let playerPosition = playerEntity.playerNode?.position else { return false }
-         let distance = playerPosition.distance(to: transitionTriggerPosition)
-         return distance < triggerDistance
-     }
+    func checkProximityToTransition() -> Bool {
+        guard let playerPosition = playerEntity.playerNode?.position else { return false }
+        let distance = playerPosition.distance(to: transitionTriggerPosition)
+        return distance < triggerDistance
+    }
     
     func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
         guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
@@ -221,21 +402,94 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
             }
         }
     }
+    
+    private func showButton() {
+        guard let view = scnView else {
+            print("Error: scnView is nil.")
+            return
+        }
+        
+        DispatchQueue.main.async {
+            // Create and configure the button
+            self.playButton = UIButton(type: .system)
+            self.playButton?.setTitle("Run", for: .normal)
+            self.playButton?.backgroundColor = UIColor(hex: "3C3EBB")
+            self.playButton?.setTitleColor(.white, for: .normal)
+            self.playButton?.layer.cornerRadius = 10
+            self.playButton?.translatesAutoresizingMaskIntoConstraints = false
+            self.playButton?.addTarget(self, action: #selector(self.buttonTapped), for: .touchUpInside)
+            
+            // Apply the custom font to the button
+            if let customFont = UIFont(name: "SpecialElite-Regular", size: 28) {                self.playButton?.titleLabel?.font = customFont
+            } else {
+                print("Failed to load SpecialElite-Regular font.")
+            }
+            
+            // Add the button to the view
+            view.addSubview(self.playButton!)
+            
+            // Set button constraints
+            NSLayoutConstraint.activate([
+                self.playButton!.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                self.playButton!.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -50),
+                self.playButton!.widthAnchor.constraint(equalToConstant: 180),
+                self.playButton!.heightAnchor.constraint(equalToConstant: 50)
+            ])
+            
+            view.layoutIfNeeded()
+        }
+    }
+
+    private func playKiranaSound2(on node: SCNNode, completion: (() -> Void)? = nil) {
+        guard let kiranaSound = SCNAudioSource(fileNamed: "s9-kirana2.wav") else {
+            print("Error: Audio file 's9-kirana2.wav' not found")
+            return
+        }
+        
+        kiranaSound.shouldStream = false
+        kiranaSound.isPositional = true
+        kiranaSound.volume = 1.0
+        kiranaSound.load()
+        
+        print("Audio loaded successfully, preparing to play 's9-kirana2.wav'")
+        
+        let playKiranaAction = SCNAction.playAudio(kiranaSound, waitForCompletion: true)
+        let completionAction = SCNAction.run { _ in
+            print("Audio 's9-kirana2.wav' playback finished.")
+            self.turnOffCandleLightEffects()  // Turn off candle light effects
+            self.performJumpscare()
+            completion?()
+        }
+        
+        let sequenceAction = SCNAction.sequence([playKiranaAction, completionAction])
+        node.runAction(sequenceAction)
+    }
+
+    // Function to turn off candle light effects
+    private func turnOffCandleLightEffects() {
+        rootNode.enumerateChildNodes { (node, _) in
+            if node.name == "candleLightNode" {
+                node.removeFromParentNode()
+            }
+        }
+        print("Candle light effects turned off.")
+    }
+
     func addCandleLightEffects(around playerNode: SCNNode) {
         let candleOffsets = [
-            SCNVector3(x: 1.2, y: 1, z: 1.2),
-            SCNVector3(x: -1.2, y: 0, z: -1.2)
+            SCNVector3(x: 1.2, y: 1, z: 1.2)
         ]
         
         for offset in candleOffsets {
             let candleNode = SCNNode()
+            candleNode.name = "candleLightNode"  // Add a name for easy removal later
             
             candleNode.position = SCNVector3(
                 playerNode.position.x + offset.x,
                 playerNode.position.y + offset.y,
                 playerNode.position.z + offset.z
             )
-
+            
             let candleGeometry = SCNCylinder(radius: 0.07, height: 0.3)
             candleGeometry.firstMaterial?.diffuse.contents = UIColor.white
             let candleVisualNode = SCNNode(geometry: candleGeometry)
@@ -250,12 +504,12 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
             
             let candleLight = SCNLight()
             candleLight.type = .omni
-            candleLight.intensity = 150
-            candleLight.color = UIColor.orange
+            candleLight.intensity = 100
+            candleLight.color = UIColor.blue
             candleNode.light = candleLight
             
             playerNode.parent?.addChildNode(candleNode)
-
+            
             let flickerAction = SCNAction.sequence([
                 SCNAction.customAction(duration: 0.15) { _,_ in candleLight.intensity = 130 },
                 SCNAction.wait(duration: 0.05),
@@ -270,41 +524,57 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
             candleNode.runAction(repeatFlicker)
         }
     }
-    
-    private func showButton() {
-        guard let view = scnView else {
-            print("Error: scnView is nil.")
+
+    private func addBlueFireAnimationNode() {
+        // Create the fire particle system
+        guard let fireParticleSystem = SCNParticleSystem(named: "smoothFire.scnp", inDirectory: nil) else {
+            print("Error: Could not find 'smoothFire.scnp' particle system.")
             return
         }
-        print("scnView is available; proceeding to show button.")
         
-        // Create a button
-        playButton = UIButton(type: .system)
-        playButton?.setTitle("Continue", for: .normal)
-        playButton?.backgroundColor = UIColor.systemBlue
-        playButton?.setTitleColor(.white, for: .normal)
-        playButton?.layer.cornerRadius = 10
-        playButton?.translatesAutoresizingMaskIntoConstraints = false
-        playButton?.addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
+        // Create a new SCNNode for the fire effect
+        let fireNode = SCNNode()
         
-        // Add the button to the view
-        view.addSubview(playButton!)
+        // Position the fire near the player node (adjust position if needed)
+        fireNode.position = SCNVector3(0, 1.5, 0) // Adjust this to control placement relative to player
         
-        // Set button constraints
-        NSLayoutConstraint.activate([
-            playButton!.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            playButton!.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -50),
-            playButton!.widthAnchor.constraint(equalToConstant: 120),
-            playButton!.heightAnchor.constraint(equalToConstant: 50)
-        ])
+        // Attach the particle system to the fire node
+        fireNode.addParticleSystem(fireParticleSystem)
+        fireNode.name = "blueFire"  // Assign a name for reference
         
-        view.layoutIfNeeded()  // Force layout update
+        playerEntity.playerNode?.addChildNode(fireNode)
+        
+        print("Blue fire node added and is always active.")
+    }
+    
+    private func playStepSound() {
+        guard let playerNode = playerEntity.playerNode else {
+            print("Player node is nil")
+            return
+        }
+        guard let stepSound = stepSound else {
+            print("Step sound is nil")
+            return
+        }
+        let playStepAction = SCNAction.playAudio(stepSound, waitForCompletion: false)
+        playerNode.runAction(playStepAction)
     }
     
     @objc private func buttonTapped() {
         print("Button tapped!")
         playButton?.removeFromSuperview()
-        // Add any additional actions you want to perform when the button is tapped
+        
+        guard let movementComponent = playerEntity?.movementComponent else {
+            print("Error: Movement component is not available.")
+            return
+        }
+        
+        // Move player to the 4th target position
+        let fourthTargetPosition = SCNVector3(-239.248, 81.08, 35.81) // Define the 4th target position here
+        movementComponent.movePlayer(to: fourthTargetPosition, duration: 5.0) {
+            print("Player has reached the 4th destination.")
+            self.playStepSound()
+        }
     }
     
     required init?(coder aDecoder: NSCoder) {
