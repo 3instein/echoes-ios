@@ -22,10 +22,10 @@ class Scene2: SCNScene {
     var isDoorOpen = false
     var isCutscenePlaying = false
     
-    lazy var doorOpenSound: SCNAudioSource? = loadAudio(named: "door_open.MP3")
-    lazy var doorCloseSound: SCNAudioSource? = loadAudio(named: "door_close.MP3")
-    lazy var grandmaGreetingsSound: SCNAudioSource? = loadAudio(named: "scene3_grandma_greetings.mp3")
-    lazy var andraGreetingsSound: SCNAudioSource? = loadAudio(named: "scene3_andra_greetings.mp3")
+    lazy var doorOpenSound: SCNAudioSource? = loadAudio(named: "doorOpen.MP3")
+    lazy var doorCloseSound: SCNAudioSource? = loadAudio(named: "doorClose.MP3")
+    lazy var grandmaGreetingsSound: SCNAudioSource? = loadAudio(named: "s3-grandma.mp3")
+    lazy var andraGreetingsSound: SCNAudioSource? = loadAudio(named: "s3-andra.mp3")
     
     private let doorOpenDuration: TimeInterval = 2.5
     private let grandmaMovePosition = SCNVector3(x: 0, y: -9.575, z: 0)
@@ -278,7 +278,7 @@ class Scene2: SCNScene {
             UIView.animate(withDuration: 2.0, animations: {
                 blackOverlay.alpha = 1.0
             }, completion: { _ in
-                blackOverlay.removeFromSuperview() // Remove overlay after fade
+                blackOverlay.removeFromSuperview()
                 print("Fade to black complete")
             })
         }
