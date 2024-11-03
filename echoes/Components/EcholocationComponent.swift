@@ -17,7 +17,7 @@ class EcholocationComponent: GKComponent {
         self.lightNode = lightNode
         self.originalLightIntensity = originalIntensity
         super.init()
-        loadSound()
+//        loadSound()
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -42,7 +42,7 @@ class EcholocationComponent: GKComponent {
         guard !isFlashing else { return }
         isFlashing = true
         
-        playEcholocationSound()
+//        playEcholocationSound()
         
         // Ensure lightNode has a light component before manipulating intensity
         guard let light = lightNode.light else {
