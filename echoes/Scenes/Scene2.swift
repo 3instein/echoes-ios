@@ -2,6 +2,7 @@
 
 import SceneKit
 import UIKit
+import AVFoundation
 
 protocol Scene2Delegate: AnyObject {
     func transitionToScene4()
@@ -19,6 +20,8 @@ class Scene2: SCNScene {
     var doorNode: SCNNode?
     var grandmaNode: SCNNode?
     var scnView: SCNView?
+    var grassFootstepAudioPlayer: AVAudioPlayer?
+    var woodFootstepAudioPlayer: AVAudioPlayer?
     var isDoorOpen = false
     var isCutscenePlaying = false
     
@@ -107,9 +110,9 @@ class Scene2: SCNScene {
     }
     
     func attachAmbientSounds() {
-        attachAmbientAudio(named: "wind.wav", to: "wind", volume: 0.5)
-        attachAmbientAudio(named: "crow.wav", to: "crow", volume: 0.5)
-        attachAmbientAudio(named: "outsideRain.wav", to: "outsideRain", volume: 0.5)
+        attachAmbientAudio(named: "wind.wav", to: "wind", volume: 0.1)
+        attachAmbientAudio(named: "crow.wav", to: "crow", volume: 0.1)
+        attachAmbientAudio(named: "outsideRain.wav", to: "outsideRain", volume: 0.1)
     }
     
     private func attachAmbientAudio(named fileName: String, to nodeName: String, volume: Float) {
@@ -138,10 +141,48 @@ class Scene2: SCNScene {
     }
     
     func startWalkingToHouse() {
-        // Player walks to the front door
-        playerEntity.movementComponent.movePlayer(to: SCNVector3(x: -15.388, y: -30.067, z: 0.728), duration: 20.0) {
-            self.beginDoorAndGrandmaSequence()
+        let firstPosition = SCNVector3(x: -15.441, y: -30.882, z: 0.253)
+        let secondPosition = SCNVector3(x: -15.388, y: -30.067, z: 0.728)
+        
+        // Play grass footsteps and move to the first position
+        playFootstepAudio(named: "grassFootsteps.wav", player: &grassFootstepAudioPlayer)
+        playerEntity.movementComponent.movePlayer(to: firstPosition, duration: 20.0) { [weak self] in
+            // Stop grass footsteps when reaching the first position
+            self?.stopFootstepAudio(player: &self!.grassFootstepAudioPlayer)
+            
+            // Play wood footsteps and move to the second position
+            self?.playFootstepAudio(named: "woodFootsteps.wav", player: &self!.woodFootstepAudioPlayer)
+            self?.playerEntity.movementComponent.movePlayer(to: secondPosition, duration: 6.0) {
+                // Stop wood footsteps when reaching the second position
+                self?.stopFootstepAudio(player: &self!.woodFootstepAudioPlayer)
+                
+                // Start the next sequence after reaching the destination
+                self?.beginDoorAndGrandmaSequence()
+            }
         }
+    }
+    
+    // Helper function to play footstep audio using AVAudioPlayer
+    private func playFootstepAudio(named fileName: String, player: inout AVAudioPlayer?) {
+        guard let url = Bundle.main.url(forResource: fileName, withExtension: nil) else {
+            print("Audio file \(fileName) not found.")
+            return
+        }
+        
+        do {
+            player = try AVAudioPlayer(contentsOf: url)
+            player?.volume = 3.0
+            player?.numberOfLoops = -1 // Loop indefinitely until stopped
+            player?.play()
+        } catch {
+            print("Error initializing audio player for \(fileName): \(error)")
+        }
+    }
+    
+    // Helper function to stop footstep audio
+    private func stopFootstepAudio(player: inout AVAudioPlayer?) {
+        player?.stop()
+        player = nil
     }
     
     func beginDoorAndGrandmaSequence() {
@@ -179,17 +220,23 @@ class Scene2: SCNScene {
     
     func moveGrandma(completion: @escaping () -> Void) {
         guard let grandmaNode = grandmaNode else { return }
-        
+
+        // Trigger echolocation and play footstep sound
         grandmaEntity?.activateEcholocation()
-        
+
+        // Play wood footsteps while grandma is moving
+        playFootstepAudio(named: "woodFootsteps.wav", player: &woodFootstepAudioPlayer)
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.grandmaEntity?.activateEcholocation()
         }
-        
+
         // Move grandma to the target position
         let moveAction = SCNAction.move(to: grandmaMovePosition, duration: 2.0)
-        
+
         grandmaNode.runAction(moveAction) {
+            // Stop wood footsteps when grandma reaches her position
+            self.stopFootstepAudio(player: &self.woodFootstepAudioPlayer)
             completion()
         }
     }
@@ -217,7 +264,7 @@ class Scene2: SCNScene {
             let temporaryLightNode = SCNNode()
             let temporaryLight = SCNLight()
             temporaryLight.type = .omni
-            temporaryLight.intensity = 7500
+            temporaryLight.intensity = 8000
             temporaryLight.color = UIColor(red: 0.5, green: 0.5, blue: 1.0, alpha: 1.0)
             temporaryLightNode.light = temporaryLight
             
@@ -227,9 +274,9 @@ class Scene2: SCNScene {
         }
         
         let delayBetweenDialogues: TimeInterval = 1.0
-        playDialogueSequence([(andraGreetingsSound, 5.0)], completion: {
+        playDialogueSequence([(andraGreetingsSound, 3.0)], completion: {
             DispatchQueue.main.asyncAfter(deadline: .now() + delayBetweenDialogues) {
-                self.playDialogueSequence([(grandmaGreetingsSound, 8.0)], completion: {
+                self.playDialogueSequence([(grandmaGreetingsSound, 6.0)], completion: {
                     self.playDoorCloseSoundAndFadeToBlack()
                 })
             }
