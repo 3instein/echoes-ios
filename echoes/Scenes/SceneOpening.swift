@@ -2,14 +2,19 @@
 
 import UIKit
 import AVKit
+import SceneKit
 
 class SceneOpening: UIViewController {
     
     var player: AVPlayer?
     var skipButton: UIButton?
+    var scene2AssetsPrepared = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        // Prepare Scene 2 assets
+        prepareScene2Assets()
         
         // Load and play video
         if let videoURL = Bundle.main.url(forResource: "Scene 1", withExtension: "mp4") {
@@ -39,6 +44,27 @@ class SceneOpening: UIViewController {
         } else {
             print("Video file not found.")
         }
+    }
+    
+    private func prepareScene2Assets() {
+        guard let scene2 = SCNScene(named: "scene2.scn") else {
+            print("Scene 2 file not found.")
+            return
+        }
+        
+        // List nodes or elements to prepare
+        let nodesToPrepare = scene2.rootNode.childNodes
+        
+        // Prepare assets in the background
+        let scnView = SCNView()
+        scnView.prepare(nodesToPrepare, completionHandler: { [weak self] success in
+            self?.scene2AssetsPrepared = success
+            if success {
+                print("Scene 2 assets successfully prepared.")
+            } else {
+                print("Failed to prepare Scene 2 assets.")
+            }
+        })
     }
     
     @objc func videoDidFinishPlaying() {
