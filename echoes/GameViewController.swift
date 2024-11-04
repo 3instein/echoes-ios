@@ -319,6 +319,7 @@ class GameViewController: UIViewController {
                 if loadedScene.isPhonePuzzleCompleted {
                     
                     loadedScene.displayPianoPuzzle(on: self.view)
+                    loadedScene.isPuzzleDisplayed = true
                     // Hide the interact button after the number pad is displayed
                     interactButton.isHidden = true // Hide interact button
                 } else {
