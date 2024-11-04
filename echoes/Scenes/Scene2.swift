@@ -146,7 +146,7 @@ class Scene2: SCNScene {
         
         // Play grass footsteps and move to the first position
         playFootstepAudio(named: "grassFootsteps.wav", player: &grassFootstepAudioPlayer)
-        playerEntity.movementComponent.movePlayer(to: firstPosition, duration: 20.0) { [weak self] in
+        playerEntity.movementComponent.movePlayer(to: firstPosition, duration: 18.0) { [weak self] in
             // Stop grass footsteps when reaching the first position
             self?.stopFootstepAudio(player: &self!.grassFootstepAudioPlayer)
             
@@ -157,7 +157,7 @@ class Scene2: SCNScene {
                 self?.stopFootstepAudio(player: &self!.woodFootstepAudioPlayer)
                 
                 // Start the next sequence after reaching the destination
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                     self?.beginDoorAndGrandmaSequence()
                 }
             }
