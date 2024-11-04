@@ -3,6 +3,9 @@
 import UIKit
 import SceneKit
 import GameplayKit
+import AVKit
+import AVFoundation
+
 
 class GameViewController: UIViewController {
     static var shared = GameViewController()
@@ -57,18 +60,18 @@ class GameViewController: UIViewController {
         GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 3.0) {
             DispatchQueue.main.async {
                 // Load Scene3 after the movement finishes
-                SceneManager.shared.loadScene8()
+                SceneManager.shared.loadScene7()
                 
-                if let gameScene = self.scnView.scene as? Scene8 {
+                if let gameScene = self.scnView.scene as? Scene7 {
                     GameViewController.playerEntity = gameScene.playerEntity
                     
                     // Create a movement component to handle player movement, including the light node
                     let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
                     GameViewController.playerEntity.movementComponent = movementComponent
                      
-                    //ADD FOR STEPS TOILET IN SCENE8
-                    movementComponent.isToilet = true
-                    print("In Scene 8, isToilet is \(movementComponent.isToilet)")
+//                    //ADD FOR STEPS TOILET IN SCENE8
+//                    movementComponent.isToilet = true
+//                    print("In Scene 8, isToilet is \(movementComponent.isToilet)")
 
                     // Link the joystick with the movement component
                     if let movementComponent = gameScene.playerEntity.movementComponent {
@@ -153,7 +156,7 @@ class GameViewController: UIViewController {
             // Check if the player is near the transition point
             if gameScene.checkProximityToTransition() {
                 // Load Scene6 after the movement finishes
-                SceneManager.shared.loadScene6()
+                SceneManager.shared.loadScene7()
                 
                 if let gameScene = self.scnView.scene as? Scene6 {
                     GameViewController.playerEntity = gameScene.playerEntity
@@ -249,26 +252,86 @@ class GameViewController: UIViewController {
                 gameScene.isPipeClicked = false
             }
         }
+        
+        // SCENE 7
+                if let gameScene = scnView.scene as? Scene7 {
+                    if let musicBoxNode = gameScene.rootNode.childNode(withName: "musicBox", recursively: true) {
+                        musicBoxNode.categoryBitMask = 2
+                    }
+                    
+                    if let phoneNode = gameScene.rootNode.childNode(withName: "phone", recursively: true) {
+                        phoneNode.categoryBitMask = 2
+                    }
+                    
+                    // Load and apply the SCNTechnique for the glow effect
+                    if let path = Bundle.main.path(forResource: "NodeTechnique", ofType: "plist"),
+                       let dict = NSDictionary(contentsOfFile: path) as? [String: AnyObject] {
+                        let technique = SCNTechnique(dictionary: dict)
+
+                        let glowColor = SCNVector3(0.0, 1.0, 1.0)  // Cyan outline
+                        technique?.setValue(NSValue(scnVector3: glowColor), forKeyPath: "glowColorSymbol")
+
+                        scnView.technique = technique
+                    }
+                    
+                    // Check proximity to interactable objects and show button
+                    gameScene.updateProximityAndGlow(interactButton: interactButton)
+                    
+                    // Hide joystick and button when puzzle is open
+                    if gameScene.isPlayingPiano || gameScene.isOpenPhone {
+                        GameViewController.joystickComponent.joystickView.isHidden = true
+                        interactButton.isHidden = true  // Hide interact button
+                    } else {
+                        GameViewController.joystickComponent.joystickView.isHidden = false
+                    }
+                    
+                    if gameScene.isGrandmaFinishedTalking || gameScene.isSwanLakePlaying {
+                        GameViewController.joystickComponent.joystickView.isHidden = false
+                    }
+                }
+
+
+
     }
     
     @objc func interactWithCake() {
-        // Now check if the loaded scene is Scene1 and assign it to the scene1 variable
-        if let loadedScene = scnView.scene as? Scene6 {
-            loadedScene.displayPuzzlePieces(on: self.view)
-            loadedScene.addOpenFridgeSound()
-        } else {
-            print("Error: Scene6 not loaded correctly")
-        }
-        
-        if let loadedScene = scnView.scene as? Scene8 {
-            if loadedScene.isPipeClicked {
-                loadedScene.examinePipe(on: self.view)
-                loadedScene.animatePipeToGreen(pipeName: "pipeclue-1")
+            // Check if the loaded scene is Scene6 and assign it to the scene1 variable
+            if let loadedScene = scnView.scene as? Scene6 {
+                loadedScene.displayPuzzlePieces(on: self.view)
+                loadedScene.addOpenFridgeSound()
+            } else {
+                print("Error: Scene6 not loaded correctly")
             }
-        } else {
-            print("Error: Scene8 not loaded correctly")
+
+            // Check if the loaded scene is Scene8 and handle pipe interaction
+            if let loadedScene = scnView.scene as? Scene8 {
+                if loadedScene.isPipeClicked {
+                    loadedScene.examinePipe(on: self.view)
+                    loadedScene.animatePipeToGreen(pipeName: "pipeclue-1")
+                }
+            } else {
+                print("Error: Scene8 not loaded correctly")
+            }
+
+            // Handle interactions in Scene7
+            if let loadedScene = scnView.scene as? Scene7 {
+                // Check if the piano puzzle has been completed
+                if loadedScene.isPhonePuzzleCompleted {
+                    
+                    loadedScene.displayPianoPuzzle(on: self.view)
+                    // Hide the interact button after the number pad is displayed
+                    interactButton.isHidden = true // Hide interact button
+                } else {
+                    // If the music puzzle is not completed, display it
+                    loadedScene.displayNumberPad(on: self.view)
+                }
+            } else {
+                print("Error: Scene7 not loaded correctly")
+            }
         }
-    }
+
+
+
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
