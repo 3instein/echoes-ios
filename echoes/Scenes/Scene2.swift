@@ -157,7 +157,9 @@ class Scene2: SCNScene {
                 self?.stopFootstepAudio(player: &self!.woodFootstepAudioPlayer)
                 
                 // Start the next sequence after reaching the destination
-                self?.beginDoorAndGrandmaSequence()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                    self?.beginDoorAndGrandmaSequence()
+                }
             }
         }
     }
@@ -204,7 +206,7 @@ class Scene2: SCNScene {
     func openDoor(completion: @escaping () -> Void) {
         guard let doorNode = doorNode, let doorOpenSound = doorOpenSound else { return }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.doorEntity?.activateEcholocation()
         }
         
@@ -230,7 +232,7 @@ class Scene2: SCNScene {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.grandmaEntity?.activateEcholocation()
         }
-
+        
         // Move grandma to the target position
         let moveAction = SCNAction.move(to: grandmaMovePosition, duration: 2.0)
 
@@ -264,7 +266,7 @@ class Scene2: SCNScene {
             let temporaryLightNode = SCNNode()
             let temporaryLight = SCNLight()
             temporaryLight.type = .omni
-            temporaryLight.intensity = 8000
+            temporaryLight.intensity = 8500
             temporaryLight.color = UIColor(red: 0.5, green: 0.5, blue: 1.0, alpha: 1.0)
             temporaryLightNode.light = temporaryLight
             

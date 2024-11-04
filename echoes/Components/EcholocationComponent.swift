@@ -7,8 +7,8 @@ import AVFoundation
 class EcholocationComponent: GKComponent {
     private let lightNode: SCNNode
     private var originalLightIntensity: CGFloat
-    private var flashDuration: TimeInterval = 2.0 // Short flash duration
-    private var resetDuration: TimeInterval = 1.5 // Quick fade back to normal
+    private var flashDuration: TimeInterval = 0.5 // Short flash duration
+    private var resetDuration: TimeInterval = 0.8 // Quick fade back to normal
     private var isFlashing = false
     
     var echolocationSound: AVAudioPlayer?
@@ -50,14 +50,16 @@ class EcholocationComponent: GKComponent {
             return
         }
         
-        // Flash the light: briefly increase intensity to simulate echolocation
-        let flashAction = SCNAction.customAction(duration: flashDuration) { _, _ in
-            light.intensity = self.originalLightIntensity + 2000
+        // Flash the light: increase intensity smoothly
+        let flashAction = SCNAction.customAction(duration: flashDuration) { _, elapsedTime in
+            let percent = elapsedTime / CGFloat(self.flashDuration)
+            light.intensity = self.originalLightIntensity + (1000 * percent) // Adjust this multiplier if needed
         }
         
-        // Reset the light back to its original intensity
-        let resetAction = SCNAction.customAction(duration: resetDuration) { _, _ in
-            light.intensity = self.originalLightIntensity
+        // Reset the light back to its original intensity smoothly
+        let resetAction = SCNAction.customAction(duration: resetDuration) { _, elapsedTime in
+            let percent = elapsedTime / CGFloat(self.resetDuration)
+            light.intensity = self.originalLightIntensity + (1000 * (1 - percent)) // Adjust this as well
         }
         
         let sequence = SCNAction.sequence([flashAction, resetAction])
