@@ -2,16 +2,22 @@
 
 import UIKit
 import AVKit
+import SceneKit
 
 class SceneOpening: UIViewController {
     
     var player: AVPlayer?
     var skipButton: UIButton?
+    var doubleTapGesture: UITapGestureRecognizer?
+    var scene2AssetsPrepared = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Load and play video
+        // Prepare Scene 2 assets
+        prepareScene2Assets()
+        
+        // Load and play the opening video
         if let videoURL = Bundle.main.url(forResource: "Scene 1", withExtension: "mp4") {
             player = AVPlayer(url: videoURL)
             let playerViewController = AVPlayerViewController()
@@ -19,35 +25,67 @@ class SceneOpening: UIViewController {
             playerViewController.showsPlaybackControls = false
             playerViewController.videoGravity = .resizeAspectFill
             
-            // Present the player view controller
             self.addChild(playerViewController)
             self.view.addSubview(playerViewController.view)
             playerViewController.view.frame = self.view.bounds
             playerViewController.didMove(toParent: self)
             
-            // Play video
             player?.play()
             
-            // Add observer for when the video finishes playing
+            // Observer for when the video finishes playing
             NotificationCenter.default.addObserver(self, selector: #selector(videoDidFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem)
             
-            // Add double tap gesture to show skip button
-            let doubleTapGesture = UITapGestureRecognizer(target: self, action: #selector(showSkipButton))
-            doubleTapGesture.numberOfTapsRequired = 2
-            self.view.addGestureRecognizer(doubleTapGesture)
-            
+            // Set up the double-tap gesture but disable it initially
+            doubleTapGesture = UITapGestureRecognizer(target: self, action: #selector(showSkipButton))
+            doubleTapGesture?.numberOfTapsRequired = 2
+            doubleTapGesture?.isEnabled = false // Disable initially
+            if let gesture = doubleTapGesture {
+                self.view.addGestureRecognizer(gesture)
+            }
         } else {
             print("Video file not found.")
         }
     }
     
+    private func prepareScene2Assets() {
+        guard let scene2 = SCNScene(named: "scene2.scn") else {
+            print("Scene 2 file not found.")
+            return
+        }
+        
+        // List nodes or elements to prepare
+        let nodesToPrepare = scene2.rootNode.childNodes
+        
+        // Prepare assets in the background
+        let scnView = SCNView()
+        scnView.prepare(nodesToPrepare, completionHandler: { [weak self] success in
+            self?.scene2AssetsPrepared = success
+            if success {
+                print("Scene 2 assets successfully prepared.")
+                // Enable the double-tap gesture for skipping once assets are ready
+                self?.doubleTapGesture?.isEnabled = true
+            } else {
+                print("Failed to prepare Scene 2 assets.")
+            }
+        })
+    }
+    
     @objc func videoDidFinishPlaying() {
         print("Video finished playing")
-        
-        // Remove observer
         NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem)
         
-        // Transition to GameViewController (Scene 1)
+        // Check if Scene 2 assets are fully loaded
+        if scene2AssetsPrepared {
+            transitionToGameViewController()
+        } else {
+            // If assets aren't prepared yet, delay and retry
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.transitionToGameViewController()
+            }
+        }
+    }
+    
+    private func transitionToGameViewController() {
         let gameVC = GameViewController()
         gameVC.modalPresentationStyle = .fullScreen
         self.present(gameVC, animated: false) {
