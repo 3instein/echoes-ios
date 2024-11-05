@@ -1,5 +1,3 @@
-//  SceneOpening.swift
-
 import UIKit
 import AVKit
 import SceneKit
@@ -8,7 +6,6 @@ class SceneOpening: UIViewController {
     
     var player: AVPlayer?
     var skipButton: UIButton?
-    var doubleTapGesture: UITapGestureRecognizer?
     var scene2AssetsPrepared = false
     
     override func viewDidLoad() {
@@ -35,13 +32,6 @@ class SceneOpening: UIViewController {
             // Observer for when the video finishes playing
             NotificationCenter.default.addObserver(self, selector: #selector(videoDidFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem)
             
-            // Set up the double-tap gesture but disable it initially
-            doubleTapGesture = UITapGestureRecognizer(target: self, action: #selector(showSkipButton))
-            doubleTapGesture?.numberOfTapsRequired = 2
-            doubleTapGesture?.isEnabled = false // Disable initially
-            if let gesture = doubleTapGesture {
-                self.view.addGestureRecognizer(gesture)
-            }
         } else {
             print("Video file not found.")
         }
@@ -62,8 +52,8 @@ class SceneOpening: UIViewController {
             self?.scene2AssetsPrepared = success
             if success {
                 print("Scene 2 assets successfully prepared.")
-                // Enable the double-tap gesture for skipping once assets are ready
-                self?.doubleTapGesture?.isEnabled = true
+                // Show the skip button once assets are ready
+                self?.showSkipButton()
             } else {
                 print("Failed to prepare Scene 2 assets.")
             }
@@ -93,15 +83,15 @@ class SceneOpening: UIViewController {
         }
     }
     
-    @objc func showSkipButton() {
+    func showSkipButton() {
         if skipButton == nil {
             skipButton = UIButton(type: .system)
             skipButton?.setTitle("Skip", for: .normal)
-            skipButton?.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+            skipButton?.backgroundColor = UIColor.black.withAlphaComponent(0.4)
             skipButton?.setTitleColor(.white, for: .normal)
             skipButton?.layer.cornerRadius = 5
             
-            if let customFont = UIFont(name: "MetalMania-Regular", size: 20) {
+            if let customFont = UIFont(name: "MetalMania-Regular", size: 18) {
                 skipButton?.titleLabel?.font = customFont
             } else {
                 print("Failed to load MetalMania-Regular font.")
