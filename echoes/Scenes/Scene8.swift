@@ -174,7 +174,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         toiletDoorCloseNode = rootNode.childNode(withName: "toiletDoorClose", recursively: true)
 
-        attachAudio(to: toiletDoorCloseNode, audioFileName: "door_close.mp3", volume: 0.5, delay: 0.2)
+        attachAudio(to: toiletDoorCloseNode, audioFileName: "door_close.mp3", volume: 3, delay: 0)
 
         dollNode.isHidden = true
         

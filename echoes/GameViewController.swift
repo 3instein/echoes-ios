@@ -11,7 +11,7 @@ class GameViewController: UIViewController {
     static var joystickComponent: VirtualJoystickComponent!
     
     var interactButton: UIButton!
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -65,7 +65,7 @@ class GameViewController: UIViewController {
                     // Create a movement component to handle player movement, including the light node
                     let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
                     GameViewController.playerEntity.movementComponent = movementComponent
-                     
+                    
                     // Link the joystick with the movement component
                     if let movementComponent = gameScene.playerEntity.movementComponent {
                         movementComponent.joystickComponent = GameViewController.joystickComponent
@@ -82,7 +82,7 @@ class GameViewController: UIViewController {
                 }
             }
         }
-    
+        
         //SCENE 8
         if let gameScene = self.scnView.scene as? Scene8 {
             GameViewController.playerEntity = gameScene.playerEntity
@@ -90,11 +90,11 @@ class GameViewController: UIViewController {
             // Create a movement component to handle player movement, including the light node
             let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
             GameViewController.playerEntity.movementComponent = movementComponent
-             
+            
             //ADD FOR STEPS TOILET IN SCENE8
             movementComponent.isToilet = true
             print("In Scene 8, isToilet is \(movementComponent.isToilet)")
-
+            
             // Link the joystick with the movement component
             if let movementComponent = gameScene.playerEntity.movementComponent {
                 movementComponent.joystickComponent = GameViewController.joystickComponent
@@ -141,10 +141,14 @@ class GameViewController: UIViewController {
     
     @objc func updateScene() {
         GameViewController.playerEntity?.movementComponent?.update(deltaTime: 0.016)
-                
+        
         if let gameScene = scnView.scene as? Scene4 {
             // Check if the player is near the transition point
             if gameScene.checkProximityToTransition() {
+                if let doorNode = gameScene.rootNode.childNode(withName: "doorFamilyRoom", recursively: true) {
+                    attachAudio(to: doorNode, audioFileName: "door_open.mp3", volume: 3, delay: 0)
+                }
+                
                 // Load Scene6 after the movement finishes
                 SceneManager.shared.loadScene5and6()
                 
@@ -172,10 +176,12 @@ class GameViewController: UIViewController {
                 }
             }
         }
-                
+        
         if let gameScene = scnView.scene as? Scene5and6 {
-            // Check if the player is near the transition point
 //            if gameScene.checkProximityToTransition() {
+//                if let doorNode = gameScene.rootNode.childNode(withName: "doorKiranaBedroom", recursively: true) {
+//                    attachAudio(to: doorNode, audioFileName: "door_open.mp3", volume: 3, delay: 0)
+//                }
 //                // Load Scene6 after the movement finishes
 //                SceneManager.shared.loadScene7()
 //                
@@ -235,33 +241,36 @@ class GameViewController: UIViewController {
         //SCENE 8
         if let gameScene = scnView.scene as? Scene8 {
             // Check if the player is near the transition point
-            if gameScene.isJumpscareDone && gameScene.checkProximityToTransition() {
-                // Load Scene9 after the movement finishes
-//                SceneManager.shared.loadScene9()
-//
-//                if let gameScene = self.scnView.scene as? Scene9 {
-//                    GameViewController.playerEntity = gameScene.playerEntity
-//                    
-//                    // Create a movement component to handle player movement, including the light node
-//                    let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
-//                    GameViewController.playerEntity.movementComponent = movementComponent
-//                                        
-//                    // Link the joystick with the movement component
-//                    if let movementComponent = gameScene.playerEntity.movementComponent {
-//                        movementComponent.joystickComponent = GameViewController.joystickComponent
-//                        self.scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
-//                    }
-//                    
-//                    // Set up fog properties for the scene
-//                    gameScene.fogStartDistance = 25.0   // Increase the start distance
-//                    gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
-//                    gameScene.fogDensityExponent = 0.3  // Reduce density to make the fog less thick
-//                    gameScene.fogColor = UIColor.black
-//                    
-//                    gameScene.setupGestureRecognizers(for: self.scnView)
-//                }
-            }
-
+            //            if gameScene.isJumpscareDone && gameScene.checkProximityToTransition() {
+            //                if let doorNode = gameScene.rootNode.childNode(withName: "doorFamilyRoom", recursively: true) {
+            //                    attachAudio(to: doorNode, audioFileName: "door_open.mp3", volume: 3, delay: 0)
+            //                }
+            //                // Load Scene9 after the movement finishes
+            //                SceneManager.shared.loadScene9()
+            //
+            //                if let gameScene = self.scnView.scene as? Scene9 {
+            //                    GameViewController.playerEntity = gameScene.playerEntity
+            //
+            //                    // Create a movement component to handle player movement, including the light node
+            //                    let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
+            //                    GameViewController.playerEntity.movementComponent = movementComponent
+            //
+            //                    // Link the joystick with the movement component
+            //                    if let movementComponent = gameScene.playerEntity.movementComponent {
+            //                        movementComponent.joystickComponent = GameViewController.joystickComponent
+            //                        self.scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
+            //                    }
+            //
+            //                    // Set up fog properties for the scene
+            //                    gameScene.fogStartDistance = 25.0   // Increase the start distance
+            //                    gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
+            //                    gameScene.fogDensityExponent = 0.3  // Reduce density to make the fog less thick
+            //                    gameScene.fogColor = UIColor.black
+            //
+            //                    gameScene.setupGestureRecognizers(for: self.scnView)
+            //                }
+            //            }
+            
             let cabinetNodeName = "smallCabinet"
             if let cabinetNode = gameScene.rootNode.childNode(withName: cabinetNodeName, recursively: true) {
                 // Set the category bitmask for post-processing
@@ -277,11 +286,11 @@ class GameViewController: UIViewController {
             if let path = Bundle.main.path(forResource: "NodeTechnique", ofType: "plist"),
                let dict = NSDictionary(contentsOfFile: path) as? [String: AnyObject] {
                 let technique = SCNTechnique(dictionary: dict)
-
+                
                 // Optionally set a custom color for the glow
                 let glowColor = SCNVector3(0.0, 1.0, 1.0)  // Cyan outline
                 technique?.setValue(NSValue(scnVector3: glowColor), forKeyPath: "glowColorSymbol")
-
+                
                 scnView.technique = technique
             }
             
@@ -292,7 +301,7 @@ class GameViewController: UIViewController {
             } else if interactButton.titleLabel?.text == "Open Cabinet" && interactButton.isTouchInside {
                 gameScene.isCabinetOpened = true
             }
-
+            
             if gameScene.isPlayingPipe || (!gameScene.isCabinetDone && gameScene.isCabinetOpened) || gameScene.isDollJumpscare {
                 GameViewController.joystickComponent.joystickView.isHidden = true
                 interactButton.isHidden = true
@@ -331,6 +340,23 @@ class GameViewController: UIViewController {
         } else {
             print("Error: Scene8 not loaded correctly")
         }
+    }
+    
+    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
+        guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
+            print("Warning: Audio file '\(audioFileName)' not found")
+            return
+        }
+        
+        audioSource.isPositional = true
+        audioSource.shouldStream = false
+        audioSource.load()
+        audioSource.volume = volume
+        
+        let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: true)
+        let waitAction = SCNAction.wait(duration: delay)
+        let sequenceAction = SCNAction.sequence([waitAction, playAudioAction])
+        node.runAction(sequenceAction)
     }
     
     override func viewDidLayoutSubviews() {

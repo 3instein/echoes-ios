@@ -134,6 +134,10 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         grandmaNode = rootNode.childNode(withName: "grandma", recursively: true)
         dollNode = rootNode.childNode(withName: "doll", recursively: true)
         
+        if let doorNode = rootNode.childNode(withName: "doorFamilyRoom", recursively: true) {
+            attachAudio(to: doorNode, audioFileName: "door_close.mp3", volume: 3, delay: 0)
+        }
+        
         if let woodNode = rootNode.childNode(withName: "woodenFloor", recursively: false) {
             attachAudio(to: woodNode, audioFileName: "woodenFloor.wav", volume: 0.7, delay: 0)
         }
@@ -154,7 +158,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
          
         if let andraParentNode = rootNode.childNode(withName: "player", recursively: true) {
             if let andraNode = andraParentNode.childNode(withName: "s5-andra", recursively: false) {
-                attachAudio(to: andraNode, audioFileName: "s5-andra.wav", volume: 7, delay: 15)
+                attachAudio(to: andraNode, audioFileName: "s5-andra.wav", volume: 7, delay: 16)
             }
         }
         
@@ -240,6 +244,10 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
             audioSource.isPositional = false
         } else {
             audioSource.isPositional = true
+        }
+        
+        if audioFileName == "muffledRain.wav" {
+            audioSource.loops = true
         }
         
         audioSource.shouldStream = false
@@ -510,15 +518,21 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
     }
     
     func playPuzzleTouchSound() {
-        guard let audioSource = SCNAudioSource(fileNamed: "puzzle.mp3") else {
-            print("Warning: puzzle.mp3 sound not found")
+        // Generate a random number between 1 and 10
+        let randomIndex = Int.random(in: 1...10)
+        // Create the file name based on the random number
+        let fileName = "puzzle\(randomIndex).wav"
+        
+        // Attempt to load the randomly selected audio source
+        guard let audioSource = SCNAudioSource(fileNamed: fileName) else {
+            print("Warning: \(fileName) sound not found")
             return
         }
         
         audioSource.load()
-        audioSource.volume = 5.0 // Set the volume as needed
-        audioSource.isPositional = false  // Set to false for background sound
-        audioSource.shouldStream = false     // Stream if it's a long sound
+        audioSource.volume = 3.0 // Set the volume as needed
+        audioSource.isPositional = false // Set to false for background sound
+        audioSource.shouldStream = false // Stream if it's a long sound
         
         // Create a node to attach the sound to
         let soundNode = SCNNode()
@@ -527,7 +541,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         // Add the sound node to the root node
         rootNode.addChildNode(soundNode)
     }
-    
+
     func checkForNearbyPieces(_ currentPiece: UIView) {
         guard let currentImageView = currentPiece as? UIImageView,
               let currentImageName = currentImageView.accessibilityIdentifier else { return }
@@ -704,7 +718,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
             // Change the image to the "Thankyou card" image
             imageView.image = UIImage(named: "backPuzzleCode.png")
             imageView.frame.size = CGSize(width: 450, height: 350)
-            
+            self.attachAudio(to: self.rootNode, audioFileName: "puzzleFinish.wav", volume: 3, delay: 0)
         }, completion: nil)
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
