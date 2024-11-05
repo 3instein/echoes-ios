@@ -57,9 +57,9 @@ class GameViewController: UIViewController {
         GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-15.538, -29.942, 0.728), duration: 3.0) {
             DispatchQueue.main.async {
                 // Load Scene3 after the movement finishes
-                SceneManager.shared.loadScene4()
+                SceneManager.shared.loadScene8()
                 
-                if let gameScene = self.scnView.scene as? Scene4 {
+                if let gameScene = self.scnView.scene as? Scene8 {
                     GameViewController.playerEntity = gameScene.playerEntity
                     
                     // Create a movement component to handle player movement, including the light node
