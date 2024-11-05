@@ -23,7 +23,7 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
     var isGameCompleted: Bool = false  // Track if the game is completed
     let snapDistance: CGFloat = 50.0
     
-    let transitionTriggerPosition = SCNVector3(28.603, 494, 103.106)
+    let transitionTriggerPosition = SCNVector3(-377.69, -463, -1.377)
     let triggerDistance: Float = 80.0
     
     init(lightNode: SCNNode) {
@@ -33,7 +33,7 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
         scnView?.pointOfView = cameraNode
         
         // Load the house scene from the Scenes folder
-        guard let houseScene = SCNScene(named: "Scene4-baru.scn") else {
+        guard let houseScene = SCNScene(named: "scene4.scn") else {
             print("Warning: House scene 'Scene 4.scn' not found")
             return
         }
@@ -70,6 +70,9 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
         
         rootNode.addChildNode(lightNode)
         
+        // Create and add blue fire animation node
+        addBlueFireAnimationNode()
+        
         if let woodNode = rootNode.childNode(withName: "woodenFloor", recursively: false) {
             attachAudio(to: woodNode, audioFileName: "woodenFloor.wav", volume: 0.7, delay: 0)
         }
@@ -84,22 +87,19 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
         
         if let andraParentNode = rootNode.childNode(withName: "player", recursively: true) {
             if let andraNode = andraParentNode.childNode(withName: "s4-andra", recursively: false) {
-                attachAudio(to: andraNode, audioFileName: "s4-andra.wav", volume: 300, delay: 23)
+                attachAudio(to: andraNode, audioFileName: "s4-andra.wav", volume: 300, delay: 30)
             }
         }
         
         if let grandmaParentNode = rootNode.childNode(withName: "grandma", recursively: true) {
             if let grandmaNode1 = grandmaParentNode.childNode(withName: "s4-grandma1", recursively: false) {
-                attachAudio(to: grandmaNode1, audioFileName: "s4-grandma1.wav", volume: 3, delay: 3)
+                attachAudio(to: grandmaNode1, audioFileName: "s4-grandma1.wav", volume: 5, delay: 10)
             }
             
             if let grandmaNode2 = grandmaParentNode.childNode(withName: "s4-grandma2", recursively: false) {
-                attachAudio(to: grandmaNode2, audioFileName: "s4-grandma2.wav", volume: 200, delay: 14.5)
+                attachAudio(to: grandmaNode2, audioFileName: "s4-grandma2.wav", volume: 600, delay: 21)
             }
         }
-        
-        // Create and add blue fire animation node
-        addBlueFireAnimationNode()
         
         self.physicsWorld.contactDelegate = self
     }

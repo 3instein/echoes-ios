@@ -275,6 +275,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
                 SCNTransaction.animationDuration = 0.2
                 self?.cameraNode.camera?.fieldOfView = 25  // Adjust this value for closer zoom
                 SCNTransaction.commit()
+                self?.cameraComponent.lockCamera()
             }
         }
         
@@ -292,6 +293,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             )
             
             GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-293, 501.033, 30), duration: 1.5) {
+                self?.cameraComponent.unlockCamera()
                 self?.isDollJumpscare = false
                 self?.toiletDoorCloseNode.isHidden = true
                 self?.toiletDoorOpenNode.isHidden = false
