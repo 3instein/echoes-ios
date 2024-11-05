@@ -161,6 +161,10 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         addFallingCupSound()
         addSpoonSound()
         
+        if let chandelierNode = rootNode.childNode(withName: "chandelier", recursively: false) {
+            attachAudio(to: chandelierNode, audioFileName: "rustyChandelier.mp3", volume: 0.9, delay: 9)
+        }
+        
         doorOpenNode.isHidden = true
 
         jumpscareDoll()

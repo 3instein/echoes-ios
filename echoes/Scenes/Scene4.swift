@@ -97,7 +97,7 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
             }
             
             if let grandmaNode2 = grandmaParentNode.childNode(withName: "s4-grandma2", recursively: false) {
-                attachAudio(to: grandmaNode2, audioFileName: "s4-grandma2.wav", volume: 600, delay: 21)
+                attachAudio(to: grandmaNode2, audioFileName: "s4-grandma2.wav", volume: 700, delay: 21)
             }
         }
         
