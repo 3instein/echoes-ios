@@ -42,7 +42,6 @@ class SceneOpening: UIViewController {
             if let gesture = doubleTapGesture {
                 self.view.addGestureRecognizer(gesture)
             }
-            
         } else {
             print("Video file not found.")
         }
