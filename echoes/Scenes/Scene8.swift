@@ -554,7 +554,12 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             }
         }
         
-        attachAudio(to: rootNode, audioFileName: "pipeMove.mp3", volume: 0.8, delay: 0)
+        // Generate a random number between 1 and 13
+        let randomIndex = Int.random(in: 1...13)
+        // Create the file name based on the random number
+        let fileName = "pipe\(randomIndex).wav"
+        
+        attachAudio(to: rootNode, audioFileName: fileName, volume: 0.8, delay: 0)
         
         print(correctlyRotatedPipes.count)
 
