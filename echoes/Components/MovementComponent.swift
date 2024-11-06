@@ -10,11 +10,9 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     var joystickComponent: VirtualJoystickComponent?
     var cameraNode: SCNNode?
     var movingProgramatically: Bool = false
-
-    private var lastSafePosition: SCNVector3?
-
-    var velocity: CGPoint = .zero
     var collisionDetected: Bool = false
+    var velocity: CGPoint = .zero
+    private var lastSafePosition: SCNVector3?
     
     // Light node reference
     var lightNode: SCNNode?
@@ -211,6 +209,21 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
 //        }
         
         if let stepSoundURL = Bundle.main.url(forResource: "step", withExtension: "mp3") {
+            do {
+                stepAudioPlayer = try AVAudioPlayer(contentsOf: stepSoundURL)
+                stepAudioPlayer?.prepareToPlay() // Prepare to play
+                print(isToilet)
+            } catch {
+                print("Error loading step sound: \(error)")
+            }
+        } else {
+            print("Sound step file not found")
+        }
+    }
+    
+    // Updated loadStepSound to accept a resource parameter
+    private func loadStepSound(resource: String) {
+        if let stepSoundURL = Bundle.main.url(forResource: resource, withExtension: "mp3") {
             do {
                 stepAudioPlayer = try AVAudioPlayer(contentsOf: stepSoundURL)
                 stepAudioPlayer?.prepareToPlay() // Prepare to play
