@@ -22,38 +22,39 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
     
     var grandmaNode: SCNNode?
     var grandmaEntity: NPCEntity!
-
-    var objCakeNode: SCNNode!  // Add a reference for Obj_Cake_003
-        let proximityDistance: Float = 150.0  // Define a proximity distance
-        
-        weak var scnView: SCNView?
-        var puzzleBackground: UIView?
-        var playButton: UIButton?  // Store a reference to the play button
-        
-        var isPuzzleDisplayed: Bool = false
-        var isGameCompleted: Bool = false  // Track if the game is completed
-        
-        var pianoKeys: [UIButton] = []  // Store piano keys
-            var audioPlayer: AVAudioPlayer? // To play piano sounds
-            var userPlayedNotes: [String] = [] // Store user input notes
-        let targetMelody: [String] = ["Upper_Mi", "La", "Si", "Upper_Do", "Upper_Re", "Upper_Mi", "Upper_Do", "Upper_Mi"] // Target melody to match
-            var blackKeys: [UIView] = []
-        var targetIndex = 0
-        
-        var hintButton: UIButton!
-        var hintTimer: Timer?
-        var containerView: UIView?
-        var progressBar: UIView!
+    var doorCloseNode : SCNNode?
     
-        
-        var correctPassword = "0324" // The correct password
-        var enteredPassword = "" // Store user input password
-        var numberPadContainer: UIView?
-        var circles: [UIView] = []
-        
-        var timer: Timer?
-        var timeRemaining: Int = 300 // 5 minutes in seconds
-        var timerLabel: UILabel!
+    var objCakeNode: SCNNode!  // Add a reference for Obj_Cake_003
+    let proximityDistance: Float = 150.0  // Define a proximity distance
+    
+    weak var scnView: SCNView?
+    var puzzleBackground: UIView?
+    var playButton: UIButton?  // Store a reference to the play button
+    
+    var isPuzzleDisplayed: Bool = false
+    var isGameCompleted: Bool = false  // Track if the game is completed
+    
+    var pianoKeys: [UIButton] = []  // Store piano keys
+    var audioPlayer: AVAudioPlayer? // To play piano sounds
+    var userPlayedNotes: [String] = [] // Store user input notes
+    let targetMelody: [String] = ["Upper_Mi", "La", "Si", "Upper_Do", "Upper_Re", "Upper_Mi", "Upper_Do", "Upper_Mi"] // Target melody to match
+    var blackKeys: [UIView] = []
+    var targetIndex = 0
+    
+    var hintButton: UIButton!
+    var hintTimer: Timer?
+    var containerView: UIView?
+    var progressBar: UIView!
+    
+    
+    var correctPassword = "0324" // The correct password
+    var enteredPassword = "" // Store user input password
+    var numberPadContainer: UIView?
+    var circles: [UIView] = []
+    
+    var timer: Timer?
+    var timeRemaining: Int = 10 // 5 minutes in seconds
+    var timerLabel: UILabel!
     
     var musicBoxNode: SCNNode!
     var phoneNode: SCNNode!
@@ -70,9 +71,10 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
     var jumpscarePlayer: AVAudioPlayer?
     
     var isGrandmaFinishedTalking = false
+    var isGrandmaisTalking = false
     
     var RingtonePlayer: AVAudioPlayer?
-
+    
     init(lightNode: SCNNode) {
         GameViewController.joystickComponent.showJoystick()
         
@@ -90,7 +92,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         for childNode in houseScene.rootNode.childNodes {
             rootNode.addChildNode(childNode)
         }
-
+        
         // Create a new player entity and initialize it using the house scene's root node
         playerEntity = PlayerEntity(in: rootNode, cameraNode: cameraNode, lightNode: lightNode)
         
@@ -102,16 +104,18 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         // Add player node to the GameScene's rootNode
         rootNode.addChildNode(playerNode)
         
-//        let grandmaLightNode = SCNNode()
-//        grandmaLightNode.light = SCNLight()
-//        rootNode.addChildNode(grandmaLightNode)
+        //        let grandmaLightNode = SCNNode()
+        //        grandmaLightNode.light = SCNLight()
+        //        rootNode.addChildNode(grandmaLightNode)
         
         // Add grandma entity and its echolocation component
-//        grandmaEntity = NPCEntity(npcNode: grandmaNode, lightNode: grandmaLightNode)
+        //        grandmaEntity = NPCEntity(npcNode: grandmaNode, lightNode: grandmaLightNode)
         
-//         Get the grandma node and hide it initially
-           grandmaNode = rootNode.childNode(withName: "grandma", recursively: true)
-           grandmaNode?.isHidden = true
+        //         Get the grandma node and hide it initially
+        grandmaNode = rootNode.childNode(withName: "grandma", recursively: true)
+        grandmaNode?.isHidden = true
+        
+        doorCloseNode = rootNode.childNode(withName: "door_close", recursively: true)
         
         // Attach the existing camera node from the player model to the scene
         cameraNode = playerNode.childNode(withName: "Camera", recursively: true)
@@ -136,31 +140,31 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         setupPianoKeys()
         
         applyCustomFont(to: candleLabel, fontSize: 14)
-
+        
         self.physicsWorld.contactDelegate = self
     }
     
     func displayNumberPad(on view: UIView) {
         isOpenPhone = true
-
+        
         // Create the main container for the number pad
         let containerHeight: CGFloat = 400
         numberPadContainer = UIView(frame: CGRect(x: 0, y: (view.bounds.height - containerHeight) / 2, width: view.bounds.width, height: containerHeight))
         numberPadContainer?.backgroundColor = UIColor.clear
         view.addSubview(numberPadContainer!)
-
+        
         // Add iPhoneBezel image behind the LockScreen and PasscodeScreen
         let bezelImageView = UIImageView(image: UIImage(named: "iPhoneBezel"))
         bezelImageView.contentMode = .scaleAspectFit
         bezelImageView.frame = numberPadContainer!.bounds
         numberPadContainer?.addSubview(bezelImageView)  // Add bezel first
-
+        
         // Add LockScreen image initially with aspect fit
         let lockScreenImageView = UIImageView(image: UIImage(named: "LockScreenMusic"))
         lockScreenImageView.contentMode = .scaleAspectFit
         lockScreenImageView.frame = numberPadContainer!.bounds
         numberPadContainer?.addSubview(lockScreenImageView)  // Add lock screen on top of bezel
-
+        
         // Play SwanLakeRingtone audio
         guard let audioUrl = Bundle.main.url(forResource: "SwanLakeRingtone", withExtension: "MP3") else { return }
         do {
@@ -169,7 +173,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         } catch {
             print("Error playing audio: \(error)")
         }
-
+        
         // Delay to switch from LockScreen to PasscodeScreen after audio finishes
         DispatchQueue.main.asyncAfter(deadline: .now() + RingtonePlayer!.duration) {
             // Fade out the lock screen
@@ -192,7 +196,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
                     let circleSize: CGFloat = 15
                     let spacing: CGFloat = 10
                     let startX = (view.bounds.width - (circleSize * 4 + spacing * 3)) / 2
-
+                    
                     for i in 0..<4 {
                         let circle = UIView(frame: CGRect(x: startX + CGFloat(i) * (circleSize + spacing), y: 10, width: circleSize, height: circleSize))
                         circle.layer.cornerRadius = circleSize / 2
@@ -206,7 +210,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
                     // Create buttons for numbers 0-9
                     let buttonTitles = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
                     let buttonSize: CGFloat = 40
-
+                    
                     for (index, title) in buttonTitles.enumerated() {
                         let button = UIButton(type: .system)
                         button.setTitle(title, for: .normal)
@@ -218,10 +222,10 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
                         button.backgroundColor = .clear
                         button.alpha = 0  // Set initial alpha to 0 for fade-in effect
                         button.addTarget(self, action: #selector(self.numberButtonTapped(_:)), for: .touchUpInside)
-
+                        
                         let row = index / 3
                         let col = index % 3
-
+                        
                         if title == "0" {
                             button.frame = CGRect(
                                 x: (view.bounds.width - buttonSize) / 2,
@@ -237,9 +241,9 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
                                 height: buttonSize
                             )
                         }
-
+                        
                         innerNumberPadContainer.addSubview(button)
-
+                        
                         // Fade in each button
                         UIView.animate(withDuration: 0.5, delay: 0.1 * Double(index), options: [.curveEaseIn], animations: {
                             button.alpha = 1
@@ -249,105 +253,105 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
             }
         }
     }
-
-
-            @objc func numberButtonTapped(_ sender: UIButton) {
-                guard let number = sender.title(for: .normal) else { return }
-
-                // Add tapped number to the entered password
-                enteredPassword += number
-                print("Entered Password: \(enteredPassword)") // Debugging output
-                
-                // Update circles
-                updateCircles()
-
-                // Automatically check after entering 4 numbers
-                if enteredPassword.count == 4 {
-                    checkPassword()
-                }
-            }
-
-            func updateCircles() {
-                for (index, circle) in circles.enumerated() {
-                    if index < enteredPassword.count {
-                        circle.backgroundColor = .white // Change color to white
-                    } else {
-                        circle.backgroundColor = .clear // Reset color
-                    }
-                }
-            }
-
-        func checkPassword() {
-            if enteredPassword == correctPassword {
-                print("Password correct! Unlocking...")
-                // Trigger puzzle completion or transition
-                triggerUnlockSuccess()
+    
+    
+    @objc func numberButtonTapped(_ sender: UIButton) {
+        guard let number = sender.title(for: .normal) else { return }
+        
+        // Add tapped number to the entered password
+        enteredPassword += number
+        print("Entered Password: \(enteredPassword)") // Debugging output
+        
+        // Update circles
+        updateCircles()
+        
+        // Automatically check after entering 4 numbers
+        if enteredPassword.count == 4 {
+            checkPassword()
+        }
+    }
+    
+    func updateCircles() {
+        for (index, circle) in circles.enumerated() {
+            if index < enteredPassword.count {
+                circle.backgroundColor = .white // Change color to white
             } else {
-                print("Incorrect password. Try again.")
-                // Fill the circles and reset after 1 second
-                fillCircles()
-                enteredPassword = ""
-            }
-        }
-
-        func shakeCircles() {
-            // Store original positions for reset
-            let originalPositions = circles.map { $0.center }
-            
-            for (index, circle) in circles.enumerated() {
-                // Add shake animation
-                let shakeAnimation = CAKeyframeAnimation(keyPath: "position")
-                shakeAnimation.values = [
-                    NSValue(cgPoint: CGPoint(x: circle.center.x - 10, y: circle.center.y)),
-                    NSValue(cgPoint: CGPoint(x: circle.center.x + 10, y: circle.center.y)),
-                    NSValue(cgPoint: CGPoint(x: circle.center.x - 10, y: circle.center.y))
-                ]
-                shakeAnimation.autoreverses = true
-                shakeAnimation.duration = 0.1
-                shakeAnimation.repeatCount = 3
-                shakeAnimation.isRemovedOnCompletion = false
-
-                circle.layer.add(shakeAnimation, forKey: "position")
-                
-                // Ensure final reset to original position
-                DispatchQueue.main.asyncAfter(deadline: .now() + shakeAnimation.duration * Double(shakeAnimation.repeatCount)) {
-                    circle.center = originalPositions[index]
-                }
-            }
-
-            // Reset circles after shake
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                self.resetCircles()
-            }
-        }
-
-
-        func fillCircles() {
-            // Fill all circles with white
-            for circle in circles {
-                UIView.animate(withDuration: 0.5, animations: {
-                    circle.backgroundColor = .white // Change color to white
-                })
-            }
-
-            // Wait for 0.5 seconds then shake the circles
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                self.shakeCircles() // Call shake function
-            }
-        }
-
-        func resetCircles() {
-            for circle in circles {
                 circle.backgroundColor = .clear // Reset color
             }
         }
+    }
+    
+    func checkPassword() {
+        if enteredPassword == correctPassword {
+            print("Password correct! Unlocking...")
+            // Trigger puzzle completion or transition
+            triggerUnlockSuccess()
+        } else {
+            print("Incorrect password. Try again.")
+            // Fill the circles and reset after 1 second
+            fillCircles()
+            enteredPassword = ""
+        }
+    }
+    
+    func shakeCircles() {
+        // Store original positions for reset
+        let originalPositions = circles.map { $0.center }
+        
+        for (index, circle) in circles.enumerated() {
+            // Add shake animation
+            let shakeAnimation = CAKeyframeAnimation(keyPath: "position")
+            shakeAnimation.values = [
+                NSValue(cgPoint: CGPoint(x: circle.center.x - 10, y: circle.center.y)),
+                NSValue(cgPoint: CGPoint(x: circle.center.x + 10, y: circle.center.y)),
+                NSValue(cgPoint: CGPoint(x: circle.center.x - 10, y: circle.center.y))
+            ]
+            shakeAnimation.autoreverses = true
+            shakeAnimation.duration = 0.1
+            shakeAnimation.repeatCount = 3
+            shakeAnimation.isRemovedOnCompletion = false
+            
+            circle.layer.add(shakeAnimation, forKey: "position")
+            
+            // Ensure final reset to original position
+            DispatchQueue.main.asyncAfter(deadline: .now() + shakeAnimation.duration * Double(shakeAnimation.repeatCount)) {
+                circle.center = originalPositions[index]
+            }
+        }
+        
+        // Reset circles after shake
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.resetCircles()
+        }
+    }
+    
+    
+    func fillCircles() {
+        // Fill all circles with white
+        for circle in circles {
+            UIView.animate(withDuration: 0.5, animations: {
+                circle.backgroundColor = .white // Change color to white
+            })
+        }
+        
+        // Wait for 0.5 seconds then shake the circles
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.shakeCircles() // Call shake function
+        }
+    }
+    
+    func resetCircles() {
+        for circle in circles {
+            circle.backgroundColor = .clear // Reset color
+        }
+    }
     
     func moveGrandma(completion: @escaping () -> Void) {
         guard let grandmaNode = grandmaNode else { return }
-
+        
         // Hide the grandmaNode before moving
         grandmaNode.isHidden = true // Hide grandma before moving
-
+        
         let targetPosition = SCNVector3(x: -254.221, y: 104.194, z: 36.647)
         let moveAction = SCNAction.move(to: targetPosition, duration: 0.5)
         
@@ -357,16 +361,16 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
             completion()
         }
     }
-
-        
-
+    
+    
+    
     func triggerUnlockSuccess() {
         // Remove the number pad container after unlocking
         numberPadContainer?.removeFromSuperview()
         
         isOpenPhone = false
         isPhonePuzzleCompleted = true
-
+        
         // Hide the joystick while the video is playing
         GameViewController.joystickComponent.hideJoystick()
         
@@ -374,27 +378,27 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         guard let numberPadFrame = numberPadContainer?.frame else { return }
         let videoContainer = UIView(frame: numberPadFrame)
         videoContainer.backgroundColor = UIColor.clear // Set to clear for video view
-
+        
         if let keyWindow = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
             keyWindow.addSubview(videoContainer)
         }
-
+        
         // Prepare the video
         guard let videoURL = Bundle.main.url(forResource: "KiranaVoiceNote", withExtension: "mp4") else {
             print("Video file not found")
             return
         }
-
+        
         // Create an AVPlayer
         let player = AVPlayer(url: videoURL)
         let playerLayer = AVPlayerLayer(player: player)
         playerLayer.frame = videoContainer.bounds
         playerLayer.videoGravity = .resizeAspect
         videoContainer.layer.addSublayer(playerLayer)
-
+        
         // Play the video
         player.play()
-
+        
         // Add observer to remove video and show joystick once finished
         NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: player.currentItem, queue: .main) { [weak self] _ in
             guard let self = self else { return }
@@ -411,8 +415,8 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
             print("Video playback completed, joystick is now visible.")
         }
     }
-
-
+    
+    
     private func updateCameraPositionAndOrientation() {
         guard let playerNode = playerEntity.playerNode else { return }
         
@@ -420,355 +424,362 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         // Adjust the offset based on how you want the camera positioned behind/above the player
         let cameraOffset = SCNVector3(0, 1.5, -5) // Example offset to place the camera behind the player
         cameraNode.position = playerNode.position + cameraOffset // Update camera position
-
+        
         // Ensure the camera faces the same direction as the player
         cameraNode.eulerAngles = playerNode.eulerAngles
     }
-
+    
+    
+    
+    func setupPianoKeys() {
+        // Define notes from middle Do to upper Mi and their corresponding numbers
+        let notes = ["Do", "Re", "Mi", "Fa", "Sol", "La", "Si", "Upper_Do", "Upper_Re", "Upper_Mi"]
+        let noteNumbers = ["1", " ", " ", " ", "5", " ", " ", "1̇", "2̇", "3̇"] // Numbers under white keys
+        
+        let keyWidth: CGFloat = 50
+        let keyHeight: CGFloat = 150
+        let spacing: CGFloat = 0
         
         
-        func setupPianoKeys() {
-                // Define notes from middle Do to upper Mi and their corresponding numbers
-                let notes = ["Do", "Re", "Mi", "Fa", "Sol", "La", "Si", "Upper_Do", "Upper_Re", "Upper_Mi"]
-                let noteNumbers = ["1", " ", " ", " ", "5", " ", " ", "1̇", "2̇", "3̇"] // Numbers under white keys
-
-                let keyWidth: CGFloat = 50
-                let keyHeight: CGFloat = 150
-                let spacing: CGFloat = 0
+        // Clear existing keys to avoid duplication
+        pianoKeys.removeAll()
+        blackKeys.removeAll()
+        
+        for (index, note) in notes.enumerated() {
+            let keyButton = UIButton(type: .system)
             
-
-                // Clear existing keys to avoid duplication
-                pianoKeys.removeAll()
-                blackKeys.removeAll()
-
-            for (index, note) in notes.enumerated() {
-                let keyButton = UIButton(type: .system)
-
-                    // Set specific images or color for certain keys
-                    switch index {
-                    case 2, 5, 6:
-                        keyButton.setBackgroundImage(UIImage(named: "WhiteKeyz"), for: .normal)
-                    case 1:
-                        keyButton.setBackgroundImage(UIImage(named: "WhiteKeyz"), for: .normal)
-                    default:
-                        keyButton.setBackgroundImage(UIImage(named: "WhiteKeyz"), for: .normal)
-                    }
-
-                    // Set the note number as the button title
-                    keyButton.setTitle(noteNumbers[index], for: .normal)
-                    keyButton.setTitleColor(.black, for: .normal) // Set title color for visibility
-                    keyButton.titleLabel?.font = UIFont.systemFont(ofSize: 15, weight: .bold) // Adjust font size and weight
-
-                    // Adjust the button's content vertical alignment to position the title lower
-                    keyButton.contentVerticalAlignment = .bottom
-
-                    keyButton.tag = index
-                
-
-                    // Set frame for white key button
-                keyButton.frame = CGRect(
-                        x: CGFloat(index) * (keyWidth + spacing),
-                        y: 0,
-                        width: keyWidth,
-                        height: keyHeight
-                    )
-                print("Key Button Frame: \(keyButton.frame)")
-                    
-                    // Add black border
-                    keyButton.layer.borderColor = UIColor.black.cgColor
-                    keyButton.layer.borderWidth = 1.5 // Adjust width as needed
-
-
-                    // Attach touch event
-                    keyButton.addTarget(self, action: #selector(playPianoKey(_:)), for: .touchUpInside)
-                    keyButton.addTarget(self, action: #selector(debugPrint(_:)), for: .touchUpInside)
-                    
-                    // Append key to piano keys array
-                    pianoKeys.append(keyButton)
-                }
-
-            // Create black keys (non-clickable)
-            let blackKeyWidth = keyWidth * 0.6
-            let blackKeyHeight = keyHeight * 0.6
-            let blackKeyPositions: [CGFloat] = [0.85, 1.75, 3.35, 4.25, 5.15, 6.75, 7.60] // Adjusted positions
-
-            // Load the black key image
-            if let blackKeyImage = UIImage(named: "BlackKeyz") {
-                for position in blackKeyPositions {
-                    let blackKey = UIImageView(frame: CGRect(x: position * keyWidth - blackKeyWidth / 2, y: 0, width: blackKeyWidth, height: blackKeyHeight))
-                    blackKey.image = blackKeyImage
-//                    blackKey.contentMode = .scaleAspectFit // Ensures the image fits the key
-                    blackKeys.append(blackKey) // Add to an array for later display
-                }
+            // Set specific images or color for certain keys
+            switch index {
+            case 2, 5, 6:
+                keyButton.setBackgroundImage(UIImage(named: "WhiteKeyz"), for: .normal)
+            case 1:
+                keyButton.setBackgroundImage(UIImage(named: "WhiteKeyz"), for: .normal)
+            default:
+                keyButton.setBackgroundImage(UIImage(named: "WhiteKeyz"), for: .normal)
             }
-
-            }
-
-        @objc func debugPrint(_ sender: UIButton) {
-            print("Debug: \(notes[sender.tag]) pressed")
+            
+            // Set the note number as the button title
+            keyButton.setTitle(noteNumbers[index], for: .normal)
+            keyButton.setTitleColor(.black, for: .normal) // Set title color for visibility
+            keyButton.titleLabel?.font = UIFont.systemFont(ofSize: 15, weight: .bold) // Adjust font size and weight
+            
+            // Adjust the button's content vertical alignment to position the title lower
+            keyButton.contentVerticalAlignment = .bottom
+            
+            keyButton.tag = index
+            
+            
+            // Set frame for white key button
+            keyButton.frame = CGRect(
+                x: CGFloat(index) * (keyWidth + spacing),
+                y: 0,
+                width: keyWidth,
+                height: keyHeight
+            )
+            print("Key Button Frame: \(keyButton.frame)")
+            
+            // Add black border
+            keyButton.layer.borderColor = UIColor.black.cgColor
+            keyButton.layer.borderWidth = 1.5 // Adjust width as needed
+            
+            
+            // Attach touch event
+            keyButton.addTarget(self, action: #selector(playPianoKey(_:)), for: .touchUpInside)
+            keyButton.addTarget(self, action: #selector(debugPrint(_:)), for: .touchUpInside)
+            
+            // Append key to piano keys array
+            pianoKeys.append(keyButton)
         }
-
+        
+        // Create black keys (non-clickable)
+        let blackKeyWidth = keyWidth * 0.6
+        let blackKeyHeight = keyHeight * 0.6
+        let blackKeyPositions: [CGFloat] = [0.85, 1.75, 3.35, 4.25, 5.15, 6.75, 7.60] // Adjusted positions
+        
+        // Load the black key image
+        if let blackKeyImage = UIImage(named: "BlackKeyz") {
+            for position in blackKeyPositions {
+                let blackKey = UIImageView(frame: CGRect(x: position * keyWidth - blackKeyWidth / 2, y: 0, width: blackKeyWidth, height: blackKeyHeight))
+                blackKey.image = blackKeyImage
+                //                    blackKey.contentMode = .scaleAspectFit // Ensures the image fits the key
+                blackKeys.append(blackKey) // Add to an array for later display
+            }
+        }
+        
+    }
+    
+    @objc func debugPrint(_ sender: UIButton) {
+        print("Debug: \(notes[sender.tag]) pressed")
+    }
+    
     func displayPianoPuzzle(on view: UIView) {
-                let screenWidth = view.bounds.width
+        // Clear existing container view if it exists
+        containerView?.removeFromSuperview()
+        
+        let screenWidth = view.bounds.width
 
-                // Define heights for each component
-                let partitureHeight: CGFloat = 130
-                let progressBarHeight: CGFloat = 50
-                let pianoHeight: CGFloat = 150
-                let pianoTopPadding: CGFloat = 10 // Define top padding for the piano
-
-                // Calculate the total height of the container view that will hold all components
-                let totalHeight = partitureHeight + progressBarHeight + pianoHeight + 20 // Adjust spacing as needed
-
-                // Create a container view centered vertically and horizontally in the main view
-                let containerWidth: CGFloat = screenWidth / 2 + 50 // Adjust as needed
-                containerView = UIView(frame: CGRect(
-                    x: (view.bounds.width - containerWidth) / 2, // Center horizontally
-                    y: (view.bounds.height - totalHeight) / 2,  // Center vertically
-                    width: containerWidth,                        // Set container width
-                    height: totalHeight                           // Use the calculated height for the puzzle
-                ))
-                view.addSubview(containerView!)
-
-                // Set the background color to a semi-transparent black
-                containerView?.backgroundColor = UIColor.black.withAlphaComponent(0.5)
-
-                // Add rounded corners
-                containerView?.layer.cornerRadius = 20 // Adjust the radius as needed
-                containerView?.layer.masksToBounds = true
-
-                // Add the partiture view at the top of the container view
-                let partitureView = UIView(frame: CGRect(
-                    x: 0,
-                    y: 0,
-                    width: containerWidth, // Use container width
-                    height: partitureHeight
-                ))
-                partitureView.backgroundColor = .clear
-                containerView?.addSubview(partitureView)
-                
-                setupTimer()
-
-                let partitureImage = UIImageView(image: UIImage(named: "MusicSheetHint")) // Replace with actual image name
-                partitureImage.contentMode = .scaleAspectFit
-                partitureImage.frame = partitureView.bounds
-                partitureView.addSubview(partitureImage)
-
-                // Add the progress circles below the partiture in the container view
-                setupProgressCircles(on: containerView!, below: partitureView)
-
-                // Add the piano view below the progress circles in the container view
-                let pianoViewWidth = CGFloat(pianoKeys.count) * 45 // Width for each key
-                let pianoViewYPosition = (progressCircles.first?.frame.maxY ?? partitureView.frame.maxY) + 10 + pianoTopPadding // Adjusted for top padding
-
-                let pianoView = UIView(frame: CGRect(
-                    x: (containerWidth - pianoViewWidth), // Center horizontally in the container view
-                    y: pianoViewYPosition,
-                    width: pianoViewWidth,
-                    height: pianoHeight
-                ))
-                pianoView.backgroundColor = .clear
-                containerView?.addSubview(pianoView)
-
-                // Add white keys to the piano
-                for (index, key) in pianoKeys.enumerated() {
-                    key.frame = CGRect(
-                        x: CGFloat(index) * (40 + 2), // Width + spacing
-                        y: 0,
-                        width: 40,
-                        height: 130
-                    )
-                    pianoView.addSubview(key)
-                }
-
-                // Add black keys to the piano
-                for blackKey in blackKeys {
-                    blackKey.frame.size = CGSize(width: 24, height: 80)
-                    pianoView.addSubview(blackKey)
-                }
-
-                // Add tap gesture recognizer to dismiss puzzle when tapping outside the container
-        //        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissPuzzle(_:)))
-        //        view.addGestureRecognizer(tapGesture)
-
-                isPuzzleDisplayed = true
-                isPlayingPiano = true
-            }
-
-
-        func setupTimer() {
-            // Create the timer label
-            timerLabel = UILabel(frame: CGRect(x: containerView!.frame.maxX + 10, y: containerView!.frame.midY - 25, width: 100, height: 50))
-            timerLabel.textColor = .white // Change to your desired text color
-            timerLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold) // Adjust font size
-            timerLabel.textAlignment = .center
-            timerLabel.text = formatTime(timeRemaining) // Display initial time
-            if let parentView = containerView?.superview {
-                parentView.addSubview(timerLabel) // Add the timer label to the parent view
-            }
-
-            // Start the timer
-            timer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(updateTimer), userInfo: nil, repeats: true)
-        }
-
-        @objc func updateTimer() {
-            if timeRemaining > 0 {
-                timeRemaining -= 1
-                timerLabel.text = formatTime(timeRemaining)
-            } else {
-                timer?.invalidate() // Stop the timer
-                timer = nil
-                dismissPuzzle() // Dismiss the puzzle when the time is up
-            }
-        }
-
-        func formatTime(_ seconds: Int) -> String {
-            let minutes = seconds / 60
-            let remainingSeconds = seconds % 60
-            return String(format: "%02d:%02d", minutes, remainingSeconds)
+        // Define heights for each component
+        let partitureHeight: CGFloat = 130
+        let progressBarHeight: CGFloat = 50
+        let pianoHeight: CGFloat = 150
+        let pianoTopPadding: CGFloat = 10 // Define top padding for the piano
+        
+        // Calculate the total height of the container view that will hold all components
+        let totalHeight = partitureHeight + progressBarHeight + pianoHeight + 20 // Adjust spacing as needed
+        
+        // Create a container view centered vertically and horizontally in the main view
+        let containerWidth: CGFloat = screenWidth / 2 + 50 // Adjust as needed
+        containerView = UIView(frame: CGRect(
+            x: (view.bounds.width - containerWidth) / 2, // Center horizontally
+            y: (view.bounds.height - totalHeight) / 2,  // Center vertically
+            width: containerWidth,                        // Set container width
+            height: totalHeight                           // Use the calculated height for the puzzle
+        ))
+        view.addSubview(containerView!)
+        
+        // Set the background color to a semi-transparent black
+        containerView?.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        
+        // Add rounded corners
+        containerView?.layer.cornerRadius = 20 // Adjust the radius as needed
+        containerView?.layer.masksToBounds = true
+        
+        // Add the partiture view at the top of the container view
+        let partitureView = UIView(frame: CGRect(
+            x: 0,
+            y: 0,
+            width: containerWidth, // Use container width
+            height: partitureHeight
+        ))
+        partitureView.backgroundColor = .clear
+        containerView?.addSubview(partitureView)
+        
+        setupTimer() // Call the timer setup
+        
+        let partitureImage = UIImageView(image: UIImage(named: "MusicSheetHint")) // Replace with actual image name
+        partitureImage.contentMode = .scaleAspectFit
+        partitureImage.frame = partitureView.bounds
+        partitureView.addSubview(partitureImage)
+        
+        // Add the progress circles below the partiture in the container view
+        setupProgressCircles(on: containerView!, below: partitureView)
+        
+        // Add the piano view below the progress circles in the container view
+        let pianoViewWidth = CGFloat(pianoKeys.count) * 45 // Width for each key
+        let pianoViewYPosition = (progressCircles.first?.frame.maxY ?? partitureView.frame.maxY) + 10 + pianoTopPadding // Adjusted for top padding
+        
+        let pianoView = UIView(frame: CGRect(
+            x: (containerWidth - pianoViewWidth), // Center horizontally in the container view
+            y: pianoViewYPosition,
+            width: pianoViewWidth,
+            height: pianoHeight
+        ))
+        pianoView.backgroundColor = .clear
+        containerView?.addSubview(pianoView)
+        
+        // Add white keys to the piano
+        for (index, key) in pianoKeys.enumerated() {
+            key.frame = CGRect(
+                x: CGFloat(index) * (40 + 2), // Width + spacing
+                y: 0,
+                width: 40,
+                height: 130
+            )
+            pianoView.addSubview(key)
         }
         
-        func dismissPuzzle() {
-            // Your existing dismiss logic
-            if let containerView = self.containerView {
-                UIView.animate(withDuration: 0.5, animations: {
-                    containerView.alpha = 0 // Fade out effect
-                }) { _ in
-                    containerView.removeFromSuperview() // Remove from superview after fade out
-                    self.isPuzzleDisplayed = false // Update state
-                }
-                
-                timerLabel.removeFromSuperview() // Remove the timer label if necessary
-            }
+        // Add black keys to the piano
+        for blackKey in blackKeys {
+            blackKey.frame.size = CGSize(width: 24, height: 80)
+            pianoView.addSubview(blackKey)
         }
+        
+        isPuzzleDisplayed = true
+        isPlayingPiano = true
+    }
 
-    //    @objc func dismissPuzzle(_ sender: UITapGestureRecognizer) {
-    //        let tapLocation = sender.location(in: containerView?.superview)
-    //        if let containerFrame = containerView?.frame, !containerFrame.contains(tapLocation) {
-    //            if !isGameCompleted {
-    //                containerView?.removeFromSuperview()
-    //                // Do NOT reset melody and progress here
-    //                isPuzzleDisplayed = false
-    //            }
-    //        }
-    //    }
-
-
-
-            // Define the full list of notes
-            let notes = ["Do", "Re", "Mi", "Fa", "Sol", "La", "Si", "Upper_Do", "Upper_Re", "Upper_Mi"]
-
-            func setupProgressBar(on view: UIView) {
-                let barWidth = UIScreen.main.bounds.width - 40 // Full width for the progress bar
-                progressBar = UIView(frame: CGRect(x: 20, y: 250, width: 0, height: 10)) // Example position and height
-                progressBar.backgroundColor = .green // Set the color for completed progress
-                view.addSubview(progressBar)
-            }
-
-        @objc func playPianoKey(_ sender: UIButton) {
-            
-            
-            guard sender.tag < notes.count else { return }
-
-            let note = notes[sender.tag]
-            playSound(named: note)
-
-            print("Pressed Note: \(note)")
-
-            if note == targetMelody[targetIndex] {
-                userPlayedNotes.append(note)
-                print("Current Sequence: \(userPlayedNotes)")
-
-                // Update the progress bar
-                updateProgressBar()
-
-                targetIndex += 1
-
-                if targetIndex == targetMelody.count {
-                    print("Melody completed successfully!")
-                    triggerPianoPuzzleCompletionTransition()
-                    // Optional: Call reset only if needed
-                }
-            } else {
-                print("Pressed Note: \(note) does not match. Resetting input.")
-                // Call reset only here if necessary
-                resetMelodyCheck() // Reset only if the note is incorrect
-            }
+    
+    
+    func setupTimer() {
+        timeRemaining = 15
+        timerLabel = UILabel(frame: CGRect(x: containerView!.frame.maxX + 10, y: containerView!.frame.midY - 25, width: 100, height: 50))
+        timerLabel.textColor = .white
+        timerLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
+        timerLabel.textAlignment = .center
+        timerLabel.text = formatTime(timeRemaining)
+        if let parentView = containerView?.superview {
+            parentView.addSubview(timerLabel)
         }
+        print("Timer started with \(timeRemaining) seconds")
+        timer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(updateTimer), userInfo: nil, repeats: true)
+    }
+    
+    @objc func updateTimer() {
+        if timeRemaining > 0 {
+            timeRemaining -= 1
+            timerLabel.text = formatTime(timeRemaining)
+        } else {
+            timer?.invalidate() // Stop the timer
+            timer = nil
+            resetPianoPuzzle() // Dismiss the puzzle when the time is up
+            print("Timer ended. Puzzle dismissed due to timeout.")
+        }
+    }
+    
+    func formatTime(_ seconds: Int) -> String {
+        let minutes = seconds / 60
+        let remainingSeconds = seconds % 60
+        return String(format: "%02d:%02d", minutes, remainingSeconds)
+    }
+    
+    func resetPianoPuzzle() {
+        // Dismiss the piano puzzle view first
+        containerView?.removeFromSuperview() // Remove the container view from the superview
+        containerView = nil // Optionally, set to nil to avoid dangling references
+
+        // Reset the timer
+        timeRemaining = 15
+        timerLabel.text = formatTime(timeRemaining)
+        timerLabel.removeFromSuperview()
+        
+        // Reset melody check
+        resetMelodyCheck()
+        
+        // Reset progress circles
+        for circle in progressCircles {
+            circle.image = UIImage(named: "MusicNote_Null") // Reset each circle to the empty note image
+        }
+        
+        // Optionally, reset the piano keys appearance
+        for key in pianoKeys {
+            key.alpha = 1.0 // Reset opacity if you have a fading effect
+        }
+        
+        isPlayingPiano = false
+        isGameCompleted = false
+
+        // Optionally, if you want to redisplay the piano puzzle UI
+        // Uncomment the following lines if you want to show the piano puzzle again after reset
+//         if let superview = containerView?.superview {
+//             displayPianoPuzzle(on: superview) // Refresh the puzzle display if needed
+//         }
+    }
 
 
-        func resetMelodyCheck() {
-            userPlayedNotes.removeAll()
-            targetIndex = 0
+
+
+    
+    // Define the full list of notes
+    let notes = ["Do", "Re", "Mi", "Fa", "Sol", "La", "Si", "Upper_Do", "Upper_Re", "Upper_Mi"]
+    
+//    func setupProgressBar(on view: UIView) {
+//        let barWidth = UIScreen.main.bounds.width - 40 // Full width for the progress bar
+//        progressBar = UIView(frame: CGRect(x: 20, y: 250, width: 0, height: 10)) // Example position and height
+//        progressBar.backgroundColor = .green // Set the color for completed progress
+//        view.addSubview(progressBar)
+//    }
+    
+    @objc func playPianoKey(_ sender: UIButton) {
+        
+        
+        guard sender.tag < notes.count else { return }
+        
+        let note = notes[sender.tag]
+        playSound(named: note)
+        
+        print("Pressed Note: \(note)")
+        
+        if note == targetMelody[targetIndex] {
+            userPlayedNotes.append(note)
             print("Current Sequence: \(userPlayedNotes)")
-
-            // Reset all progress circles to MusicNote_Null
-            for circle in progressCircles {
-                circle.image = UIImage(named: "MusicNote_Null")
+            
+            // Update the progress bar
+            updateProgressBar()
+            
+            targetIndex += 1
+            
+            if targetIndex == targetMelody.count {
+                print("Melody completed successfully!")
+                triggerPianoPuzzleCompletionTransition()
+                // Optional: Call reset only if needed
             }
-
-            // Ensure progress bar is updated
-            updateProgressBar() // Reset the visual representation
+        } else {
+            print("Pressed Note: \(note) does not match. Resetting input.")
+            // Call reset only here if necessary
+            resetMelodyCheck() // Reset only if the note is incorrect
         }
-
-
-
-
-            // Property to hold the progress circle views
-            var progressCircles: [UIImageView] = []
-
-            // Function to setup the progress images
-            func setupProgressCircles(on containerView: UIView, below partitureView: UIView) {
-                let circleDiameter: CGFloat = 25
-                let spacing: CGFloat = 15
-                let totalWidth = CGFloat(targetMelody.count) * (circleDiameter + spacing) - spacing
-                let yPosition = partitureView.frame.maxY + 10
-                
-                for (index, _) in targetMelody.enumerated() {
-                    // Create a progress image with modified height to make it stretch longer
-                    let progressImage = UIImageView(frame: CGRect(
-                        x: (containerView.bounds.width - totalWidth) / 2 + CGFloat(index) * (circleDiameter + spacing),
-                        y: yPosition,
-                        width: circleDiameter,
-                        height: circleDiameter * 1.5 // Adjust height to stretch longer
-                    ))
-                    
-                    // Set the image for the progress circle
-                    progressImage.image = UIImage(named: "MusicNote_Null")
-                    progressImage.contentMode = .scaleAspectFill // Scale the image to fill the view
-                    progressImage.clipsToBounds = true // Clip the image to the bounds of the UIImageView
-                    
-                    containerView.addSubview(progressImage)
-                    progressCircles.append(progressImage)
-                }
-            }
-
-        func updateProgressBar() {
-            print("Updating progress bar. Current played notes: \(userPlayedNotes)")
-            for (index, progressImage) in progressCircles.enumerated() {
-                if index < userPlayedNotes.count {
-                    progressImage.image = UIImage(named: "MusicNote_Full")
-                } else {
-                    progressImage.image = UIImage(named: "MusicNote_Null")
-                }
-            }
-        }
-
-
-            func playSound(named note: String) {
-                guard let soundURL = Bundle.main.url(forResource: note, withExtension: "mp3") else {
-                    print("Sound file for \(note) not found")
-                    return
-                }
-
-                do {
-                    audioPlayer = try AVAudioPlayer(contentsOf: soundURL)
-                    audioPlayer?.play()
-                } catch {
-                    print("Failed to play \(note): \(error)")
-                }
-            }
+    }
+    
+    
+    func resetMelodyCheck() {
+        userPlayedNotes.removeAll()
+        targetIndex = 0
+        print("Current Sequence: \(userPlayedNotes)")
         
+        // Reset all progress circles to MusicNote_Null
+        for circle in progressCircles {
+            circle.image = UIImage(named: "MusicNote_Null")
+        }
+        
+        // Reset the progress bar visually as well
+        /*progressCircles.frame.size.width = 0*/ // Reset progress bar width
+    }
+    
+    
+    // Property to hold the progress circle views
+    var progressCircles: [UIImageView] = []
+    
+    func setupProgressCircles(on containerView: UIView, below partitureView: UIView) {
+        // Clear existing progress circles
+        for circle in progressCircles {
+            circle.removeFromSuperview()
+        }
+        progressCircles.removeAll() // Clear the array holding the circles
+
+        let numberOfCircles = 8 // Example number of circles
+        let circleDiameter: CGFloat = 40 // Example diameter for circles
+        let circleSpacing: CGFloat = 10 // Space between circles
+
+        for i in 0..<numberOfCircles {
+            let circle = UIImageView(frame: CGRect(
+                x: (containerView.bounds.width - (circleDiameter * CGFloat(numberOfCircles) + circleSpacing * CGFloat(numberOfCircles - 1))) / 2 + CGFloat(i) * (circleDiameter + circleSpacing),
+                y: partitureView.frame.maxY + 10,
+                width: circleDiameter,
+                height: circleDiameter
+            ))
+            circle.image = UIImage(named: "MusicNote_Null") // Initial image for the circle
+            progressCircles.append(circle)
+            containerView.addSubview(circle)
+        }
+    }
+
+    
+    func updateProgressBar() {
+        print("Updating progress bar. Current played notes: \(userPlayedNotes)")
+        for (index, progressImage) in progressCircles.enumerated() {
+            if index < userPlayedNotes.count {
+                progressImage.image = UIImage(named: "MusicNote_Full")
+            } else {
+                progressImage.image = UIImage(named: "MusicNote_Null")
+            }
+        }
+    }
+    
+    
+    func playSound(named note: String) {
+        guard let soundURL = Bundle.main.url(forResource: note, withExtension: "mp3") else {
+            print("Sound file for \(note) not found")
+            return
+        }
+        
+        do {
+            audioPlayer = try AVAudioPlayer(contentsOf: soundURL)
+            audioPlayer?.play()
+        } catch {
+            print("Failed to play \(note): \(error)")
+        }
+    }
+    
     func triggerPianoPuzzleCompletionTransition() {
         // Step 1: Animate each key in a wave pattern
         for (index, key) in pianoKeys.enumerated() {
@@ -783,6 +794,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         isPianoPuzzleCompleted = true
         timerLabel.removeFromSuperview()
         isPlayingPiano = true
+        isGameCompleted = true
         toggleGlowEffect(on: musicBoxNode, isEnabled: false)
         
         // Step 2: Load and play the MusicBox audio
@@ -803,7 +815,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
                 print("Error loading MusicBox audio: \(error)")
             }
         }
-
+        
         // Step 3: After all key animations, fade out the puzzle view
         let totalAnimationDuration = Double(pianoKeys.count) * 0.05 + 0.5
         DispatchQueue.main.asyncAfter(deadline: .now() + totalAnimationDuration) {
@@ -815,11 +827,15 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
                     self.isPuzzleDisplayed = false // Update state
                 }
             }
-
+            
             // Step 4: Display grandma and perform final animation sequence after audio ends
             DispatchQueue.main.asyncAfter(deadline: .now() + (self.musicBoxPlayer?.duration ?? 0)) {
                 
                 self.isSwanLakePlaying = false
+                
+                // Hide the joystick while grandma speaks
+                GameViewController.joystickComponent.joystickView.isHidden = true
+                
                 // Create a black semi-transparent overlay view
                 let overlayView = UIView(frame: UIScreen.main.bounds)
                 overlayView.backgroundColor = UIColor.black
@@ -827,26 +843,30 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
                 if let keyWindow = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
                     keyWindow.addSubview(overlayView)
                 }
-
+                
                 UIView.animate(withDuration: 1.5, animations: {
                     overlayView.alpha = 1.0 // Fade in the overlay
                 }) { _ in
                     // Show grandma node
                     self.grandmaNode?.isHidden = false // Show grandma node
-
+                    self.doorCloseNode?.isHidden = true
+                    self.isGrandmaFinishedTalking = false
+                    self.isGrandmaisTalking = true
+                    
+                    
                     // Move player to new position
                     let newPosition = SCNVector3(-326.366, 93.134, 35.809)
                     self.playerEntity.playerNode?.position = newPosition
-
+                    
                     // Set the camera to face the initial angles (180, 0, 180)
                     self.cameraNode.eulerAngles = SCNVector3(0, CGFloat(Double.pi), 0) // Y rotation 180 degrees
-
+                    
                     // Delay the camera rotation by 2 seconds
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                         // Add an action to rotate the camera 180 degrees over 1 second
                         let cameraRotationAction = SCNAction.rotateBy(x: 0, y: CGFloat.pi, z: 0, duration: 0.3)
                         cameraRotationAction.timingMode = .easeInEaseOut
-
+                        
                         // Run the action on the camera node
                         self.cameraNode.runAction(cameraRotationAction) { [self] in
                             // Play the jumpscare audio
@@ -855,18 +875,16 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
                                     jumpscarePlayer = try AVAudioPlayer(contentsOf: jumpscareURL)
                                     jumpscarePlayer?.volume = 1.0
                                     jumpscarePlayer?.play()
+                                    isGrandmaFinishedTalking = false
                                 } catch {
                                     print("Error loading jumpscare4 audio: \(error)")
                                 }
                             }
-
+                            
                             // Set the final orientation after rotation
                             let finalEulerAngles = SCNVector3(0, 0, 0) // Adjust to desired final angles
                             self.cameraNode.eulerAngles = finalEulerAngles
-
-                            // Unlock the camera after rotation is complete
-                            self.cameraComponent?.unlockCamera()
-
+                            
                             // Step 5: Play grandma's audio after rotation and jumpscare
                             if let grandmaAudioURL = Bundle.main.url(forResource: "s7-grandma", withExtension: "MP3") {
                                 do {
@@ -877,6 +895,8 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
                                         print("grandma audio finished")
                                         isGrandmaFinishedTalking = true
+                                        isGrandmaisTalking = false
+                                        // Show the joystick again after grandma's speech
                                         GameViewController.joystickComponent.joystickView.isHidden = false
                                     }
                                 } catch {
@@ -885,7 +905,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
                             }
                         }
                     }
-
+                    
                     // Fade back out the overlay after a short delay
                     UIView.animate(withDuration: 0.5, delay: 0.5, options: [], animations: {
                         overlayView.alpha = 0.0 // Fade out the overlay
@@ -897,6 +917,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         }
     }
 
+    
     
     func displaycandleLabel(on view: UIView) {
         candleLabel.text = "Candle Obtained"
@@ -926,12 +947,12 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         )
         candleAndKeysImageView.alpha = 0.0 // Start with hidden image
         view.addSubview(candleAndKeysImageView)
-
+        
         // Fade in the image
         UIView.animate(withDuration: 0.5, delay: 0.5, options: [], animations: {
             candleAndKeysImageView.alpha = 1.0
         }, completion: nil)
-
+        
         // Fade out the label after a delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 4.5) {
             UIView.animate(withDuration: 0.5) {
@@ -940,27 +961,27 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
             }
         }
     }
-
-
-
-
+    
+    
+    
+    
     // Define the label for displaying the message
-       private let candleLabel: UILabel = {
-           let label = UILabel()
-           label.textAlignment = .center
-           label.textColor = UIColor.white
-           label.clipsToBounds = true
-           label.alpha = 0.0
-           return label
-       }()
-
+    private let candleLabel: UILabel = {
+        let label = UILabel()
+        label.textAlignment = .center
+        label.textColor = UIColor.white
+        label.clipsToBounds = true
+        label.alpha = 0.0
+        return label
+    }()
+    
     private func applyCustomFont(to label: UILabel, fontSize: CGFloat) {
-            if let customFont = UIFont(name: "SpecialElite-Regular", size: fontSize) {
-                label.font = customFont
-            } else {
-                print("Failed to load SpecialElite-Regular font.")
-            }
+        if let customFont = UIFont(name: "SpecialElite-Regular", size: fontSize) {
+            label.font = customFont
+        } else {
+            print("Failed to load SpecialElite-Regular font.")
         }
+    }
     
     
     func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
@@ -985,7 +1006,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         let sequenceAction = SCNAction.sequence([waitAction, playAudioAction])
         node.runAction(sequenceAction)
     }
-
+    
     
     func updateProximityAndGlow(interactButton: UIButton) {
         guard let playerNode = playerEntity.playerNode else {
@@ -996,9 +1017,9 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         // Measure distances to each puzzle object
         let distanceToMusicBox = playerNode.position.distance(to: musicBoxNode.position)
         let distanceToPhone = playerNode.position.distance(to: phoneNode.position)
-
-        print("Distance to Music Box: \(distanceToMusicBox), Distance to Phone: \(distanceToPhone)") // Debugging distances
-
+        
+//        print("Distance to Music Box: \(distanceToMusicBox), Distance to Phone: \(distanceToPhone)") // Debugging distances
+        
         // Check if the piano puzzle is completed
         if isPianoPuzzleCompleted {
             // Disable glow on both nodes if the piano puzzle is finished
@@ -1007,7 +1028,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
             interactButton.isHidden = true // Hide interact button since the puzzle is complete
             return
         }
-
+        
         if !isPhonePuzzleCompleted {
             // Only allow the phone to glow at first
             if distanceToPhone < proximityDistance {
@@ -1018,10 +1039,10 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
                 toggleGlowEffect(on: phoneNode, isEnabled: false)
                 interactButton.isHidden = true
             }
-
+            
             // Ensure the music box does not glow until the phone puzzle is completed
             toggleGlowEffect(on: musicBoxNode, isEnabled: false)
-
+            
         } else {
             // After the phone puzzle is completed, allow the music box to glow
             if distanceToMusicBox < proximityDistance {
@@ -1032,14 +1053,14 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
                 toggleGlowEffect(on: musicBoxNode, isEnabled: false)
                 interactButton.isHidden = true
             }
-
+            
             // Ensure the phone does not glow after its puzzle is completed
             toggleGlowEffect(on: phoneNode, isEnabled: false)
         }
     }
-
-
-
+    
+    
+    
     // This function would be called when the piano puzzle is completed
     func completePianoPuzzle() {
         isPhonePuzzleCompleted = true
@@ -1062,14 +1083,14 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         
     }
     
-
+    
     func toggleGlowEffect(on node: SCNNode, isEnabled: Bool) {
         if isEnabled {
             node.categoryBitMask = 2 // Enable glow effect for the specified node
-            print("Glow enabled for \(node.name ?? "")") // Debugging
+//            print("Glow enabled for \(node.name ?? "")") // Debugging
         } else {
             node.categoryBitMask = 1 // Disable glow effect for the specified node
-            print("Glow disabled for \(node.name ?? "")") // Debugging
+//            print("Glow disabled for \(node.name ?? "")") // Debugging
         }
     }
     
