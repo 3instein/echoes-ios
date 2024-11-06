@@ -7,17 +7,17 @@ import AVFoundation
 class EcholocationComponent: GKComponent {
     private let lightNode: SCNNode
     private var originalLightIntensity: CGFloat
-    private var flashDuration: TimeInterval = 0.1 // Short flash duration
-    private var resetDuration: TimeInterval = 0.2 // Quick fade back to normal
+    private var flashDuration: TimeInterval = 0.5 // Short flash duration
+    private var resetDuration: TimeInterval = 0.8 // Quick fade back to normal
     private var isFlashing = false
     
     var echolocationSound: AVAudioPlayer?
     
-    init(lightNode: SCNNode, originalIntensity: CGFloat = 75) {
+    init(lightNode: SCNNode, originalIntensity: CGFloat = 100) {
         self.lightNode = lightNode
         self.originalLightIntensity = originalIntensity
         super.init()
-        loadSound()
+//        loadSound()
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -42,7 +42,7 @@ class EcholocationComponent: GKComponent {
         guard !isFlashing else { return }
         isFlashing = true
         
-        playEcholocationSound()
+//        playEcholocationSound()
         
         // Ensure lightNode has a light component before manipulating intensity
         guard let light = lightNode.light else {
@@ -50,14 +50,16 @@ class EcholocationComponent: GKComponent {
             return
         }
         
-        // Flash the light: briefly increase intensity to simulate echolocation
-        let flashAction = SCNAction.customAction(duration: flashDuration) { _, _ in
-            light.intensity = self.originalLightIntensity + 1000
+        // Flash the light: increase intensity smoothly
+        let flashAction = SCNAction.customAction(duration: flashDuration) { _, elapsedTime in
+            let percent = elapsedTime / CGFloat(self.flashDuration)
+            light.intensity = self.originalLightIntensity + (1000 * percent) // Adjust this multiplier if needed
         }
         
-        // Reset the light back to its original intensity
-        let resetAction = SCNAction.customAction(duration: resetDuration) { _, _ in
-            light.intensity = self.originalLightIntensity
+        // Reset the light back to its original intensity smoothly
+        let resetAction = SCNAction.customAction(duration: resetDuration) { _, elapsedTime in
+            let percent = elapsedTime / CGFloat(self.resetDuration)
+            light.intensity = self.originalLightIntensity + (1000 * (1 - percent)) // Adjust this as well
         }
         
         let sequence = SCNAction.sequence([flashAction, resetAction])

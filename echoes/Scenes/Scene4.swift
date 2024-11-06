@@ -1,9 +1,4 @@
-//
-//  Scene6.swift
-//  echoes
-//
-//  Created by Pelangi Masita Wati on 21/10/24.
-//
+//  Scene4.swift
 
 import SceneKit
 import UIKit
@@ -11,7 +6,6 @@ import UIKit
 class Scene4: SCNScene, SCNPhysicsContactDelegate {
     var playerEntity: PlayerEntity!
     var cameraComponent: CameraComponent!
-    var joystickComponent: VirtualJoystickComponent!
     var cameraNode: SCNNode!
     var lightNode: SCNNode!
     var combinedPieces: [UIView: [UIView]] = [:]  // Dictionary that tracks combined pieces
@@ -27,14 +21,13 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
     let triggerDistance: Float = 80.0
     
     init(lightNode: SCNNode) {
-        GameViewController.joystickComponent.showJoystick()
         super.init()
         self.lightNode = lightNode
         scnView?.pointOfView = cameraNode
         
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "scene4.scn") else {
-            print("Warning: House scene 'Scene 4.scn' not found")
+            print("Warning: Scene named 'scene4.scn' not found")
             return
         }
         
@@ -122,11 +115,11 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
     }
 
     // Check if the player is close to the transition trigger point
-     func checkProximityToTransition() -> Bool {
-         guard let playerPosition = playerEntity.playerNode?.position else { return false }
-         let distance = playerPosition.distance(to: transitionTriggerPosition)
-         return distance < triggerDistance
-     }
+    func checkProximityToTransition() -> Bool {
+        guard let playerPosition = playerEntity.playerNode?.position else { return false }
+        let distance = playerPosition.distance(to: transitionTriggerPosition)
+        return distance < triggerDistance
+    }
     
     func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
         guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
