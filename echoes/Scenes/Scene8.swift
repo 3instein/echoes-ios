@@ -97,6 +97,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     var lastActivatedPipeIndex: Int = -1 // Track the last activated pipe index
     
     var isNecklaceFalling = false
+    var isPipeSuccess = false
     var isPipeFailed = false
     var isDollJumpscare = false
     var isJumpscareDone = false
@@ -189,10 +190,10 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     func pipeCompleted() {
         if currentPipeIndex == 15 {
             print("Puzzle solved! The necklace is revealed.")
-            
+            timer?.invalidate()
+
             pipeBackground?.removeFromSuperview()
             timeLabel.removeFromSuperview()
-            timer?.invalidate()
             
             // Loop through each puzzle piece
             for i in 1...8 {
@@ -612,6 +613,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         print("Current pipe index after animation: \(currentPipeIndex)")
         
         if areAllPipesCorrectlyRotated() {
+            isPipeSuccess = true
             pipeCompleted()
         }
     }
@@ -915,7 +917,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             let minutes = timeLimit / 60
             let seconds = timeLimit % 60
             timeLabel.text = String(format: "%02d:%02d", minutes, seconds)
-        } else {
+        } else if isPipeSuccess != true {
             timeLabel.text = "Time's Up!"
             triggerPipeFailedTransition() // Implement your failure transition logic here
         }
