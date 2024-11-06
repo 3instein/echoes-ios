@@ -284,9 +284,14 @@ class GameViewController: UIViewController {
                     } else {
                         GameViewController.joystickComponent.joystickView.isHidden = false
                     }
+
                     
-                    if gameScene.isGrandmaFinishedTalking || gameScene.isSwanLakePlaying {
+                    if gameScene.isGrandmaFinishedTalking || gameScene.isSwanLakePlaying{
                         GameViewController.joystickComponent.joystickView.isHidden = false
+                    }
+                    
+                    if gameScene.isGrandmaisTalking {
+                        GameViewController.joystickComponent.joystickView.isHidden = true
                     }
                 }
 
@@ -320,6 +325,7 @@ class GameViewController: UIViewController {
                     
                     loadedScene.displayPianoPuzzle(on: self.view)
                     loadedScene.isPuzzleDisplayed = true
+                    
                     // Hide the interact button after the number pad is displayed
                     interactButton.isHidden = true // Hide interact button
                 } else {
