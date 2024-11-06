@@ -716,19 +716,20 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         // Create a flip animation
         UIView.transition(with: imageView, duration: 1, options: [.transitionFlipFromLeft], animations: {
             // Change the image to the "Thankyou card" image
-            imageView.image = UIImage(named: "backPuzzleCode.png")
+            //            imageView.image = UIImage(named: "backPuzzleCode.png")
+            imageView.image = UIImage(named: "thankyou card.png")
             imageView.frame.size = CGSize(width: 450, height: 350)
             self.attachAudio(to: self.rootNode, audioFileName: "puzzleFinish.wav", volume: 3, delay: 0)
         }, completion: nil)
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
-            self.puzzleBackground?.removeFromSuperview()
-            self.isPlayingPuzzle = false
-            self.isCodeDone = true
-            self.doorCloseNode.isHidden = true
-            self.doorOpenNode.isHidden = false
-            self.attachAudio(to: self.doorOpenNode, audioFileName: "door_open.mp3", volume: 3, delay: 0)
-        }
+        //        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+        //            self.puzzleBackground?.removeFromSuperview()
+        //            self.isPlayingPuzzle = false
+        //            self.isCodeDone = true
+        //            self.doorCloseNode.isHidden = true
+        //            self.doorOpenNode.isHidden = false
+        //            self.attachAudio(to: self.doorOpenNode, audioFileName: "door_open.mp3", volume: 3, delay: 0)
+        //        }
     }
     
     private func addBlueFireAnimationNode() {
