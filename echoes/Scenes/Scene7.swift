@@ -75,6 +75,9 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
     
     var RingtonePlayer: AVAudioPlayer?
     
+    let transitionTriggerPosition = SCNVector3(-83.414, 507.713, 113.845)
+    let triggerDistance: Float = 80.0
+    
     init(lightNode: SCNNode) {
         GameViewController.joystickComponent.showJoystick()
         
@@ -140,6 +143,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         setupPianoKeys()
         
         applyCustomFont(to: candleLabel, fontSize: 14)
+        applyCustomFont(to: FailLabel, fontSize: 14)
         
         self.physicsWorld.contactDelegate = self
     }
@@ -607,6 +611,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         timerLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
         timerLabel.textAlignment = .center
         timerLabel.text = formatTime(timeRemaining)
+        applyCustomFont(to: timerLabel, fontSize: 20)
         if let parentView = containerView?.superview {
             parentView.addSubview(timerLabel)
         }
@@ -657,6 +662,13 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         
         isPlayingPiano = false
         isGameCompleted = false
+        
+        // Show the fail label if the puzzle has not been completed successfully
+        if isPianoPuzzleCompleted == false {
+                if let keyWindow = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
+                    self.displayFailLabel(on: keyWindow)
+                }
+            }
 
         // Optionally, if you want to redisplay the piano puzzle UI
         // Uncomment the following lines if you want to show the piano puzzle again after reset
@@ -852,10 +864,11 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
                     self.doorCloseNode?.isHidden = true
                     self.isGrandmaFinishedTalking = false
                     self.isGrandmaisTalking = true
+                    self.addBlueFireAnimationNode()
                     
                     
                     // Move player to new position
-                    let newPosition = SCNVector3(-326.366, 93.134, 35.809)
+                    let newPosition = SCNVector3(-395.591, 104.963, 42.888)
                     self.playerEntity.playerNode?.position = newPosition
                     
                     // Set the camera to face the initial angles (180, 0, 180)
@@ -917,6 +930,22 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         }
     }
 
+    private func addBlueFireAnimationNode() {
+          // Create the fire particle system
+          let fireParticleSystem = SCNParticleSystem(named: "smoothFire.scnp", inDirectory: nil)
+          
+          // Create a new SCNNode for the fire effect
+          let fireNode = SCNNode()
+          fireNode.position = transitionTriggerPosition
+          
+          // Attach the particle system to the fire node
+          fireNode.addParticleSystem(fireParticleSystem!)
+          
+          scnView?.antialiasingMode = .multisampling4X // Apply anti-aliasing for smoother visuals
+
+          // Add the fire node to the scene
+          rootNode.addChildNode(fireNode)
+      }
     
     
     func displaycandleLabel(on view: UIView) {
@@ -967,6 +996,44 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
     
     // Define the label for displaying the message
     private let candleLabel: UILabel = {
+        let label = UILabel()
+        label.textAlignment = .center
+        label.textColor = UIColor.white
+        label.clipsToBounds = true
+        label.alpha = 0.0
+        return label
+    }()
+    
+    func displayFailLabel(on view: UIView) {
+        FailLabel.text = "You Failed! Try Again!"
+        view.addSubview(FailLabel)
+        
+        // Position the camera instruction label above the center of the screen
+        let offsetFromTop: CGFloat = 170
+        FailLabel.frame = CGRect(
+            x: (view.bounds.width - 250) / 2,
+            y: (view.bounds.height) / 2 - offsetFromTop,
+            width: 255,
+            height: 25
+        )
+        // Fade in the label
+        UIView.animate(withDuration: 0.5) {
+            self.FailLabel.alpha = 1.0
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+            UIView.animate(withDuration: 0.5) {
+                self.FailLabel.alpha = 0.0
+            }
+        }
+    }
+
+    
+    
+    
+    
+    // Define the label for displaying the message
+    private let FailLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .center
         label.textColor = UIColor.white
