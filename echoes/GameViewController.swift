@@ -10,7 +10,7 @@ class GameViewController: UIViewController, Scene2Delegate {
     static var joystickComponent: VirtualJoystickComponent!
     
     var scnView: SCNView!
-    var scene6: Scene6!
+    // var scene6: Scene6!
     var interactButton: UIButton!
     
     override func viewDidLoad() {
