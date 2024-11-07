@@ -93,7 +93,7 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
         
         if let grandmaParentNode = rootNode.childNode(withName: "grandma", recursively: true) {
             if let grandmaNode1 = grandmaParentNode.childNode(withName: "s4-grandma1", recursively: false) {
-                attachAudio(to: grandmaNode1, audioFileName: "s4-grandma1.wav", volume: 3, delay: 10)
+                attachAudio(to: grandmaNode1, audioFileName: "s4-grandma1.wav", volume: 2, delay: 10)
             }
             
             if let grandmaNode2 = grandmaParentNode.childNode(withName: "s4-grandma2", recursively: false) {
@@ -134,15 +134,10 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
             return
         }
         
-        if (audioFileName == "s4-andra.wav"){
-            audioSource.isPositional = false
-        } else {
-            audioSource.isPositional = true
-        }
-        
         audioSource.shouldStream = false
         audioSource.load()
         audioSource.volume = volume
+        audioSource.isPositional = true
         
         // Set looping for continuous rain sound
         if audioFileName == "muffledRain.wav" {
