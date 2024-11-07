@@ -150,15 +150,13 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
             attachAudio(to: muffledNode, audioFileName: "muffledRain.wav", volume: 0.7, delay: 0)
         }
                 
-        if let grandmaParentNode = rootNode.childNode(withName: "grandma", recursively: true) {
-            if let grandmaNode1 = grandmaParentNode.childNode(withName: "s5-grandma", recursively: false) {
-                attachAudio(to: grandmaNode1, audioFileName: "s5-grandma.wav", volume: 8, delay: 6)
-            }
+        if let grandmaAudioNode = grandmaNode.childNode(withName: "s5-grandma", recursively: false) {
+            attachAudio(to: grandmaAudioNode, audioFileName: "s5-grandma.wav", volume: 10, delay: 10)
         }
          
         if let andraParentNode = rootNode.childNode(withName: "player", recursively: true) {
             if let andraNode = andraParentNode.childNode(withName: "s5-andra", recursively: false) {
-                attachAudio(to: andraNode, audioFileName: "s5-andra.wav", volume: 7, delay: 16)
+                attachAudio(to: andraNode, audioFileName: "s5-andra.wav", volume: 8, delay: 20)
             }
         }
         
@@ -166,7 +164,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         addSpoonSound()
         
         if let chandelierNode = rootNode.childNode(withName: "chandelier", recursively: false) {
-            attachAudio(to: chandelierNode, audioFileName: "rustyChandelier.mp3", volume: 0.9, delay: 9)
+            attachAudio(to: chandelierNode, audioFileName: "rustyChandelier.mp3", volume: 0.9, delay: 17)
         }
         
         doorOpenNode.isHidden = true
@@ -183,7 +181,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
     func jumpscareDoll() {
         let playerPosition = (playerEntity.playerNode?.position)!
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 22.0) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 26.0) { [weak self] in
             self?.isDollJumpscare = true
             self?.dollNode.isHidden = false
             
@@ -206,22 +204,26 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
             }
         }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 32.0) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 36.0) { [weak self] in
             self?.cameraNode.camera?.fieldOfView = 75  // Default value for normal view
-
-            guard let cameraNode = self?.cameraNode else { return }
-            
-            // Get current Euler angles and only adjust X and Z axes
-            let eulerAngles = cameraNode.eulerAngles
-            cameraNode.eulerAngles = SCNVector3(
-                (self?.roundedAngle(eulerAngles.x * 180 / .pi) ?? 0) * .pi / 180, // Round X-axis
-                eulerAngles.y, // Keep Y-axis unchanged
-                (self?.roundedAngle(eulerAngles.z * 180 / .pi) ?? 0) * .pi / 180  // Round Z-axis
-            )
             
             GameViewController.playerEntity?.movementComponent.movePlayer(to: playerPosition, duration: 1.5) {
                 self?.isDollJumpscare = false
                 self?.isJumpscareDone = true
+                
+                guard let cameraNode = self?.cameraNode else { return }
+
+                // Get current Euler angles and only adjust X and Z axes
+                let eulerAngles = cameraNode.eulerAngles
+                cameraNode.eulerAngles = SCNVector3(
+                    (self?.roundedAngle(eulerAngles.x * 180 / .pi) ?? 0) * .pi / 180, // Round X-axis
+                    eulerAngles.y, // Keep Y-axis unchanged
+                    (self?.roundedAngle(eulerAngles.z * 180 / .pi) ?? 0) * .pi / 180  // Round Z-axis
+                )
+            }
+            
+            if let grandmaAudioNode = self?.grandmaNode.childNode(withName: "s5-grandma", recursively: false) {
+                self?.cameraNode.look(at: grandmaAudioNode.position)
             }
         }
     }
@@ -234,40 +236,6 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         return targets.min(by: { abs($0 - angle) < abs($1 - angle) }) ?? angle
     }
     
-    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
-        guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
-            print("Warning: Audio file '\(audioFileName)' not found")
-            return
-        }
-        
-        if audioFileName == "s5-grandma.wav" || audioFileName == "s5-andra.wav" {
-            audioSource.isPositional = false
-        } else {
-            audioSource.isPositional = true
-        }
-        
-        if audioFileName == "muffledRain.wav" {
-            audioSource.loops = true
-        }
-        
-        audioSource.shouldStream = false
-        audioSource.load()
-        audioSource.volume = volume
-
-        // Create a new node to attach the audio and position it
-        let audioNode = SCNNode()
-        node.addChildNode(audioNode)
-
-        // Play audio with delay
-        let playAudioAction = SCNAction.sequence([
-            SCNAction.wait(duration: delay),
-            SCNAction.playAudio(audioSource, waitForCompletion: false)
-        ])
-        
-        // Play the audio
-        audioNode.runAction(playAudioAction)
-    }
-
     func displayPuzzlePieces(on view: UIView) {
         grandmaNode.isHidden = true
         let pieceImages = [
@@ -813,6 +781,35 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
                 }
             }
         }
+    }
+    
+    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
+        guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
+            print("Warning: Audio file '\(audioFileName)' not found")
+            return
+        }
+
+        if audioFileName == "muffledRain.wav" {
+            audioSource.loops = true
+        }
+        
+        audioSource.shouldStream = false
+        audioSource.load()
+        audioSource.volume = volume
+        audioSource.isPositional = true
+
+        // Create a new node to attach the audio and position it
+        let audioNode = SCNNode()
+        node.addChildNode(audioNode)
+
+        // Play audio with delay
+        let playAudioAction = SCNAction.sequence([
+            SCNAction.wait(duration: delay),
+            SCNAction.playAudio(audioSource, waitForCompletion: false)
+        ])
+        
+        // Play the audio
+        audioNode.runAction(playAudioAction)
     }
     
     func addFallingCupSound() {
