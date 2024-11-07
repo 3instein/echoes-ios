@@ -949,7 +949,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
     
     
     func displaycandleLabel(on view: UIView) {
-        candleLabel.text = "Candle Obtained"
+        candleLabel.text = "Puzzle Solved! Candle and Keys Obtained"
         view.addSubview(candleLabel)
         
         // Position the candle label above the center of the screen
@@ -1160,6 +1160,13 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
 //            print("Glow disabled for \(node.name ?? "")") // Debugging
         }
     }
+    
+    // Check if the player is close to the transition trigger point
+        func checkProximityToTransition() -> Bool {
+            guard let playerPosition = playerEntity.playerNode?.position else { return false }
+            let distance = playerPosition.distance(to: transitionTriggerPosition)
+            return distance < triggerDistance
+        }
     
     
     func setupGestureRecognizers(for view: UIView) {
