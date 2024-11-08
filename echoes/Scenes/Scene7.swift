@@ -104,6 +104,10 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
             return
         }
         
+        if let muffledNode = rootNode.childNode(withName: "muffledRain", recursively: true) {
+              attachAudio(to: muffledNode, audioFileName: "muffledRain.wav", volume: 0.5, delay: 0)
+          }
+        
         // Add player node to the GameScene's rootNode
         rootNode.addChildNode(playerNode)
         
@@ -388,10 +392,12 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         }
         
         // Prepare the video
-        guard let videoURL = Bundle.main.url(forResource: "KiranaVoiceNote", withExtension: "mp4") else {
+        guard let videoURL = Bundle.main.url(forResource: "KiranaDiary", withExtension: "mp4") else {
             print("Video file not found")
             return
         }
+        
+        
         
         // Create an AVPlayer
         let player = AVPlayer(url: videoURL)
@@ -399,6 +405,8 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         playerLayer.frame = videoContainer.bounds
         playerLayer.videoGravity = .resizeAspect
         videoContainer.layer.addSublayer(playerLayer)
+        player.volume = 1.0
+        
         
         // Play the video
         player.play()
