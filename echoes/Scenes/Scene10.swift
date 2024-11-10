@@ -40,6 +40,41 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         }
         cameraNode.camera?.fieldOfView = 75
         cameraComponent = CameraComponent(cameraNode: cameraNode)
+        rootNode.addChildNode(lightNode)
+        
+        // Add collision bodies to furniture
+        setupFurnitureCollision()
+        
+        // Set physics contact delegate
+        self.physicsWorld.contactDelegate = self
+    }
+    
+    private func setupFurnitureCollision() {
+        // Define collision setup for each piece of furniture
+        
+        if let bedNode = rootNode.childNode(withName: "victorian_bed", recursively: true) {
+            bedNode.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
+            bedNode.physicsBody?.categoryBitMask = 2  // Define as static object
+            bedNode.physicsBody?.collisionBitMask = 1  // Collides with player
+        }
+        
+        if let leftEndTable = rootNode.childNode(withName: "end_table01", recursively: true) {
+            leftEndTable.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
+            leftEndTable.physicsBody?.categoryBitMask = 2
+            leftEndTable.physicsBody?.collisionBitMask = 1
+        }
+        
+        if let rightEndTable = rootNode.childNode(withName: "end_table02", recursively: true) {
+            rightEndTable.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
+            rightEndTable.physicsBody?.categoryBitMask = 2
+            rightEndTable.physicsBody?.collisionBitMask = 1
+        }
+        
+        if let doorNode = rootNode.childNode(withName: "door", recursively: true) {
+            doorNode.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
+            doorNode.physicsBody?.categoryBitMask = 2
+            doorNode.physicsBody?.collisionBitMask = 1
+        }
     }
     
     func setupGestureRecognizers(for view: UIView) {
