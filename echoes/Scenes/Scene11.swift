@@ -22,7 +22,7 @@ class Scene11: SCNScene, SCNPhysicsContactDelegate {
         scnView?.pointOfView = cameraNode
         
         // Load the house scene from the Scenes folder
-        guard let houseScene = SCNScene(named: "scene.scn") else {
+        guard let houseScene = SCNScene(named: "scene11.scn") else {
             print("Warning: House scene 'Scene4.scn' not found")
             return
         }
@@ -58,6 +58,17 @@ class Scene11: SCNScene, SCNPhysicsContactDelegate {
         cameraComponent = CameraComponent(cameraNode: cameraNode)
         
         rootNode.addChildNode(lightNode)
+        
+        guard let trapDoorNode = rootNode.childNode(withName: "trapDoor", recursively: true) else {
+            print("Warning: TrapDoor node not found in the scene.")
+            return
+        }
+        
+        // Assuming the animation is part of the trapDoor's animations or has an identifier "trapDoorAnimation"
+        if let trapDoorAnimation = trapDoorNode.animationPlayer(forKey: "transform") {
+            // If animation is already added to the node
+            trapDoorAnimation.play()
+        }
         
         playContinuousThunderEffect()
         
