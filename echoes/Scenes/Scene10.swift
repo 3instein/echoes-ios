@@ -9,13 +9,17 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
     var lightNode: SCNNode!
     var cameraNode: SCNNode!
     var doorNode: SCNNode!
+    var trapdoorNode: SCNNode!
     var lockButton: UIButton?
+    var enterButton: UIButton?
     weak var scnView: SCNView?
     private var keyImageView: UIImageView!
     private var doorImageView: UIImageView!
     private var miniGameCompleted = false
+    private var trapDoorEntered = false
     
-    let triggerDistance: Float = 130.0  // Distance within which "Lock" button should appear
+    let doorTriggerDistance: Float = 130.0  // Distance within which "Lock" button should appear
+    let trapdoorTriggerDistance: Float = 100.0  // Distance within which "Enter" button for trapdoor should appear
     
     init(lightNode: SCNNode, scnView: SCNView) {
         super.init()
@@ -50,6 +54,7 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         cameraComponent = CameraComponent(cameraNode: cameraNode)
         
         doorNode = rootNode.childNode(withName: "door", recursively: true)
+        trapdoorNode = rootNode.childNode(withName: "trapdoor", recursively: true)
         
         rootNode.addChildNode(lightNode)
         
@@ -81,24 +86,37 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
             doorNode.physicsBody?.categoryBitMask = 2
             doorNode.physicsBody?.collisionBitMask = 1
         }
+        if let trapdoorNode = trapdoorNode {
+            trapdoorNode.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
+            trapdoorNode.physicsBody?.categoryBitMask = 2
+            trapdoorNode.physicsBody?.collisionBitMask = 1
+        }
     }
     
-    func checkProximityToDoor() {
+    func checkProximity() {
         guard let playerWorldPosition = playerEntity.playerNode?.worldPosition else {
             print("Error: playerNode not found.")
             return
         }
-        guard let doorWorldPosition = doorNode?.worldPosition else {
-            print("Error: doorNode not found.")
-            return
+        
+        // Check proximity to door for locking mini-game
+        if let doorWorldPosition = doorNode?.worldPosition {
+            let distanceToDoor = playerWorldPosition.distanceTo(doorWorldPosition)
+            if distanceToDoor < doorTriggerDistance && !miniGameCompleted {
+                showLockButton()
+            } else {
+                hideLockButton()
+            }
         }
         
-        let distance = playerWorldPosition.distance(to: doorWorldPosition)
-        
-        if distance < triggerDistance && !miniGameCompleted {
-            showLockButton()
-        } else {
-            hideLockButton()
+        // Check proximity to trap door
+        if let trapdoorWorldPosition = trapdoorNode?.worldPosition, !trapDoorEntered {
+            let distanceToTrapdoor = playerWorldPosition.distanceTo(trapdoorWorldPosition)
+            if distanceToTrapdoor < trapdoorTriggerDistance {
+                showEnterButton()
+            } else {
+                hideEnterButton()
+            }
         }
     }
     
@@ -106,21 +124,8 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         if lockButton == nil {
             lockButton = UIButton(type: .system)
             lockButton?.setTitle("Lock", for: .normal)
-            
-            // Copy style from interactButton
-            if let customFont = UIFont(name: "SpecialElite-Regular", size: 16) {
-                lockButton?.titleLabel?.font = customFont
-            } else {
-                print("Failed to load SpecialElite-Regular font.")
-            }
-            lockButton?.titleLabel?.numberOfLines = -1
-            lockButton?.titleLabel?.textAlignment = .center
-            lockButton?.backgroundColor = UIColor.white.withAlphaComponent(0.7)
-            lockButton?.setTitleColor(.blue, for: .normal)
-            lockButton?.layer.cornerRadius = 15
+            styleButton(lockButton!)
             lockButton?.frame = CGRect(x: 100, y: 100, width: 100, height: 30)
-            
-            // Add to view and set up action
             scnView?.addSubview(lockButton!)
             lockButton?.addTarget(self, action: #selector(startMiniGame), for: .touchUpInside)
         }
@@ -131,26 +136,51 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         lockButton = nil
     }
     
+    private func showEnterButton() {
+        if enterButton == nil {
+            enterButton = UIButton(type: .system)
+            enterButton?.setTitle("Enter", for: .normal)
+            styleButton(enterButton!)
+            enterButton?.frame = CGRect(x: 150, y: 150, width: 100, height: 30)
+            scnView?.addSubview(enterButton!)
+            enterButton?.addTarget(self, action: #selector(enterTrapdoor), for: .touchUpInside)
+        }
+    }
+    
+    private func hideEnterButton() {
+        enterButton?.removeFromSuperview()
+        enterButton = nil
+    }
+    
+    private func styleButton(_ button: UIButton) {
+        if let customFont = UIFont(name: "SpecialElite-Regular", size: 16) {
+            button.titleLabel?.font = customFont
+        } else {
+            print("Failed to load SpecialElite-Regular font.")
+        }
+        button.titleLabel?.numberOfLines = -1
+        button.titleLabel?.textAlignment = .center
+        button.backgroundColor = UIColor.white.withAlphaComponent(0.7)
+        button.setTitleColor(.blue, for: .normal)
+        button.layer.cornerRadius = 15
+    }
+    
     @objc private func startMiniGame() {
-        // Hide the lock button when the mini-game starts
         hideLockButton()
-        
         GameViewController.joystickComponent.joystickView.isHidden = true
         setupMiniGameUI()
     }
     
     private func setupMiniGameUI() {
-        // Create door image view in the center of the screen
+        // Door-locking mini-game setup
         doorImageView = UIImageView(image: UIImage(named: "door.jpg"))
         doorImageView.frame = CGRect(x: scnView!.bounds.midX - 85, y: scnView!.bounds.midY - 200, width: 180, height: 380)
         scnView?.addSubview(doorImageView)
         
-        // Create key image view at the bottom of the screen
         keyImageView = UIImageView(image: UIImage(named: "key.jpg"))
         keyImageView.frame = CGRect(x: 100, y: scnView!.bounds.height - 250, width: 100, height: 100)
         scnView?.addSubview(keyImageView)
         
-        // Enable dragging on the key image view
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handleDrag(_:)))
         keyImageView.addGestureRecognizer(panGesture)
         keyImageView.isUserInteractionEnabled = true
@@ -163,7 +193,6 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         }
         gesture.setTranslation(.zero, in: scnView)
         
-        // Check for success when drag ends
         if gesture.state == .ended {
             checkForSuccess()
         }
@@ -179,11 +208,31 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         }
     }
     
+    @objc private func enterTrapdoor() {
+        hideEnterButton()
+        trapDoorEntered = true
+        UIView.animate(withDuration: 1.0, animations: {
+            self.scnView?.alpha = 0.0  // Fade to black
+        }) { _ in
+            // Transition to Scene11
+            SceneManager.shared.loadScene11()
+        }
+    }
+    
     func setupGestureRecognizers(for view: UIView) {
         cameraComponent.setupGestureRecognizers(for: view)
     }
     
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+}
+
+extension SCNVector3 {
+    func distanceTo(_ vector: SCNVector3) -> Float {
+        let dx = self.x - vector.x
+        let dy = self.y - vector.y
+        let dz = self.z - vector.z
+        return sqrt(dx * dx + dy * dy + dz * dz)
     }
 }
