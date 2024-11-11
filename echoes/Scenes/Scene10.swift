@@ -13,6 +13,7 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
     weak var scnView: SCNView?
     private var keyImageView: UIImageView!
     private var doorImageView: UIImageView!
+    private var miniGameCompleted = false
     
     let triggerDistance: Float = 130.0  // Distance within which "Lock" button should appear
     
@@ -93,10 +94,8 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         }
         
         let distance = playerWorldPosition.distance(to: doorWorldPosition)
-        // print("Distance to door (world positions):", distance)
         
-        if distance < triggerDistance {
-            // print("Player is within range of the door.")
+        if distance < triggerDistance && !miniGameCompleted {
             showLockButton()
         } else {
             hideLockButton()
@@ -133,8 +132,10 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
     }
     
     @objc private func startMiniGame() {
-        GameViewController.joystickComponent.joystickView.isHidden = true
+        // Hide the lock button when the mini-game starts
         hideLockButton()
+        
+        GameViewController.joystickComponent.joystickView.isHidden = true
         setupMiniGameUI()
     }
     
@@ -172,8 +173,7 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         if keyImageView.frame.intersects(doorImageView.frame) {
             keyImageView.removeFromSuperview()
             doorImageView.removeFromSuperview()
-            hideLockButton()
-            
+            miniGameCompleted = true
             GameViewController.joystickComponent.joystickView.isHidden = false
             print("Door successfully locked")
         }
