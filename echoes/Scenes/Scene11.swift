@@ -72,7 +72,71 @@ class Scene11: SCNScene, SCNPhysicsContactDelegate {
         
         playContinuousThunderEffect()
         
-        self.physicsWorld.contactDelegate = self
+        attachAmbientAudioNode(named: "siren.wav", to: "siren", volume: 1000.0)
+        attachVoiceNode(named: "s11-polisi.mp3", to: "detective", volume: 1.0)
+        
+    }
+    
+    private func attachAmbientAudioNode(named fileName: String, to nodeName: String, volume: Float) {
+        guard let node = rootNode.childNode(withName: nodeName, recursively: true) else {
+            print("Warning: Node '\(nodeName)' not found in the scene model")
+            return
+        }
+        attachAmbientAudio(to: node, audioFileName: fileName, volume: volume)
+    }
+    
+    private func attachVoiceNode(named fileName: String, to nodeName: String, volume: Float) {
+        guard let node = rootNode.childNode(withName: nodeName, recursively: true) else {
+            print("Warning: Node '\(nodeName)' not found in the scene model")
+            return
+        }
+        attachAudio(to: node, audioFileName: fileName, volume: volume, delay: 8.0)
+    }
+    
+    func attachAmbientAudio(to node: SCNNode, audioFileName: String, volume: Float = 1.0) {
+        guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
+            print("Warning: Audio file '\(audioFileName)' not found")
+            return
+        }
+        
+        audioSource.loops = true
+        audioSource.isPositional = true
+        audioSource.shouldStream = false
+        audioSource.load()
+        
+        audioSource.volume = volume
+        
+        let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: false)
+        node.runAction(playAudioAction)
+    }
+    
+    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
+        guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
+            print("Warning: Audio file '\(audioFileName)' not found")
+            return
+        }
+        
+        print(audioFileName)
+        
+        if (audioFileName == "s4-andra.wav" || audioFileName == "s11-polisi.mp3") {
+            audioSource.isPositional = false
+        } else {
+            audioSource.isPositional = true
+        }
+        
+        audioSource.shouldStream = false
+        audioSource.load()
+        audioSource.volume = volume
+        
+        // Set looping for continuous rain sound
+        if audioFileName == "muffledRain.wav" {
+            audioSource.loops = true  // This ensures the rain loops without breaking
+        }
+        
+        let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: true)
+        let waitAction = SCNAction.wait(duration: delay)
+        let sequenceAction = SCNAction.sequence([waitAction, playAudioAction])
+        node.runAction(sequenceAction)
     }
     
     func playContinuousThunderEffect() {
@@ -151,41 +215,13 @@ class Scene11: SCNScene, SCNPhysicsContactDelegate {
         audioSource.isPositional = true
         audioSource.shouldStream = false
         audioSource.load()
-        audioSource.volume = 0.5
+        audioSource.volume = 0.15
         
         // Play the audio with no delay for immediate thunder effect
         let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: false)
         
         // Run the audio action on the scene’s root node
         rootNode.runAction(playAudioAction)
-    }
-
-    
-    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
-        guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
-            print("Warning: Audio file '\(audioFileName)' not found")
-            return
-        }
-        
-        if (audioFileName == "s4-andra.wav"){
-            audioSource.isPositional = false
-        } else {
-            audioSource.isPositional = true
-        }
-        
-        audioSource.shouldStream = false
-        audioSource.load()
-        audioSource.volume = volume
-        
-        // Set looping for continuous rain sound
-        if audioFileName == "muffledRain.wav" {
-            audioSource.loops = true  // This ensures the rain loops without breaking
-        }
-        
-        let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: true)
-        let waitAction = SCNAction.wait(duration: delay)
-        let sequenceAction = SCNAction.sequence([waitAction, playAudioAction])
-        node.runAction(sequenceAction)
     }
     
     func setupGestureRecognizers(for view: UIView) {
