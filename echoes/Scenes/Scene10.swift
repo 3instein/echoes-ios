@@ -63,9 +63,29 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         
         // Add collision bodies to furniture (-temporarily disabled, causing crash*)
         // setupFurnitureCollision()
+        playAndraSound()
         
-        // Set physics contact delegate
         self.physicsWorld.contactDelegate = self
+    }
+    
+    private func playAndraSound() {
+        guard let andraSound = SCNAudioSource(fileNamed: "s10-andra.mp3") else {
+            print("Error: Sound file 's10-andra.mp3' not found in the project bundle")
+            return
+        }
+        
+        andraSound.shouldStream = false
+        andraSound.isPositional = false
+        andraSound.volume = 2.0
+        andraSound.load()
+        
+        let playAndraSound = SCNAction.sequence([
+            SCNAction.wait(duration: 1.0), // 1-second delay
+            SCNAction.playAudio(andraSound, waitForCompletion: false)
+        ])
+        
+        // Run the action on the root node or any other node where you want the sound to originate
+        rootNode.runAction(playAndraSound)
     }
     
     private func setupFurnitureCollision() {
