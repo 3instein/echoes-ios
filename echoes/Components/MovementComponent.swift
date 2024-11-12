@@ -1,8 +1,8 @@
 //  MovementComponent.swift
 
+import AVFoundation
 import GameplayKit
 import SceneKit
-import AVFoundation
 
 class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     let playerNode: SCNNode
@@ -10,6 +10,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     var joystickComponent: VirtualJoystickComponent?
     var cameraNode: SCNNode?
     var movingProgramatically: Bool = false
+    private var isShaking: Bool = false // Track shake state
 
     private var lastSafePosition: SCNVector3?
 
@@ -18,17 +19,17 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     
     // Light node reference
     var lightNode: SCNNode?
-    var originalLightIntensity: CGFloat = 75 // Default intensity
-    var isLightActive = false // Track if light is active
-    private var lightIncreaseDuration: TimeInterval = 0.5 // Reduced duration for increasing intensity
-    private var lightDecreaseDuration: TimeInterval = 0.3 // Reduced duration for decreasing intensity
+    var originalLightIntensity: CGFloat = 75  // Default intensity
+    var isLightActive = false  // Track if light is active
+    private var lightIncreaseDuration: TimeInterval = 0.5  // Reduced duration for increasing intensity
+    private var lightDecreaseDuration: TimeInterval = 0.3  // Reduced duration for decreasing intensity
     private var lightTimer: Timer?
-    private var lightTimerDelay: TimeInterval = 1.0 // Reduced delay before light starts dimming
-    
+    private var lightTimerDelay: TimeInterval = 1.0  // Reduced delay before light starts dimming
+
     // Sound properties
     var echoAudioPlayer: AVAudioPlayer?
     private var lastStepTime: Date?
-    private let stepDelay: TimeInterval = 2.0 // Minimum delay between steps
+    private let stepDelay: TimeInterval = 2.0  // Minimum delay between steps
 
     var stepAudioPlayer: AVAudioPlayer?
     var toiletStepAudioPlayer: AVAudioPlayer?
@@ -50,14 +51,9 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
         self.playerNode = playerNode
         self.cameraNode = cameraNode
         self.lightNode = lightNode
-        self.originalLightIntensity = lightNode?.light?.intensity ?? 75 // Set original intensity
+        self.originalLightIntensity = lightNode?.light?.intensity ?? 75  // Set original intensity
 
         super.init()
-        
-        print("MovementComponent initialized. Current isToilet: \(isToilet)")
-
-        // Load sound
-        loadSounds()
         loadStepSound(resource: currentStepResource)
     }
 
@@ -112,6 +108,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
             let speed = movementVector.length() / deltaTime
             if speed > 0 {
                 playEchoSound()
+                shakeCamera(duration: 0.1, intensity: 0.02) // Apply shake effect
                 if !stepAudioPlayer!.isPlaying {
                     playStepSound()
                 }
@@ -126,6 +123,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
         } else if movingProgramatically {
             updateLightPosition()
 
+            shakeCamera(duration: 0.1, intensity: 0.02) // Apply shake effect
             let currentTime = Date()
             if lastStepTime == nil || currentTime.timeIntervalSince(lastStepTime!) >= stepDelay {
                 playEchoSound()
@@ -156,7 +154,8 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     private func updateLightPosition() {
         guard let lightNode = lightNode else { return }
         // Update the light position to follow the player
-        lightNode.position = SCNVector3(playerNode.position.x, playerNode.position.y + 5, playerNode.position.z) // Adjust height as necessary
+        lightNode.position = SCNVector3(
+            playerNode.position.x, playerNode.position.y + 5, playerNode.position.z)  // Adjust height as necessary
     }
 
     func activateLightPulsing() {
@@ -165,51 +164,74 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
         isLightActive = true
 
         // Increase light intensity smoothly
-        let targetIntensity: CGFloat = originalLightIntensity + 500 // Set the target intensity
-        let increaseAction = SCNAction.customAction(duration: lightIncreaseDuration) { node, elapsedTime in
+        let targetIntensity: CGFloat = originalLightIntensity + 500  // Set the target intensity
+        let increaseAction = SCNAction.customAction(duration: lightIncreaseDuration) {
+            node, elapsedTime in
             let percent = elapsedTime / CGFloat(self.lightIncreaseDuration)
-            let newIntensity = self.originalLightIntensity + (500 * percent) // Change 500 to desired increase amount
+            let newIntensity = self.originalLightIntensity + (500 * percent)  // Change 500 to desired increase amount
             node.light?.intensity = newIntensity
         }
 
         lightNode.runAction(increaseAction)
 
         // Schedule a timer to decrease intensity after a shorter delay
-        lightTimer?.invalidate() // Invalidate any existing timer
-        lightTimer = Timer.scheduledTimer(withTimeInterval: lightTimerDelay, repeats: false) { [weak self] _ in
+        lightTimer?.invalidate()  // Invalidate any existing timer
+        lightTimer = Timer.scheduledTimer(withTimeInterval: lightTimerDelay, repeats: false) {
+            [weak self] _ in
             self?.decreaseLightIntensity()
         }
     }
 
     private func decreaseLightIntensity() {
         guard let lightNode = lightNode else { return }
-        print("decreasing")
 
         // Decrease light intensity smoothly
-        let decreaseAction = SCNAction.customAction(duration: lightDecreaseDuration) { node, elapsedTime in
+        let decreaseAction = SCNAction.customAction(duration: lightDecreaseDuration) {
+            node, elapsedTime in
             let percent = elapsedTime / CGFloat(self.lightDecreaseDuration)
-            let newIntensity = self.originalLightIntensity + (500 * (1 - percent)) // Reverse the increase effect
-            node.light?.intensity = newIntensity // Ensure it doesn't go below original
-            
+            let newIntensity = self.originalLightIntensity + (500 * (1 - percent))  // Reverse the increase effect
+            node.light?.intensity = newIntensity  // Ensure it doesn't go below original
+
         }
 
         lightNode.runAction(decreaseAction) { [weak self] in
-            self?.isLightActive = false // Mark light as inactive after fading out
-            lightNode.light?.intensity = self?.originalLightIntensity ?? 0 // Ensure it resets to original
+            self?.isLightActive = false  // Mark light as inactive after fading out
+            lightNode.light?.intensity = self?.originalLightIntensity ?? 0  // Ensure it resets to original
         }
     }
-    
-    private func loadSounds() {
-        if let echoSoundURL = Bundle.main.url(forResource: "EcholocationSound", withExtension: "mp3") {
-            do {
-                echoAudioPlayer = try AVAudioPlayer(contentsOf: echoSoundURL)
-                echoAudioPlayer?.prepareToPlay() // Prepare to play
-            } catch {
-                print("Error loading sound: \(error)")
+
+    private func shakeCamera(duration: TimeInterval, intensity: Float = 0.02) {
+        guard let cameraNode = cameraNode, !isShaking else { return }  // Prevent multiple shakes
+        isShaking = true
+
+        // Store the original position to reset after shaking
+        let originalPosition = cameraNode.position
+
+        // Animation action for shake effect with left-right sway
+        let shakeAction = SCNAction.customAction(duration: duration) { [weak self] _, elapsedTime in
+            guard let self = self else { return }
+
+            // Calculate each axis offset separately to reduce complexity
+            let oscillationFactor = Float(sin(Double(elapsedTime) * .pi * 2 / duration))
+            let randomOffsetX = oscillationFactor * intensity  // Smooth oscillation on X-axis
+            let randomOffsetY = Float.random(in: -0.5...0.5) * intensity * 0.2  // Minor Y-axis movement
+            let randomOffsetZ = Float.random(in: -0.5...0.5) * intensity * 0.2  // Minor Z-axis movement
+
+            // Set each component of position separately
+            let newPositionX = originalPosition.x + randomOffsetX
+            let newPositionY = originalPosition.y + randomOffsetY
+            let newPositionZ = originalPosition.z + randomOffsetZ
+
+            // Apply offset to camera position
+            cameraNode.position = SCNVector3(newPositionX, newPositionY, newPositionZ)
+
+            // Smoothly reset position to original at end of duration
+            if elapsedTime >= CGFloat(duration) {
+                cameraNode.position = originalPosition
+                self.isShaking = false
             }
-        } else {
-            print("Sound file not found")
         }
+        cameraNode.runAction(shakeAction)
     }
     
     // Updated loadStepSound to accept a resource parameter
@@ -234,7 +256,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
         }
 
         if !echoAudioPlayer.isPlaying {
-            echoAudioPlayer.play() // Play the sound
+            echoAudioPlayer.play()  // Play the sound
         }
     }
 
@@ -244,55 +266,56 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
         }
 
         if !stepAudioPlayer.isPlaying {
-            stepAudioPlayer.play() // Start playing the sound
+            stepAudioPlayer.play()  // Start playing the sound
         }
     }
-    
+
     private func stopStepSound() {
         guard let stepAudioPlayer = stepAudioPlayer else {
-            stepAudioPlayer?.stop() // Stop if currently playing
+            stepAudioPlayer?.stop()  // Stop if currently playing
             return
         }
     }
 
     private func addPlayerPhysicsBody() {
-          if playerNode.physicsBody == nil {
-              // Ensure the player node has a physics body initialized correctly
-              playerNode.physicsBody = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(node: playerNode, options: nil))
+        if playerNode.physicsBody == nil {
+            // Ensure the player node has a physics body initialized correctly
+            playerNode.physicsBody = SCNPhysicsBody(
+                type: .dynamic, shape: SCNPhysicsShape(node: playerNode, options: nil))
 
-              guard let playerPhysicsBody = playerNode.physicsBody else {
-                  print("Error: Player physics body is nil after initialization")
-                  return
-              }
+            guard let playerPhysicsBody = playerNode.physicsBody else {
+                print("Error: Player physics body is nil after initialization")
+                return
+            }
 
-              // Set mass, category, collision, and contact test bit masks
-              playerPhysicsBody.mass = 1.0 // Set a lower mass for better movement control
-  //            playerPhysicsBody.friction = 0.5 // Adjust friction as needed
-              playerPhysicsBody.restitution = 1.0 // No bounciness
+            // Set mass, category, collision, and contact test bit masks
+            playerPhysicsBody.mass = 1.0  // Set a lower mass for better movement control
+            //            playerPhysicsBody.friction = 0.5 // Adjust friction as needed
+            playerPhysicsBody.restitution = 1.0  // No bounciness
+            playerPhysicsBody.isAffectedByGravity = false
 
-              playerPhysicsBody.isAffectedByGravity = false
-              // Set up collision and contact masks
-              playerPhysicsBody.categoryBitMask = 1  // Define a bitmask for the player
-              playerPhysicsBody.collisionBitMask = 2 // Collides with walls/floor
-              playerPhysicsBody.contactTestBitMask = 2 // Test for contact with walls
-              
-              // Now call the method to setup walls physics
-              setupWallPhysicsBodies()
-          }
-      }
+            // Set up collision and contact masks
+            playerPhysicsBody.categoryBitMask = 1  // Define a bitmask for the player
+            playerPhysicsBody.collisionBitMask = 2  // Collides with walls/floor
+            playerPhysicsBody.contactTestBitMask = 2  // Test for contact with walls
+
+            // Now call the method to setup walls physics
+            setupWallPhysicsBodies()
+        }
+    }
 
     private func setupWallPhysicsBodies() {
-          // Loop through your walls and apply physics bodies
-          for node in playerNode.parent?.childNodes ?? [] {
-              if node.name?.contains("wall") == true /*|| node.name?.contains("floor")  == true */{
-                  print("wall")
-                  node.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
-                  node.physicsBody?.categoryBitMask = 2  // Wall category
-                  node.physicsBody?.collisionBitMask = 1  // Collides with player
-                  node.physicsBody?.contactTestBitMask = 1
-              }
-          }
-      }
+        // Loop through your walls and apply physics bodies
+        for node in playerNode.parent?.childNodes ?? [] {
+            if node.name?.contains("wall") == true /*|| node.name?.contains("floor")  == true */ {
+                print("wall")
+                node.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
+                node.physicsBody?.categoryBitMask = 2  // Wall category
+                node.physicsBody?.collisionBitMask = 1  // Collides with player
+                node.physicsBody?.contactTestBitMask = 1
+            }
+        }
+    }
 
     func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
         print("Player collided with wall or floor")
@@ -337,11 +360,11 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
 }
 
 // SCNVector3 Operators
-func +(left: SCNVector3, right: SCNVector3) -> SCNVector3 {
+func + (left: SCNVector3, right: SCNVector3) -> SCNVector3 {
     return SCNVector3(left.x + right.x, left.y + right.y, left.z + right.z)
 }
 
-func *(vector: SCNVector3, scalar: Float) -> SCNVector3 {
+func * (vector: SCNVector3, scalar: Float) -> SCNVector3 {
     return SCNVector3(vector.x * scalar, vector.y * scalar, vector.z * scalar)
 }
 

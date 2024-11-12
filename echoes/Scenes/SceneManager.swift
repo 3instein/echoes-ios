@@ -46,18 +46,6 @@ class SceneManager {
         currentScene = scene2
     }
     
-    func loadScene3() {
-        guard let lightNode = lightNode else {
-            print("Error: Light node is not initialized.")
-            return
-        }
-        let scene3 = Scene3(lightNode: lightNode)
-        scnView?.scene = scene3
-        scene3.scnView = scnView  // Assign the SCNView to the scene
-        scene3.setupGestureRecognizers(for: scnView!)
-        currentScene = scene3
-    }
-    
     func loadScene4() {
         guard let lightNode = lightNode else {
             print("Error: Light node is not initialized.")
@@ -67,25 +55,15 @@ class SceneManager {
         scnView?.scene = scene4
         currentScene = scene4
     }
-    
-    func loadScene5() {
+
+    func loadScene5and6() {
         guard let lightNode = lightNode else {
             print("Error: Light node is not initialized.")
             return
         }
-        let scene5 = Scene5(lightNode: lightNode)
-        scnView?.scene = scene5
-        currentScene = scene5
-    }
-    
-    func loadScene6() {
-        guard let lightNode = lightNode else {
-            print("Error: Light node is not initialized.")
-            return
-        }
-        let scene6 = Scene6(lightNode: lightNode)
-        scnView?.scene = scene6
-        currentScene = scene6
+        let scene5and6 = Scene5and6(lightNode: lightNode)
+        scnView?.scene = scene5and6
+        currentScene = scene5and6
     }
     
     func loadScene7() {
