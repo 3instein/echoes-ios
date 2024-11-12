@@ -613,7 +613,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
     
     
     func setupTimer() {
-        timeRemaining = 15
+        timeRemaining = 120
         timerLabel = UILabel(frame: CGRect(x: containerView!.frame.maxX + 10, y: containerView!.frame.midY - 25, width: 100, height: 50))
         timerLabel.textColor = .white
         timerLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
@@ -651,7 +651,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         containerView = nil // Optionally, set to nil to avoid dangling references
 
         // Reset the timer
-        timeRemaining = 15
+        timeRemaining = 120
         timerLabel.text = formatTime(timeRemaining)
         timerLabel.removeFromSuperview()
         

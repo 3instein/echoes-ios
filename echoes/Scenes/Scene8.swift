@@ -112,7 +112,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         self.lightNode = lightNode
         
         // Load the house scene from the Scenes folder
-        guard let houseScene = SCNScene(named: "scene8.scn") else {
+        guard let houseScene = SCNScene(named: "scene8ely.scn") else {
             print("Warning: House scene 'Scene 8.scn' not found")
             return
         }
