@@ -87,6 +87,42 @@ class GameViewController: UIViewController, Scene2Delegate {
         displayLink.add(to: .main, forMode: .default)
     }
     
+//    func transitionToScene10() {
+//        SceneManager.shared.loadScene10()
+//        
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+//            GameViewController.joystickComponent.showJoystick()
+//        }
+//        scnView.backgroundColor = UIColor.clear
+//        
+//        if let gameScene = self.scnView.scene as? Scene10 {
+//            GameViewController.playerEntity = gameScene.playerEntity
+//            
+//            // Create a movement component to handle player movement, including the light node
+//            let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode)
+//            GameViewController.playerEntity.movementComponent = movementComponent
+//            
+//            // Link the joystick with the movement component
+//            if let movementComponent = gameScene.playerEntity.movementComponent {
+//                movementComponent.joystickComponent = GameViewController.joystickComponent
+//                self.scnView.scene?.physicsWorld.contactDelegate = movementComponent
+//            }
+//            
+//            // Set up fog properties for the scene
+//            gameScene.fogStartDistance = 25.0
+//            gameScene.fogEndDistance = 300.0
+//            gameScene.fogDensityExponent = 0.2
+//            gameScene.fogColor = UIColor.black
+//            
+//            gameScene.setupGestureRecognizers(for: self.scnView)
+//            
+//            // After scene loads, set the background back to black
+//            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+//                self.scnView.backgroundColor = UIColor.black
+//            }
+//        }
+//    }
+    
     func transitionToScene4() {
         // Load Scene4 after Scene2 finishes
         SceneManager.shared.loadScene4()
@@ -303,6 +339,11 @@ class GameViewController: UIViewController, Scene2Delegate {
                 gameScene.displayNecklaceObtainedLabel(on: self.view)
                 gameScene.isPipeFailed = false
             }
+        }
+        
+        // Check proximity in Scene10
+        if let gameScene = scnView.scene as? Scene10 {
+            gameScene.checkProximity()
         }
     }
     

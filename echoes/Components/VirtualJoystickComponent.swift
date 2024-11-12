@@ -103,10 +103,21 @@ class VirtualJoystickComponent: GKComponent {
         joystickView.addGestureRecognizer(panGestureRecognizer)
     }
     
-    // Show the joystick tutorial with a delay
     func showJoystickTutorial() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-            self?.showInstructionLabel()
+            guard let self = self else { return }
+            
+            // Show the joystick instruction label continuously
+            self.showInstructionLabel()
+            
+            // Show the camera instruction label if it hasn’t been shown before
+            if !self.hasShownCameraInstruction {
+                self.hasShownCameraInstruction = true
+                UIView.animate(withDuration: 0.5) {
+                    self.cameraInstructionLabel.alpha = 1.0
+                }
+                self.hideCameraInstructionLabelWithDelay()
+            }
         }
     }
     
@@ -121,14 +132,6 @@ class VirtualJoystickComponent: GKComponent {
             UIView.animate(withDuration: 0.5) {
                 self.instructionLabel.alpha = 0.0
             }
-        }
-    }
-    
-    private func showCameraInstructionLabel() {
-        guard !hasShownCameraInstruction else { return }  // Show only if not displayed before
-        hasShownCameraInstruction = true
-        UIView.animate(withDuration: 0.5) {
-            self.cameraInstructionLabel.alpha = 1.0
         }
     }
     
@@ -151,8 +154,11 @@ class VirtualJoystickComponent: GKComponent {
             isTouching = true
             resetIdleTimer()
             animateJoystickAlpha(to: 0.5)
+            
+            // Hide the instruction label after the joystick is first moved
             hideInstructionLabelWithDelay()
-            showCameraInstructionLabel()
+            hideCameraInstructionLabelWithDelay()
+            
         case .changed:
             let limitedDistance = min(distance, maxDistance)
             let angle = atan2(offset.y, offset.x)
@@ -161,10 +167,11 @@ class VirtualJoystickComponent: GKComponent {
             let yPosition = limitedDistance * sin(angle) + joystickView.bounds.midY - knobSize / 2
             joystickKnob.frame.origin = CGPoint(x: xPosition, y: yPosition)
             resetIdleTimer()
+            
         case .ended, .cancelled:
             resetJoystick()
             startIdleTimer()
-            hideCameraInstructionLabelWithDelay()
+            
         default:
             break
         }
@@ -201,7 +208,6 @@ class VirtualJoystickComponent: GKComponent {
         }
     }
     
-    // Function to hide the joystick
     func hideJoystick() {
         UIView.animate(withDuration: 0.5) {
             self.joystickView.alpha = 0.0
@@ -210,7 +216,6 @@ class VirtualJoystickComponent: GKComponent {
         }
     }
     
-    // Function to show the joystick
     func showJoystick() {
         joystickView.isHidden = false
         UIView.animate(withDuration: 0.5) {
