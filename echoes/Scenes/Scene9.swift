@@ -725,8 +725,8 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
 
         rezaNode.removeAllActions()
 
-        let minimumDistance: Float = 100.0
-        let moveSpeed: Float = 0.1
+        let minimumDistance: Float = 1.0  // Adjust minimum distance for close proximity check
+        let moveSpeed: Float = 0.05       // Reduced speed for Reza
 
         let followPlayerAction = SCNAction.run { [weak self] _ in
             guard let self = self else { return }
@@ -746,11 +746,47 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
                     rezaPosition.y + direction.y,
                     rezaPosition.z + direction.z
                 )
+            } else {
+                // Distance is close to zero, indicating Reza caught up to the player
+                self.showTryAgainPopup()
             }
         }
 
         let repeatFollowAction = SCNAction.repeatForever(SCNAction.sequence([followPlayerAction, SCNAction.wait(duration: 0.1)]))
         rezaNode.runAction(repeatFollowAction)
+    }
+
+    // Function to display a "Try Again" popup
+    private func showTryAgainPopup() {
+        guard let view = scnView else { return }
+
+        DispatchQueue.main.async {
+            let tryAgainLabel = UILabel()
+            tryAgainLabel.text = "Try Again"
+            tryAgainLabel.font = UIFont.systemFont(ofSize: 36, weight: .bold)
+            tryAgainLabel.textColor = .red
+            tryAgainLabel.backgroundColor = UIColor.black.withAlphaComponent(0.7)
+            tryAgainLabel.textAlignment = .center
+            tryAgainLabel.translatesAutoresizingMaskIntoConstraints = false
+            tryAgainLabel.layer.cornerRadius = 10
+            tryAgainLabel.layer.masksToBounds = true
+
+            view.addSubview(tryAgainLabel)
+
+            NSLayoutConstraint.activate([
+                tryAgainLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                tryAgainLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+                tryAgainLabel.widthAnchor.constraint(equalToConstant: 200),
+                tryAgainLabel.heightAnchor.constraint(equalToConstant: 100)
+            ])
+
+            // Fade out the label after showing it
+            UIView.animate(withDuration: 2.0, delay: 1.0, options: [], animations: {
+                tryAgainLabel.alpha = 0
+            }, completion: { _ in
+                tryAgainLabel.removeFromSuperview()
+            })
+        }
     }
     
     private func moveRezaToSequence() {
