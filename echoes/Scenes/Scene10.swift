@@ -18,8 +18,8 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
     private var miniGameCompleted = false
     private var trapDoorEntered = false
     
-    let doorTriggerDistance: Float = 130.0  // Distance within which "Lock" button should appear
-    let trapdoorTriggerDistance: Float = 100.0  // Distance within which "Enter" button for trapdoor should appear
+    let doorTriggerDistance: Float = 135.0  // Distance within which "Lock" button for door room should appear
+    let trapdoorTriggerDistance: Float = 110.0  // Distance within which "Enter" button for trap door should appear
     
     init(lightNode: SCNNode, scnView: SCNView) {
         super.init()
@@ -54,12 +54,12 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         cameraComponent = CameraComponent(cameraNode: cameraNode)
         
         doorNode = rootNode.childNode(withName: "door", recursively: true)
-        trapdoorNode = rootNode.childNode(withName: "trapdoor", recursively: true)
+        trapdoorNode = rootNode.childNode(withName: "trap_door", recursively: true)
         
         rootNode.addChildNode(lightNode)
         
-        // Add collision bodies to furniture
-        setupFurnitureCollision()
+        // Add collision bodies to furniture (-temporarily disabled, causing crash*)
+        // setupFurnitureCollision()
         
         // Set physics contact delegate
         self.physicsWorld.contactDelegate = self
@@ -109,13 +109,15 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
             }
         }
         
-        // Check proximity to trap door
+        // Check proximity to trapdoor and enable glow if within range
         if let trapdoorWorldPosition = trapdoorNode?.worldPosition, !trapDoorEntered {
             let distanceToTrapdoor = playerWorldPosition.distanceTo(trapdoorWorldPosition)
             if distanceToTrapdoor < trapdoorTriggerDistance {
                 showEnterButton()
+                toggleGlowEffect(isEnabled: true)
             } else {
                 hideEnterButton()
+                toggleGlowEffect(isEnabled: false)
             }
         }
     }
@@ -165,6 +167,19 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         button.layer.cornerRadius = 15
     }
     
+    private func toggleGlowEffect(isEnabled: Bool) {
+        guard let trapdoorMaterial = trapdoorNode?.geometry?.firstMaterial else {
+            print("Error: trapdoor material not found")
+            return
+        }
+        
+        if isEnabled {
+            trapdoorMaterial.emission.contents = UIColor.cyan.withAlphaComponent(0.8)
+        } else {
+            trapdoorMaterial.emission.contents = UIColor.black
+        }
+    }
+    
     @objc private func startMiniGame() {
         hideLockButton()
         GameViewController.joystickComponent.joystickView.isHidden = true
@@ -212,9 +227,8 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         hideEnterButton()
         trapDoorEntered = true
         UIView.animate(withDuration: 1.0, animations: {
-            self.scnView?.alpha = 0.0  // Fade to black
+            self.scnView?.alpha = 0.0
         }) { _ in
-            // Transition to Scene11
             SceneManager.shared.loadScene11()
         }
     }
