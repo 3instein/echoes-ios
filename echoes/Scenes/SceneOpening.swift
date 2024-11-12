@@ -124,4 +124,12 @@ class SceneOpening: UIViewController {
         // Call the same function when the video finishes
         videoDidFinishPlaying()
     }
+    
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return .landscape
+    }
+
+    override var shouldAutorotate: Bool {
+        return true
+    }
 }
