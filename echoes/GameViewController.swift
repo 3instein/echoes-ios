@@ -28,10 +28,10 @@ class GameViewController: UIViewController, Scene2Delegate {
         GameViewController.joystickComponent.attachToView(self.view)
         
         // Load the initial game scene
-        SceneManager.shared.loadScene11()
+        SceneManager.shared.loadScene12()
         
         // Set up the PlayerEntity for Scene2
-        if let gameScene = self.scnView.scene as? Scene11 {
+        if let gameScene = self.scnView.scene as? Scene12 {
             GameViewController.playerEntity = gameScene.playerEntity
             // Set delegate to handle Scene2 transition
 //            gameScene.delegate = self
@@ -58,6 +58,12 @@ class GameViewController: UIViewController, Scene2Delegate {
             
             // Start the walking sequence and cutscene in Scene2
 //            gameScene.startWalkingToHouse()
+        }
+        
+        if let gameScene = self.scnView.scene as? Scene12 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 11.0) { [weak self] in
+                gameScene.setupAndStartSlideshow(on: self!.view!)
+            }
         }
         
         // Configure the SCNView
@@ -198,6 +204,11 @@ class GameViewController: UIViewController, Scene2Delegate {
             } else {
                 GameViewController.joystickComponent.joystickView.isHidden = false
             }
+        }
+        
+        // Check proximity to the cake in Scene6
+        if let gameScene = scnView.scene as? Scene12 {
+            GameViewController.joystickComponent.joystickView.isHidden = true
         }
     }
     
