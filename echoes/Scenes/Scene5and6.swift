@@ -135,7 +135,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         dollNode = rootNode.childNode(withName: "doll", recursively: true)
         
         if let doorNode = rootNode.childNode(withName: "doorFamilyRoom", recursively: true) {
-            attachAudio(to: doorNode, audioFileName: "door_close.mp3", volume: 3, delay: 0)
+            attachAudio(to: doorNode, audioFileName: "doorClose.mp3", volume: 3, delay: 0)
         }
         
         if let woodNode = rootNode.childNode(withName: "woodenFloor", recursively: false) {
@@ -695,7 +695,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
             self.isCodeDone = true
             self.doorCloseNode.isHidden = true
             self.doorOpenNode.isHidden = false
-            self.attachAudio(to: self.doorOpenNode, audioFileName: "door_open.mp3", volume: 3, delay: 0)
+            self.attachAudio(to: self.doorOpenNode, audioFileName: "doorOpen.mp3", volume: 3, delay: 0)
         }
     }
     
