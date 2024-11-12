@@ -1,9 +1,4 @@
-//
-//  Scene6.swift
-//  echoes
-//
-//  Created by Pelangi Masita Wati on 21/10/24.
-//
+//  Scene4.swift
 
 import SceneKit
 import UIKit
@@ -11,7 +6,6 @@ import UIKit
 class Scene4: SCNScene, SCNPhysicsContactDelegate {
     var playerEntity: PlayerEntity!
     var cameraComponent: CameraComponent!
-    var joystickComponent: VirtualJoystickComponent!
     var cameraNode: SCNNode!
     var lightNode: SCNNode!
     var combinedPieces: [UIView: [UIView]] = [:]  // Dictionary that tracks combined pieces
@@ -23,17 +17,16 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
     var isGameCompleted: Bool = false  // Track if the game is completed
     let snapDistance: CGFloat = 50.0
     
-    let transitionTriggerPosition = SCNVector3(28, 62, 65)
-    let triggerDistance: Float = 100.0
+    let transitionTriggerPosition = SCNVector3(-377.69, -463, -1.377)
+    let triggerDistance: Float = 80.0
     
     init(lightNode: SCNNode) {
-        GameViewController.joystickComponent.showJoystick()
         super.init()
         self.lightNode = lightNode
         scnView?.pointOfView = cameraNode
         
         // Load the house scene from the Scenes folder
-        guard let houseScene = SCNScene(named: "Scene4.scn") else {
+        guard let houseScene = SCNScene(named: "scene4.scn") else {
             print("Warning: House scene 'Scene 4.scn' not found")
             return
         }
@@ -70,6 +63,9 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
         
         rootNode.addChildNode(lightNode)
         
+        // Create and add blue fire animation node
+        addBlueFireAnimationNode()
+        
         if let woodNode = rootNode.childNode(withName: "woodenFloor", recursively: false) {
             attachAudio(to: woodNode, audioFileName: "woodenFloor.wav", volume: 0.7, delay: 0)
         }
@@ -84,22 +80,19 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
         
         if let andraParentNode = rootNode.childNode(withName: "player", recursively: true) {
             if let andraNode = andraParentNode.childNode(withName: "s4-andra", recursively: false) {
-                attachAudio(to: andraNode, audioFileName: "s4-andra.wav", volume: 300, delay: 23)
+                attachAudio(to: andraNode, audioFileName: "s4-andra.wav", volume: 300, delay: 30)
             }
         }
         
         if let grandmaParentNode = rootNode.childNode(withName: "grandma", recursively: true) {
             if let grandmaNode1 = grandmaParentNode.childNode(withName: "s4-grandma1", recursively: false) {
-                attachAudio(to: grandmaNode1, audioFileName: "s4-grandma1.wav", volume: 3, delay: 3)
+                attachAudio(to: grandmaNode1, audioFileName: "s4-grandma1.wav", volume: 2, delay: 10)
             }
             
             if let grandmaNode2 = grandmaParentNode.childNode(withName: "s4-grandma2", recursively: false) {
-                attachAudio(to: grandmaNode2, audioFileName: "s4-grandma2.wav", volume: 200, delay: 14)
+                attachAudio(to: grandmaNode2, audioFileName: "s4-grandma2.wav", volume: 1000, delay: 22)
             }
         }
-        
-        // Create and add blue fire animation node
-        addBlueFireAnimationNode()
         
         self.physicsWorld.contactDelegate = self
     }
@@ -122,11 +115,11 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
     }
 
     // Check if the player is close to the transition trigger point
-     func checkProximityToTransition() -> Bool {
-         guard let playerPosition = playerEntity.playerNode?.position else { return false }
-         let distance = playerPosition.distance(to: transitionTriggerPosition)
-         return distance < triggerDistance
-     }
+    func checkProximityToTransition() -> Bool {
+        guard let playerPosition = playerEntity.playerNode?.position else { return false }
+        let distance = playerPosition.distance(to: transitionTriggerPosition)
+        return distance < triggerDistance
+    }
     
     func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
         guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
@@ -134,15 +127,10 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
             return
         }
         
-        if (audioFileName == "s4-andra.wav"){
-            audioSource.isPositional = false
-        } else {
-            audioSource.isPositional = true
-        }
-        
         audioSource.shouldStream = false
         audioSource.load()
         audioSource.volume = volume
+        audioSource.isPositional = true
         
         // Set looping for continuous rain sound
         if audioFileName == "muffledRain.wav" {
