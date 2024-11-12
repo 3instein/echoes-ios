@@ -168,36 +168,36 @@ class GameViewController: UIViewController, Scene2Delegate {
         }
         
         if let gameScene = scnView.scene as? Scene5and6 {
-//            if gameScene.checkProximityToTransition() {
-//                if let doorNode = gameScene.rootNode.childNode(withName: "doorKiranaBedroom", recursively: true) {
-//                    attachAudio(to: doorNode, audioFileName: "door_open.mp3", volume: 3, delay: 0)
-//                }
-//                // Load Scene6 after the movement finishes
-//                SceneManager.shared.loadScene7()
-//                
-//                if let gameScene = self.scnView.scene as? Scene7 {
-//                    GameViewController.playerEntity = gameScene.playerEntity
-//                    
-//                    
-//                    // Create a movement component to handle player movement, including the light node
-//                    let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
-//                    GameViewController.playerEntity.movementComponent = movementComponent
-//                    
-//                    // Link the joystick with the movement component
-//                    if let movementComponent = gameScene.playerEntity.movementComponent {
-//                        movementComponent.joystickComponent = GameViewController.joystickComponent
-//                        self.scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
-//                    }
-//                    
-//                    // Set up fog properties for the scene
-//                    gameScene.fogStartDistance = 25.0   // Increase the start distance
-//                    gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
-//                    gameScene.fogDensityExponent = 0.5  // Reduce density to make the fog less thick
-//                    gameScene.fogColor = UIColor.black
-//                    
-//                    gameScene.setupGestureRecognizers(for: self.scnView)
-//                }
-//            }
+            if gameScene.checkProximityToTransition() {
+                if let doorNode = gameScene.rootNode.childNode(withName: "doorKiranaBedroom", recursively: true) {
+                    attachAudio(to: doorNode, audioFileName: "door_open.mp3", volume: 3, delay: 0)
+                }
+                // Load Scene6 after the movement finishes
+                SceneManager.shared.loadScene7()
+                
+                if let gameScene = self.scnView.scene as? Scene7 {
+                    GameViewController.playerEntity = gameScene.playerEntity
+                    
+                    
+                    // Create a movement component to handle player movement, including the light node
+                    let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
+                    GameViewController.playerEntity.movementComponent = movementComponent
+                    
+                    // Link the joystick with the movement component
+                    if let movementComponent = gameScene.playerEntity.movementComponent {
+                        movementComponent.joystickComponent = GameViewController.joystickComponent
+                        self.scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
+                    }
+                    
+                    // Set up fog properties for the scene
+                    gameScene.fogStartDistance = 25.0   // Increase the start distance
+                    gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
+                    gameScene.fogDensityExponent = 0.5  // Reduce density to make the fog less thick
+                    gameScene.fogColor = UIColor.black
+                    
+                    gameScene.setupGestureRecognizers(for: self.scnView)
+                }
+            }
             
             // Load and apply the SCNTechnique for the glow effect
             if let path = Bundle.main.path(forResource: "NodeTechnique", ofType: "plist"),
@@ -311,36 +311,36 @@ class GameViewController: UIViewController, Scene2Delegate {
         // SCENE 7
                 if let gameScene = scnView.scene as? Scene7 {
                     
-//                    if gameScene.checkProximityToTransition() {
-//                        if let doorNode = gameScene.rootNode.childNode(withName: "doorToilet", recursively: true) {
-//                            attachAudio(to: doorNode, audioFileName: "door_open.mp3", volume: 3, delay: 0)
-//                        }
-//                        // Load Scene6 after the movement finishes
-//                        SceneManager.shared.loadScene8()
-//                        
-//                        if let gameScene = self.scnView.scene as? Scene8 {
-//                            GameViewController.playerEntity = gameScene.playerEntity
-//                            
-//                            
-//                            // Create a movement component to handle player movement, including the light node
-//                            let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
-//                            GameViewController.playerEntity.movementComponent = movementComponent
-//                            
-//                            // Link the joystick with the movement component
-//                            if let movementComponent = gameScene.playerEntity.movementComponent {
-//                                movementComponent.joystickComponent = GameViewController.joystickComponent
-//                                self.scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
-//                            }
-//                            
-//                            // Set up fog properties for the scene
-//                            gameScene.fogStartDistance = 25.0   // Increase the start distance
-//                            gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
-//                            gameScene.fogDensityExponent = 0.5  // Reduce density to make the fog less thick
-//                            gameScene.fogColor = UIColor.black
-//                            
-//                            gameScene.setupGestureRecognizers(for: self.scnView)
-//                        }
-//                    }
+                    if gameScene.checkProximityToTransition() {
+                        if let doorNode = gameScene.rootNode.childNode(withName: "doorToilet", recursively: true) {
+                            attachAudio(to: doorNode, audioFileName: "door_open.mp3", volume: 3, delay: 0)
+                        }
+                        // Load Scene6 after the movement finishes
+                        SceneManager.shared.loadScene8()
+                        
+                        if let gameScene = self.scnView.scene as? Scene8 {
+                            GameViewController.playerEntity = gameScene.playerEntity
+                            
+                            
+                            // Create a movement component to handle player movement, including the light node
+                            let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
+                            GameViewController.playerEntity.movementComponent = movementComponent
+                            
+                            // Link the joystick with the movement component
+                            if let movementComponent = gameScene.playerEntity.movementComponent {
+                                movementComponent.joystickComponent = GameViewController.joystickComponent
+                                self.scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
+                            }
+                            
+                            // Set up fog properties for the scene
+                            gameScene.fogStartDistance = 25.0   // Increase the start distance
+                            gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
+                            gameScene.fogDensityExponent = 0.5  // Reduce density to make the fog less thick
+                            gameScene.fogColor = UIColor.black
+                            
+                            gameScene.setupGestureRecognizers(for: self.scnView)
+                        }
+                    }
                     
                     if let musicBoxNode = gameScene.rootNode.childNode(withName: "musicBox", recursively: true) {
                         musicBoxNode.categoryBitMask = 2
