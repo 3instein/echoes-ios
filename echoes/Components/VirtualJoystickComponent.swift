@@ -16,6 +16,7 @@ extension UIColor {
 }
 
 class VirtualJoystickComponent: GKComponent {
+    var isEnabled: Bool = true
     static var shared = VirtualJoystickComponent()
     var joystickView: UIView!
     var joystickKnob: UIView!
@@ -53,6 +54,8 @@ class VirtualJoystickComponent: GKComponent {
     }
 
     @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
+        guard isEnabled else { return }
+        
         let location = gesture.location(in: joystickView)
         let offset = CGPoint(x: location.x - joystickView.bounds.midX, y: location.y - joystickView.bounds.midY)
         let distance = sqrt(offset.x * offset.x + offset.y * offset.y)
