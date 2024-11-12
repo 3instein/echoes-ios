@@ -237,9 +237,9 @@ class GameViewController: UIViewController, Scene2Delegate {
             }
         }
         
-        // Check proximity to door in Scene10
+        // Check proximity in Scene10
         if let gameScene = scnView.scene as? Scene10 {
-            gameScene.checkProximityToDoor()
+            gameScene.checkProximity()
         }
     }
     
