@@ -282,7 +282,7 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         UIView.animate(withDuration: 1.0, animations: {
             self.scnView?.alpha = 0.0
         }) { _ in
-            SceneManager.shared.loadScene11()
+//            SceneManager.shared.loadScene11()
         }
     }
     
