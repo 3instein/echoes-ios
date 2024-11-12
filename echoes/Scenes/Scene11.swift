@@ -16,10 +16,22 @@ class Scene11: SCNScene, SCNPhysicsContactDelegate {
     
     weak var scnView: SCNView?
     
+    var isDeathPicked: Bool = false
+    
+    var isGrandmaPicked = false
+    var isAyuPicked = false
+    var isRezaPicked = false
+    
+    var isRacunPicked = false
+    
+    var purpleOverlay: UIView?
+    var deathImagesOverlay: UIView?
+    
     init(lightNode: SCNNode) {
         super.init()
         self.lightNode = lightNode
         scnView?.pointOfView = cameraNode
+        GameViewController.joystickComponent.joystickView.isHidden = true
         
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "scene11.scn") else {
@@ -141,7 +153,7 @@ class Scene11: SCNScene, SCNPhysicsContactDelegate {
     
     func playContinuousThunderEffect() {
         let thunderLightNodes = ["thunderLightA", "thunderLightB", "thunderLightC", "thunderLightD"]
-
+        
         for lightName in thunderLightNodes {
             
             guard let thunderLightNode = rootNode.childNode(withName: lightName, recursively: true) else {
@@ -165,7 +177,7 @@ class Scene11: SCNScene, SCNPhysicsContactDelegate {
             // Significantly slower flash sequence for enhanced realism
             let flashDuration = SCNAction.wait(duration: 2.0)  // Prolonged flash duration
             let delayBetweenFlashes = SCNAction.wait(duration: 3.5)  // Longer delay between flashes
-
+            
             // Thunder sequence with one or two slow flashes for dramatic effect
             let thunderSequence = SCNAction.sequence([
                 flashOnAction,
@@ -201,7 +213,265 @@ class Scene11: SCNScene, SCNPhysicsContactDelegate {
             thunderLightNode.runAction(SCNAction.sequence([SCNAction.wait(duration: initialDelay), continuousThunderLoop]))
         }
     }
+    
+    private func applyCustomFont(to label: UILabel, fontSize: CGFloat) {
+        if let customFont = UIFont(name: "SpecialElite-Regular", size: fontSize) {
+            label.font = customFont
+        } else {
+            print("Failed to load SpecialElite-Regular font.")
+        }
+    }
+    
+    func showPurpleBackgroundOverlay(in view: UIView) {
+        guard let purpleImage = UIImage(named: "Purple_Background") else {
+            print("Error: Image 'Purple_Background' not found.")
+            return
+        }
+        
+        let overlayView = UIView(frame: view.bounds)
+        overlayView.tag = 999 // Unique tag to find and remove this overlay later
+        overlayView.backgroundColor = UIColor(patternImage: purpleImage)
+        overlayView.alpha = 0
+        view.addSubview(overlayView)
+        
+        UIView.animate(withDuration: 0.3) {
+            overlayView.alpha = 1
+        }
+        
+        // Create and add the "Siapa Pembunuhnya" label at the top
+        let titleLabel = UILabel()
+        titleLabel.text = "Siapa Pembunuhnya"
+        titleLabel.textColor = .white
+        titleLabel.textAlignment = .center
+        titleLabel.frame = CGRect(x: 0, y: 30, width: view.bounds.width, height: 30) // Positioned at the top of the screen
+        applyCustomFont(to: titleLabel, fontSize: 24) // Apply custom font
+        overlayView.addSubview(titleLabel)
+        
+        let characterImages = ["Character_Reza", "Character_Ayu", "Character_Grandma"]
+        let greenCharacterImages = ["Character_Reza_Green", "Character_Ayu_Green", "Character_Grandma_Green"]
+        let characterNames = ["Reza", "Ayu", "Grandma"]
+        
+        // Increased the size and spacing for the images
+        let profileImageSize: CGFloat = 175.0 // Bigger image size
+        let spacing: CGFloat = 30.0 // Increased spacing between the images
+        
+        // Adjust the vertical position to be centered below the title
+        let totalHeight = profileImageSize + 25 + 20 // Profile image height + label height + spacing
+        let centerY = (view.bounds.height - totalHeight) / 2 + 20 // Added some space below the title
+        
+        for (index, characterImageName) in characterImages.enumerated() {
+            guard let characterImage = UIImage(named: characterImageName) else {
+                print("Error: Image '\(characterImageName)' not found.")
+                continue
+            }
+            
+            let profileImageView = UIImageView(image: characterImage)
+            
+            // Adjust the xPosition to make room for the larger images and more spacing
+            let xPosition = CGFloat(index) * (profileImageSize + spacing) + (view.bounds.width - (CGFloat(characterImages.count) * (profileImageSize + spacing) - spacing)) / 2
+            profileImageView.frame = CGRect(x: xPosition, y: centerY, width: profileImageSize, height: profileImageSize) // Keep images centered
+            profileImageView.contentMode = .scaleAspectFill
+            profileImageView.isUserInteractionEnabled = true
+            profileImageView.tag = index
+            profileImageView.accessibilityIdentifier = greenCharacterImages[index]
+            
+            overlayView.addSubview(profileImageView)
+            
+            let label = UILabel()
+            label.text = characterNames[index]
+            label.textColor = .white
+            label.textAlignment = .center
+            label.frame = CGRect(x: xPosition, y: profileImageView.frame.maxY + 25, width: profileImageSize, height: 20) // Adjusted position for text
+            applyCustomFont(to: label, fontSize: 16) // Apply custom font
+            overlayView.addSubview(label)
+            
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleCharacterTap(_:)))
+            profileImageView.addGestureRecognizer(tapGesture)
+        }
+    }
+    
+    
+    var isTappedOnce = false // Flag to track if any image has been tapped
+    
+    @objc func handleCharacterTap(_ sender: UITapGestureRecognizer) {
+        guard let tappedImageView = sender.view as? UIImageView,
+              let superview = tappedImageView.superview else { return }
+        
+        // Prevent further taps if one image has already been tapped
+        if isTappedOnce {
+            return
+        }
+        
+        // Get the green image name from the accessibilityIdentifier
+        if let greenImageName = tappedImageView.accessibilityIdentifier,
+           let greenImage = UIImage(named: greenImageName) {
+            // Replace the tapped image with the green version
+            tappedImageView.image = greenImage
+        }
+        
+        // Check if the player tapped on the "Character_Grandma" image
+        if let tappedCharacterName = tappedImageView.accessibilityIdentifier, tappedCharacterName == "Character_Grandma_Green" {
+            print("Correct") // Print "Correct" if the player tapped Grandma            
+            GameViewController.isGrandmaPicked = true
+        }
+        
+        // Check if the player tapped on the "Character_Ayu" image
+        if let tappedCharacterName = tappedImageView.accessibilityIdentifier, tappedCharacterName == "Character_Ayu_Green" {
+            print("Ayu") // Print "Correct" if the player tapped Ayu
+            
+            GameViewController.isAyuPicked = true
+        }
+        
+        if let tappedCharacterName = tappedImageView.accessibilityIdentifier, tappedCharacterName == "Character_Reza_Green" {
+            print("Reza") // Print "Correct" if the player tapped Ayu
+            
+            GameViewController.isRezaPicked = true
+        }
+        
+        // Set the flag to true to prevent further taps
+        isTappedOnce = true
+        
+        // Disable user interaction on all other images
+        for subview in superview.subviews {
+            if let imageView = subview as? UIImageView {
+                imageView.isUserInteractionEnabled = false
+            }
+        }
+        
+        // After 2 seconds, close the Purple Overlay and show Death Images Overlay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            // Remove the Purple Background and character images
+            self.clearSubviews(in: superview)
+            
+            // Show the Death Images Overlay
+            self.replaceWithDeathImages(in: superview)
+        }
+    }
+    
+    
+    // Helper function to clear specific subviews
+    func clearSubviews(in view: UIView) {
+        for subview in view.subviews {
+            if subview is UIImageView || subview is UILabel {
+                subview.removeFromSuperview()
+            }
+        }
+    }
+    
+    func replaceWithDeathImages(in view: UIView?) {
+        let deathImages = ["Death_Pukul", "Death_Racun", "Death_Jantung"]
+        let deathNames = ["Pukul", "Racun", "Serangan Jantung"]
+        let greenDeathImages = ["Death_Pukul_Green", "Death_Racun_Green", "Death_Jantung_Green"]
+        
+        guard let mainView = view else { return }
 
+        let profileImageSize: CGFloat = 100.0 // Adjusted size to match the other example
+        let spacing: CGFloat = 60.0 // Increased spacing to match the other layout
+
+        // Create and add the "Penyebab Kematian Kirana" label at the top
+        let titleLabel = UILabel()
+        titleLabel.text = "Penyebab Kematian Kirana"
+        titleLabel.textColor = .white
+        titleLabel.textAlignment = .center
+        titleLabel.font = UIFont.systemFont(ofSize: 20)
+        titleLabel.frame = CGRect(x: 0, y: 30, width: mainView.bounds.width, height: 30) // Positioned at the top of the screen
+        
+        // Apply custom font to the title label
+            applyCustomFont(to: titleLabel, fontSize: 20)
+        mainView.addSubview(titleLabel)
+
+        // Adjust the vertical position to be centered below the title
+        let totalHeight = profileImageSize + 25 + 20 // Profile image height + label height + spacing
+        let centerY = (mainView.bounds.height - totalHeight) / 2 + 20 // Added space below the title
+
+        for (index, deathImageName) in deathImages.enumerated() {
+            guard let deathImage = UIImage(named: deathImageName) else {
+                print("Error: Image '\(deathImageName)' not found.")
+                continue
+            }
+
+            let deathImageView = UIImageView(image: deathImage)
+            
+            // Adjust the xPosition to make sure images are centered
+            let xPosition = CGFloat(index) * (profileImageSize + spacing) + (mainView.bounds.width - (CGFloat(deathImages.count) * (profileImageSize + spacing) - spacing)) / 2
+            deathImageView.frame = CGRect(x: xPosition, y: centerY, width: profileImageSize, height: profileImageSize)
+            
+            // Ensuring that all images scale to fill their frame
+            deathImageView.contentMode = .scaleAspectFill // This ensures all images are resized and cropped to fill the given size
+
+            deathImageView.isUserInteractionEnabled = true
+            deathImageView.tag = index
+            deathImageView.accessibilityIdentifier = greenDeathImages[index]
+
+            mainView.addSubview(deathImageView)
+
+            // Adjust label for longer text
+            let label = UILabel()
+            label.text = deathNames[index]
+            label.textColor = .white
+            label.textAlignment = .center
+            label.numberOfLines = 0 // Allow text to wrap to the next line
+            label.lineBreakMode = .byWordWrapping // Wrap text by word if necessary
+            label.frame = CGRect(x: xPosition, y: deathImageView.frame.maxY + 78, width: profileImageSize, height: 40) // Adjusted height to fit multiple lines
+            mainView.addSubview(label)
+
+            // Apply custom font to the label
+            applyCustomFont(to: label, fontSize: 16)
+
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleDeathImageTap(_:)))
+            deathImageView.addGestureRecognizer(tapGesture)
+        }
+    }
+
+
+    var hasTappedOnce = false // Variable to track if a tap has occurred
+
+    @objc func handleDeathImageTap(_ sender: UITapGestureRecognizer) {
+        guard let tappedImageView = sender.view as? UIImageView else { return }
+        
+        // If we've already tapped once, return early and do nothing
+        if hasTappedOnce {
+            return
+        }
+
+        // Mark that a tap has been made
+        hasTappedOnce = true
+
+        // Disable user interaction on all death images after one tap
+        for subview in tappedImageView.superview?.subviews ?? [] {
+            if let imageView = subview as? UIImageView {
+                imageView.isUserInteractionEnabled = false
+            }
+        }
+        
+        // Handle the specific tapped image logic (example for "Death_Racun_Green")
+        if let tappedDeathImageName = tappedImageView.accessibilityIdentifier, tappedDeathImageName == "Death_Racun_Green" {
+            print("Correct") // Print "Correct" if the player tapped Death_Racun
+            
+            GameViewController.isCauseCorrect = true
+        }
+        
+        // Change the image to its green version (if it has one)
+        if let greenImageName = tappedImageView.accessibilityIdentifier,
+           let greenImage = UIImage(named: greenImageName) {
+            tappedImageView.image = greenImage
+        }
+
+        // After 2 seconds, fade out the superview and then remove it
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            guard let superview = tappedImageView.superview else { return }
+            
+            // Animate fade-out transition
+            UIView.animate(withDuration: 0.5, animations: {
+                superview.alpha = 0 // Fade out the entire superview
+            }, completion: { _ in
+                superview.removeFromSuperview() // Remove the superview after fading out
+                self.isDeathPicked = true
+                
+            })
+        }
+    }
+    
     // Helper function to play a random thunder sound
     func playRandomThunderSound() {
         let thunderSoundFiles = ["thunder1.wav", "thunder2.wav", "thunder3.wav", "thunder4.wav", "thunder5.wav"]

@@ -25,18 +25,16 @@ class Scene12: SCNScene, SCNPhysicsContactDelegate {
     var slideshowTimer: Timer?
 
     weak var scnView: SCNView?
-    
-    var answerCorrect: Bool = false
-    var previousPlayerChoice: String? = "Ayu" // This can be "Ayu" or "Reza"
 
-    let transitionTriggerPosition = SCNVector3(34.188, 503, 103.106)
-    let triggerDistance: Float = 80.0
+    var durationSalah = 0.0
+    var isFinished: Bool = false
     
     init(lightNode: SCNNode) {
         super.init()
         self.lightNode = lightNode
         scnView?.pointOfView = cameraNode
-        
+        GameViewController.joystickComponent.joystickView.isHidden = true
+
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "scene12.scn") else {
             print("Warning: House scene 'Scene12.scn' not found")
@@ -84,9 +82,9 @@ class Scene12: SCNScene, SCNPhysicsContactDelegate {
         grandmalastNode = rootNode.childNode(withName: "grandmaLast", recursively: true)
         treeNode = rootNode.childNode(withName: "tree", recursively: true)
 
-        if answerCorrect {
+        if GameViewController.isGrandmaPicked && GameViewController.isCauseCorrect {
             // Play the correct answer sound
-            attachAudio(to: rootNode, audioFileName: "s12-benar.mp3", volume: 3.0, delay: 5.0)
+            attachAudio(to: rootNode, audioFileName: "s12-benar.mp3", volume: 1.0, delay: 5.0)
                         
             // Stop swaying after the audio completes (34 seconds in this case)
             DispatchQueue.main.asyncAfter(deadline: .now() + 40.0) { [weak self] in
@@ -99,23 +97,25 @@ class Scene12: SCNScene, SCNPhysicsContactDelegate {
                 self?.showKiller()
             }
         } else {
-            // Play the wrong answer sound
             // Determine which "salah" audio to play based on the previous player's choice
             var wrongAnswerAudioFile = "s12-salah.mp3" // Default audio
 
-            if let choice = previousPlayerChoice {
-                if choice == "Ayu" {
-                    wrongAnswerAudioFile = "s12-salahAyu.mp3"
-                } else if choice == "Reza" {
-                    wrongAnswerAudioFile = "s12-salahReza.mp3"
-                }
+            if GameViewController.isAyuPicked {
+                wrongAnswerAudioFile = "s12-salahAyu.mp3"
+            } else if GameViewController.isRezaPicked {
+                wrongAnswerAudioFile = "s12-salahReza.mp3"
             }
-
+            
             // Play the appropriate wrong answer sound
-            attachAudio(to: rootNode, audioFileName: wrongAnswerAudioFile, volume: 3.0, delay: 5.0)
+            attachAudio(to: rootNode, audioFileName: wrongAnswerAudioFile, volume: 1.0, delay: 5.0)
 
+            if GameViewController.isGrandmaPicked {
+                durationSalah = 3.0
+            } else {
+                durationSalah = 25.0
+            }
             // Stop swaying after the audio completes (20 seconds in this case)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 25.0) { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + durationSalah) { [weak self] in
                 self?.slideBenar?.removeFromSuperview()
                 self?.slideshowTimer?.invalidate()
                 self?.slideshowImages.forEach { $0.isHidden = true }
@@ -135,17 +135,15 @@ class Scene12: SCNScene, SCNPhysicsContactDelegate {
         var maxIndex = 4
         var transitionTime = 0.0
         
-        if answerCorrect {
+        if GameViewController.isGrandmaPicked && GameViewController.isCauseCorrect {
             imageNames = ["benar-1.jpeg", "benar-2.jpeg", "benar-3.jpeg", "benar-4.jpeg"]
             maxIndex = 4
             transitionTime = 5.2
         } else {
-            if let choice = previousPlayerChoice {
-                if choice == "Ayu" {
-                    imageNames = ["salahAyu-1.jpeg", "salahAyu-2.jpeg", "salahAyu-3.jpeg"]
-                } else {
-                    imageNames = ["salahReza-1.jpeg", "salahReza-2.jpeg", "salahReza-3.jpeg"]
-                }
+            if GameViewController.isAyuPicked {
+                imageNames = ["salahAyu-1.jpeg", "salahAyu-2.jpeg", "salahAyu-3.jpeg"]
+            } else if GameViewController.isRezaPicked {
+                imageNames = ["salahReza-1.jpeg", "salahReza-2.jpeg", "salahReza-3.jpeg"]
             }
             maxIndex = 3
             transitionTime = 3.0
@@ -184,6 +182,10 @@ class Scene12: SCNScene, SCNPhysicsContactDelegate {
         
         // Set the initial image to be shown
         slideshowImages[currentIndex].isHidden = false
+        slideshowImages[currentIndex].alpha = 0
+        UIView.animate(withDuration: 0.7) {
+            slideshowImages[currentIndex].alpha = 1
+        }
         
         // Start the slideshow with a timer
         slideshowTimer = Timer.scheduledTimer(withTimeInterval: transitionTime, repeats: true) { [weak self] timer in
@@ -225,7 +227,7 @@ class Scene12: SCNScene, SCNPhysicsContactDelegate {
     }
 
     func showKiller() {
-        if ((self.answerCorrect) == true) {
+        if GameViewController.isGrandmaPicked && GameViewController.isCauseCorrect {
             SCNTransaction.begin()
             SCNTransaction.animationDuration = 3.0
             self.cameraNode.look(at: self.grandmalastNode.position)
@@ -234,7 +236,11 @@ class Scene12: SCNScene, SCNPhysicsContactDelegate {
             self.attachAudio(to: self.grandmalastNode!, audioFileName: "jumpscare3.wav", volume: 40.0, delay: 0)
             
             GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-637.748, -2378.121, 10), duration: 7.0) {
-                self.attachAudio(to: self.grandmalastNode, audioFileName: "s12-grandmaLaugh.wav", volume: 0.4, delay: 0.0)
+                self.attachAudio(to: self.grandmalastNode, audioFileName: "s12-grandmaLaugh.wav", volume: 0.2, delay: 0.0)
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) { [weak self] in
+                    self!.isFinished = true
+                }
             }
         } else {
             // Move policeCars node to the back when the answer is incorrect
@@ -266,6 +272,10 @@ class Scene12: SCNScene, SCNPhysicsContactDelegate {
             
             // Execute the actions
             policeCarsNode.runAction(sequence)
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+                self?.isFinished = true
+            }
         }
     }
     
@@ -353,7 +363,23 @@ class Scene12: SCNScene, SCNPhysicsContactDelegate {
         // Run the audio action on the scene’s root node
         rootNode.runAction(playAudioAction)
     }
-        
+    
+    func fadeScreenToBlack(on view: UIView) {
+        DispatchQueue.main.async {
+            let blackOverlay = UIView(frame: view.bounds)
+            blackOverlay.backgroundColor = .black
+            blackOverlay.alpha = 0
+            view.addSubview(blackOverlay)
+            
+            UIView.animate(withDuration: 2.0, animations: {
+                blackOverlay.alpha = 1.0
+            }, completion: { _ in
+                blackOverlay.removeFromSuperview()
+                print("Fade to black complete")
+            })
+        }
+    }
+    
     func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
         guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
             print("Warning: Audio file '\(audioFileName)' not found")
@@ -390,18 +416,6 @@ class Scene12: SCNScene, SCNPhysicsContactDelegate {
         } else {
             print("Failed to load SpecialElite-Regular font.")
         }
-    }
-    
-    // Check if the player is close to the transition trigger point
-    func checkProximityToTransition() -> Bool {
-        guard let playerNode = playerEntity.playerNode else { return false }
-        
-        // Calculate the distance to the transition trigger
-        let distance = playerNode.position.distance(to: transitionTriggerPosition)
-        print("player position:", playerNode.position)
-        print("distance to trigger:", distance)
-        
-        return distance < triggerDistance
     }
     
     func setupGestureRecognizers(for view: UIView) {
