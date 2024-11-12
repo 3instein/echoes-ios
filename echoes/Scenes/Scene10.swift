@@ -10,12 +10,14 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
     var cameraNode: SCNNode!
     var doorNode: SCNNode!
     var trapdoorNode: SCNNode!
+    var knockDoorNode: SCNNode!
     var lockButton: UIButton?
     var enterButton: UIButton?
     weak var scnView: SCNView?
     private var keyImageView: UIImageView!
     private var doorImageView: UIImageView!
     private var miniGameCompleted = false
+    private var isMiniGameActive = false
     private var trapDoorEntered = false
     
     let doorTriggerDistance: Float = 135.0  // Distance within which "Lock" button for door room should appear
@@ -55,6 +57,7 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         
         doorNode = rootNode.childNode(withName: "door", recursively: true)
         trapdoorNode = rootNode.childNode(withName: "trap_door", recursively: true)
+        knockDoorNode = rootNode.childNode(withName: "knock_door", recursively: true)
         
         rootNode.addChildNode(lightNode)
         
@@ -100,7 +103,7 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         }
         
         // Check proximity to door for locking mini-game
-        if let doorWorldPosition = doorNode?.worldPosition {
+        if let doorWorldPosition = doorNode?.worldPosition, !isMiniGameActive {
             let distanceToDoor = playerWorldPosition.distanceTo(doorWorldPosition)
             if distanceToDoor < doorTriggerDistance && !miniGameCompleted {
                 showLockButton()
@@ -187,7 +190,13 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
     }
     
     private func setupMiniGameUI() {
-        // Door-locking mini-game setup
+        // Start the mini-game
+        isMiniGameActive = true
+        
+        // Hide the lock button immediately
+        hideLockButton()
+        
+        // Set up the mini-game UI as before
         doorImageView = UIImageView(image: UIImage(named: "door.jpg"))
         doorImageView.frame = CGRect(x: scnView!.bounds.midX - 85, y: scnView!.bounds.midY - 200, width: 180, height: 380)
         scnView?.addSubview(doorImageView)
@@ -218,9 +227,33 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
             keyImageView.removeFromSuperview()
             doorImageView.removeFromSuperview()
             miniGameCompleted = true
+            isMiniGameActive = false
+            
             GameViewController.joystickComponent.joystickView.isHidden = false
+            playDoorKnockSound()
             print("Door successfully locked")
         }
+    }
+    
+    private func playDoorKnockSound() {
+        guard let knockDoorNode = knockDoorNode else {
+            print("Error: Knock door node not found in the scene")
+            return
+        }
+        
+        guard let knockSound = SCNAudioSource(fileNamed: "doorKnockHard.wav") else {
+            print("Error: Knock sound file 'doorKnockHard.wav' not found in the project bundle")
+            return
+        }
+        
+        knockSound.shouldStream = false
+        knockSound.isPositional = false
+        knockSound.loops = true
+        knockSound.volume = 1.0
+        knockSound.load()
+        
+        let playKnockSound = SCNAction.playAudio(knockSound, waitForCompletion: false)
+        knockDoorNode.runAction(playKnockSound)
     }
     
     @objc private func enterTrapdoor() {
