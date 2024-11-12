@@ -25,12 +25,10 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     private var lightDecreaseDuration: TimeInterval = 0.3  // Reduced duration for decreasing intensity
     private var lightTimer: Timer?
     private var lightTimerDelay: TimeInterval = 1.0  // Reduced delay before light starts dimming
-
     // Sound properties
     var echoAudioPlayer: AVAudioPlayer?
     private var lastStepTime: Date?
     private let stepDelay: TimeInterval = 2.0  // Minimum delay between steps
-
     var stepAudioPlayer: AVAudioPlayer?
     var toiletStepAudioPlayer: AVAudioPlayer?
 
@@ -52,15 +50,14 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
         self.cameraNode = cameraNode
         self.lightNode = lightNode
         self.originalLightIntensity = lightNode?.light?.intensity ?? 75  // Set original intensity
-
         super.init()
         loadStepSound(resource: currentStepResource)
     }
-
+    
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
     override func update(deltaTime seconds: TimeInterval) {
         if !movingProgramatically {
             guard let joystick = joystickComponent, joystick.isTouching, let cameraNode = cameraNode else {
@@ -116,13 +113,11 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
                 stopStepSound()
                 isWalking = false
             }
-
             if !isLightActive {
                 activateLightPulsing()
             }
         } else if movingProgramatically {
             updateLightPosition()
-
             shakeCamera(duration: 0.1, intensity: 0.02) // Apply shake effect
             let currentTime = Date()
             if lastStepTime == nil || currentTime.timeIntervalSince(lastStepTime!) >= stepDelay {
@@ -157,23 +152,23 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
         lightNode.position = SCNVector3(
             playerNode.position.x, playerNode.position.y + 5, playerNode.position.z)  // Adjust height as necessary
     }
-
+    
     func activateLightPulsing() {
         guard let lightNode = lightNode else { return }
-
+        
         isLightActive = true
-
+        
         // Increase light intensity smoothly
-        let targetIntensity: CGFloat = originalLightIntensity + 500  // Set the target intensity
+        let targetIntensity: CGFloat = originalLightIntensity + 500
         let increaseAction = SCNAction.customAction(duration: lightIncreaseDuration) {
             node, elapsedTime in
             let percent = elapsedTime / CGFloat(self.lightIncreaseDuration)
-            let newIntensity = self.originalLightIntensity + (500 * percent)  // Change 500 to desired increase amount
+            let newIntensity = self.originalLightIntensity + (500 * percent)
             node.light?.intensity = newIntensity
         }
-
+        
         lightNode.runAction(increaseAction)
-
+        
         // Schedule a timer to decrease intensity after a shorter delay
         lightTimer?.invalidate()  // Invalidate any existing timer
         lightTimer = Timer.scheduledTimer(withTimeInterval: lightTimerDelay, repeats: false) {
@@ -181,10 +176,9 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
             self?.decreaseLightIntensity()
         }
     }
-
+    
     private func decreaseLightIntensity() {
         guard let lightNode = lightNode else { return }
-
         // Decrease light intensity smoothly
         let decreaseAction = SCNAction.customAction(duration: lightDecreaseDuration) {
             node, elapsedTime in
@@ -193,38 +187,37 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
             node.light?.intensity = newIntensity  // Ensure it doesn't go below original
 
         }
-
+        
         lightNode.runAction(decreaseAction) { [weak self] in
             self?.isLightActive = false  // Mark light as inactive after fading out
             lightNode.light?.intensity = self?.originalLightIntensity ?? 0  // Ensure it resets to original
         }
     }
-
+    
     private func shakeCamera(duration: TimeInterval, intensity: Float = 0.02) {
         guard let cameraNode = cameraNode, !isShaking else { return }  // Prevent multiple shakes
         isShaking = true
-
+        
         // Store the original position to reset after shaking
         let originalPosition = cameraNode.position
-
+        
         // Animation action for shake effect with left-right sway
         let shakeAction = SCNAction.customAction(duration: duration) { [weak self] _, elapsedTime in
             guard let self = self else { return }
-
+            
             // Calculate each axis offset separately to reduce complexity
             let oscillationFactor = Float(sin(Double(elapsedTime) * .pi * 2 / duration))
             let randomOffsetX = oscillationFactor * intensity  // Smooth oscillation on X-axis
             let randomOffsetY = Float.random(in: -0.5...0.5) * intensity * 0.2  // Minor Y-axis movement
             let randomOffsetZ = Float.random(in: -0.5...0.5) * intensity * 0.2  // Minor Z-axis movement
-
             // Set each component of position separately
             let newPositionX = originalPosition.x + randomOffsetX
             let newPositionY = originalPosition.y + randomOffsetY
             let newPositionZ = originalPosition.z + randomOffsetZ
-
+            
             // Apply offset to camera position
             cameraNode.position = SCNVector3(newPositionX, newPositionY, newPositionZ)
-
+            
             // Smoothly reset position to original at end of duration
             if elapsedTime >= CGFloat(duration) {
                 cameraNode.position = originalPosition
@@ -249,22 +242,22 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
             print("Sound step file not found")
         }
     }
-
+    
     private func playEchoSound() {
         guard let echoAudioPlayer = echoAudioPlayer else {
             return
         }
-
+        
         if !echoAudioPlayer.isPlaying {
             echoAudioPlayer.play()  // Play the sound
         }
     }
-
+    
     private func playStepSound() {
         guard let stepAudioPlayer = stepAudioPlayer else {
             return
         }
-
+        
         if !stepAudioPlayer.isPlaying {
             stepAudioPlayer.play()  // Start playing the sound
         }
@@ -276,13 +269,11 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
             return
         }
     }
-
+    
     private func addPlayerPhysicsBody() {
         if playerNode.physicsBody == nil {
-            // Ensure the player node has a physics body initialized correctly
-            playerNode.physicsBody = SCNPhysicsBody(
-                type: .dynamic, shape: SCNPhysicsShape(node: playerNode, options: nil))
-
+            playerNode.physicsBody = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(node: playerNode, options: nil))
+            
             guard let playerPhysicsBody = playerNode.physicsBody else {
                 print("Error: Player physics body is nil after initialization")
                 return
@@ -298,12 +289,10 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
             playerPhysicsBody.categoryBitMask = 1  // Define a bitmask for the player
             playerPhysicsBody.collisionBitMask = 2  // Collides with walls/floor
             playerPhysicsBody.contactTestBitMask = 2  // Test for contact with walls
-
             // Now call the method to setup walls physics
             setupWallPhysicsBodies()
         }
     }
-
     private func setupWallPhysicsBodies() {
         // Loop through your walls and apply physics bodies
         for node in playerNode.parent?.childNodes ?? [] {
@@ -316,13 +305,12 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
             }
         }
     }
-
     func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
         print("Player collided with wall or floor")
-
+        
         let nodeA = contact.nodeA
         let nodeB = contact.nodeB
-
+        
         // Check for collision between player and walls/floor
         if (nodeA.physicsBody?.categoryBitMask == 1 && nodeB.physicsBody?.categoryBitMask == 2) ||
            (nodeB.physicsBody?.categoryBitMask == 1 && nodeA.physicsBody?.categoryBitMask == 2) {
