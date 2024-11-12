@@ -59,33 +59,6 @@ class GameViewController: UIViewController, Scene2Delegate {
             gameScene.startWalkingToHouse()
         }
         
-        //SCENE 8
-        if let gameScene = self.scnView.scene as? Scene8 {
-            GameViewController.playerEntity = gameScene.playerEntity
-            
-            // Create a movement component to handle player movement, including the light node
-            let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
-            GameViewController.playerEntity.movementComponent = movementComponent
-            
-            //ADD FOR STEPS TOILET IN SCENE8
-            movementComponent.isToilet = true
-            print("In Scene 8, isToilet is \(movementComponent.isToilet)")
-            
-            // Link the joystick with the movement component
-            if let movementComponent = gameScene.playerEntity.movementComponent {
-                movementComponent.joystickComponent = GameViewController.joystickComponent
-                self.scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
-            }
-            
-            // Set up fog properties for the scene
-            gameScene.fogStartDistance = 25.0   // Increase the start distance
-            gameScene.fogEndDistance = 300.0    // Increase the end distance to make the fog more gradual
-            gameScene.fogDensityExponent = 0.2  // Reduce density to make the fog less thick
-            gameScene.fogColor = UIColor.black
-            
-            gameScene.setupGestureRecognizers(for: self.scnView)
-        }
-        
         // Configure the SCNView
         scnView.allowsCameraControl = false
         //        scnView.showsStatistics = true
@@ -169,7 +142,6 @@ class GameViewController: UIViewController, Scene2Delegate {
                 
                 if let gameScene = self.scnView.scene as? Scene5and6 {
                     GameViewController.playerEntity = gameScene.playerEntity
-                    
                     
                     // Create a movement component to handle player movement, including the light node
                     let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
