@@ -10,7 +10,12 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     var joystickComponent: VirtualJoystickComponent?
     var cameraNode: SCNNode?
     var movingProgramatically: Bool = false
-    private var isShaking: Bool = false
+    private var isShaking: Bool = false // Track shake state
+
+    private var lastSafePosition: SCNVector3?
+
+    var velocity: CGPoint = .zero
+    var collisionDetected: Bool = false
     
     // Light node reference
     var lightNode: SCNNode?
@@ -27,10 +32,20 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     private let stepDelay: TimeInterval = 2.0  // Minimum delay between steps
     
     var stepAudioPlayer: AVAudioPlayer?
-    private let minStepDelay: TimeInterval = 0.2  // Minimum delay between steps
-    private let maxStepDelay: TimeInterval = 1.0  // Maximum delay between steps
-    private var isWalking = false  // Track if the player is walking
-    
+    var toiletStepAudioPlayer: AVAudioPlayer?
+
+    private let minStepDelay: TimeInterval = 0.2 // Minimum delay between steps
+    private let maxStepDelay: TimeInterval = 1.0 // Maximum delay between steps
+    private var isWalking = false // Track if the player is walking
+
+    var isToilet: Bool = false {
+        didSet {
+            print("isToilet changed to \(isToilet)")
+        }
+    }
+
+    private var currentStepResource: String = "step" // Track the current step sound resource
+
     init(playerNode: SCNNode, cameraNode: SCNNode?, lightNode: SCNNode?) {
         print("movecomp init")
         self.playerNode = playerNode
@@ -39,8 +54,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
         self.originalLightIntensity = lightNode?.light?.intensity ?? 75  // Set original intensity
         
         super.init()
-        
-        loadSounds()
+        loadStepSound(resource: currentStepResource)
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -49,48 +63,51 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     
     override func update(deltaTime seconds: TimeInterval) {
         if !movingProgramatically {
-            guard let joystick = joystickComponent, joystick.isTouching, let cameraNode = cameraNode
-            else {
+            guard let joystick = joystickComponent, joystick.isTouching, let cameraNode = cameraNode else {
                 stepAudioPlayer?.stop()
-                
                 return
             }
             
+            // If collisionDetected is true, reset it if player has moved away
+            if collisionDetected {
+                resetCollisionIfMovedAway()
+                if collisionDetected { return }  // Skip update if still colliding
+            }
+
+            lastSafePosition = playerNode.position
+
             addPlayerPhysicsBody()
             
             let direction = joystick.direction
             let deltaTime = Float(seconds)
-            
-            // Calculate the camera's forward and right direction vectors
             let cameraTransform = cameraNode.transform
-            let forwardVector = SCNVector3(
-                cameraTransform.m31, cameraTransform.m32, cameraTransform.m33)
-            let rightVector = SCNVector3(
-                cameraTransform.m11, cameraTransform.m12, cameraTransform.m13)
-            
-            // Scale direction by joystick input
+
+            var forwardVector = SCNVector3(cameraTransform.m31, 0, cameraTransform.m33).normalized()
+            var rightVector = SCNVector3(cameraTransform.m11, 0, cameraTransform.m13).normalized()
+
             let forwardMovement = forwardVector * Float(direction.y) * movementSpeed * deltaTime
             let rightMovement = rightVector * Float(direction.x) * movementSpeed * deltaTime
-            
-            // Combine forward and right movement
+
             let movementVector = forwardMovement + rightMovement
-            
-            // Use a temporary node to check for collisions
-            let tempNode = SCNNode()
-            tempNode.position = playerNode.position + movementVector
-            
-            // Translate the player node based on the movement vector
+
             playerNode.localTranslate(by: movementVector)
-            
-            // Update light position to follow player
+
             updateLightPosition()
+
+            if movementVector.length() > 0 {
+                collisionDetected = false
+            }
+
+            let targetResource = isToilet ? "toiletStep" : "step"
+            if currentStepResource != targetResource {
+                // Reload step sound with the new resource
+                currentStepResource = targetResource
+                loadStepSound(resource: currentStepResource)
+            }
             
-            // Calculate player speed
             let speed = movementVector.length() / deltaTime
-            
-            // Check if the player is moving
             if speed > 0 {
-                // playEchoSound() // Play echo sound continuously
+                playEchoSound()
                 shakeCamera(duration: 0.1, intensity: 0.02) // Apply shake effect
                 if !stepAudioPlayer!.isPlaying {
                     playStepSound()
@@ -99,27 +116,37 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
                 stopStepSound()
                 isWalking = false
             }
-            
-            // User is moving
             if !isLightActive {
                 activateLightPulsing()
             }
         } else if movingProgramatically {
-            // Update light position to follow player
             updateLightPosition()
             
             shakeCamera(duration: 0.1, intensity: 0.02) // Apply shake effect
-            // Check time since last step to play sound
             let currentTime = Date()
             if lastStepTime == nil || currentTime.timeIntervalSince(lastStepTime!) >= stepDelay {
-                // playEchoSound()
-                lastStepTime = currentTime  // Update the last step time
+                playEchoSound()
+                lastStepTime = currentTime
             }
-            
-            // User is moving
+
             if !isLightActive {
                 activateLightPulsing()
             }
+        }
+    }
+
+    func applyCollisionResponse() {
+        // Set collisionDetected to true to prevent further movement
+        collisionDetected = true
+        velocity = .zero
+    }
+    
+    func resetCollisionIfMovedAway() {
+        guard let joystick = joystickComponent else { return }
+
+        // Reset collision if player has input and is moving away from collision point
+        if joystick.direction != .zero {
+            collisionDetected = false
         }
     }
     
@@ -156,8 +183,6 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     
     private func decreaseLightIntensity() {
         guard let lightNode = lightNode else { return }
-        print("decreasing")
-        
         // Decrease light intensity smoothly
         let decreaseAction = SCNAction.customAction(duration: lightDecreaseDuration) {
             node, elapsedTime in
@@ -203,26 +228,17 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
                 self.isShaking = false
             }
         }
-        
         cameraNode.runAction(shakeAction)
     }
     
-    private func loadSounds() {
-        // if let echoSoundURL = Bundle.main.url(forResource: "EcholocationSound", withExtension: "mp3") {
-        //     do {
-        //         echoAudioPlayer = try AVAudioPlayer(contentsOf: echoSoundURL)
-        //         echoAudioPlayer?.prepareToPlay() // Prepare to play
-        //     } catch {
-        //         print("Error loading sound: \(error)")
-        //     }
-        // } else {
-        //     print("Sound file not found")
-        // }
-        
-        if let stepSoundURL = Bundle.main.url(forResource: "step", withExtension: "mp3") {
+    // Updated loadStepSound to accept a resource parameter
+    private func loadStepSound(resource: String) {
+        if let stepSoundURL = Bundle.main.url(forResource: resource, withExtension: "mp3") {
             do {
                 stepAudioPlayer = try AVAudioPlayer(contentsOf: stepSoundURL)
-                stepAudioPlayer?.prepareToPlay()  // Prepare to play
+                stepAudioPlayer?.prepareToPlay() // Prepare to play
+                print(isToilet)
+                print(resource)
             } catch {
                 print("Error loading step sound: \(error)")
             }
@@ -303,28 +319,30 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
         let nodeB = contact.nodeB
         
         // Check for collision between player and walls/floor
-        if (nodeA.physicsBody?.categoryBitMask == 1 && nodeB.physicsBody?.categoryBitMask == 2)
-            || (nodeB.physicsBody?.categoryBitMask == 1 && nodeA.physicsBody?.categoryBitMask == 2)
-        {
-            print("Player collided with wall or floor")
-            
-            // Stop player movement by applying a zero velocity
+        if (nodeA.physicsBody?.categoryBitMask == 1 && nodeB.physicsBody?.categoryBitMask == 2) ||
+           (nodeB.physicsBody?.categoryBitMask == 1 && nodeA.physicsBody?.categoryBitMask == 2) {
+
+            // Identify the player node from the contact nodes
             let playerNode = (nodeA.physicsBody?.categoryBitMask == 1) ? nodeA : nodeB
+
             if let playerPhysicsBody = playerNode.physicsBody {
-                // Gradually dampen the velocity instead of setting it to zero
-                let currentVelocity = playerPhysicsBody.velocity
-                playerPhysicsBody.velocity = SCNVector3(currentVelocity.x * 0.5, 0, currentVelocity.z * 0.5)  // Dampen velocity
-                // Adjust friction temporarily
-                playerPhysicsBody.friction = 0.2  // Lower friction for easier movement post-collision
-                // Reset joystick direction only if not touching the joystick
-                joystickComponent?.resetJoystick()
+                // Restore position to last known safe location
+                if let safePosition = lastSafePosition {
+                    playerNode.position = safePosition
+                    playerPhysicsBody.velocity = SCNVector3Zero // Stop movement
+                }
+
+                // Zero out velocity and joystick input for accurate stopping
+                velocity = .zero
+                joystickComponent?.resetJoystick() // Prevents movement continuation
+
+                // Set collision detected flag
+                collisionDetected = true
             }
         }
     }
     
-    func movePlayer(
-        to position: SCNVector3, duration: TimeInterval, completion: @escaping () -> Void
-    ) {
+    func movePlayer(to position: SCNVector3, duration: TimeInterval, completion: @escaping () -> Void) {
         movingProgramatically = true
         let playerNode = playerNode
         let moveAction = SCNAction.move(to: position, duration: duration)
@@ -347,8 +365,15 @@ func * (vector: SCNVector3, scalar: Float) -> SCNVector3 {
 
 // Utility extension for vector math
 extension SCNVector3 {
+    // Length (magnitude) of the vector
     func length() -> Float {
-        return sqrt(x * x + y * y + z * z)
+        return sqrtf(x * x + y * y + z * z)
+    }
+    
+    // Normalized vector (unit vector in the same direction)
+    func normalized() -> SCNVector3 {
+        let len = length()
+        return len > 0 ? SCNVector3(x / len, y / len, z / len) : SCNVector3(0, 0, 0)
     }
 }
 
