@@ -92,11 +92,7 @@ vertex out_vertex_t blur_vertex(custom_vertex_t in [[stage_in]])
 
 // http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/
 constant float offset[] = { 0.0, 1.0, 2.0, 3.0, 4.0 };
-<<<<<<< HEAD
-constant float weight[] = { 0.2270270270, 0.1945945946, 0.1216216216, 0.0540540541, 0.0162162162 };
-=======
 constant float weight[] = { 0.150, 0.150, 0.096, 0.050, 0.021 };
->>>>>>> origin/dev
 constant float bufferSize = 512.0;
 
 fragment half4 blur_fragment_h(out_vertex_t vert [[stage_in]],
