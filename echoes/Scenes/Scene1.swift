@@ -15,8 +15,8 @@ class Scene1: SCNScene {
         self.lightNode = lightNode
         
         // Load the house scene from the Scenes folder
-        guard let houseScene = SCNScene(named: "Scene1.scn") else {
-            print("Warning: House scene 'Scene 1.scn' not found")
+        guard let houseScene = SCNScene(named: "scene1.scn") else {
+            print("Warning: House scene 'scene1.scn' not found")
             return
         }
 
