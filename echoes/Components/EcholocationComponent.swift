@@ -22,7 +22,6 @@ class EcholocationComponent: GKComponent {
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-        
     private func loadSound() {
         guard let soundURL = Bundle.main.url(forResource: "EcholocationSound", withExtension: "mp3") else {
             print("Echolocation sound file not found")
@@ -40,8 +39,6 @@ class EcholocationComponent: GKComponent {
     func activateFlash() {
         guard !isFlashing else { return }
         isFlashing = true
-        
-        //        playEcholocationSound()
         
         // Ensure lightNode has a light component before manipulating intensity
         guard let light = lightNode.light else {
