@@ -296,8 +296,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     private func setupWallPhysicsBodies() {
         // Loop through your walls and apply physics bodies
         for node in playerNode.parent?.childNodes ?? [] {
-            if node.name?.contains("wall") == true /*|| node.name?.contains("floor")  == true */ {
-                print("wall")
+            if node.name?.contains("wall") == true || node.name?.contains("Door") == true || node.name?.contains("door") == true {
                 node.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
                 node.physicsBody?.categoryBitMask = 2  // Wall category
                 node.physicsBody?.collisionBitMask = 1  // Collides with player

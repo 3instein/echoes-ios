@@ -880,12 +880,12 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
                     self.playerEntity.playerNode?.position = newPosition
                     
                     // Set the camera to face the initial angles (180, 0, 180)
-                    self.cameraNode.eulerAngles = SCNVector3(0, CGFloat(Double.pi), 0) // Y rotation 180 degrees
+                    self.cameraNode.eulerAngles = SCNVector3(0, CGFloat(3 * Double.pi / 2), 0) // Y rotation 180 degrees
                     
                     // Delay the camera rotation by 2 seconds
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                         // Add an action to rotate the camera 180 degrees over 1 second
-                        let cameraRotationAction = SCNAction.rotateBy(x: 0, y: CGFloat.pi, z: 0, duration: 0.3)
+                        let cameraRotationAction = SCNAction.rotateBy(x: 0, y: CGFloat(3 * Double.pi / 2), z: 0, duration: 0.3)
                         cameraRotationAction.timingMode = .easeInEaseOut
                         
                         // Run the action on the camera node
@@ -903,7 +903,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
                             }
                             
                             // Set the final orientation after rotation
-                            let finalEulerAngles = SCNVector3(0, 0, 0) // Adjust to desired final angles
+                            let finalEulerAngles = SCNVector3(0, CGFloat(Double.pi / 2), 0) // Adjust to desired final angles
                             self.cameraNode.eulerAngles = finalEulerAngles
                             
                             // Step 5: Play grandma's audio after rotation and jumpscare
@@ -957,7 +957,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
     
     
     func displaycandleLabel(on view: UIView) {
-        candleLabel.text = "Puzzle Solved! Candle and Keys Obtained"
+        candleLabel.text = "Candle and keys are obtained!"
         view.addSubview(candleLabel)
         
         // Position the candle label above the center of the screen
@@ -1013,7 +1013,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
     }()
     
     func displayFailLabel(on view: UIView) {
-        FailLabel.text = "You Failed! Try Again!"
+        FailLabel.text = "You failed! Try again!"
         view.addSubview(FailLabel)
         
         // Position the camera instruction label above the center of the screen

@@ -66,7 +66,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
     ]
     
     // Define the label for displaying the message
-    private let puzzleLabel: UILabel = {
+    let puzzleLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .center
         label.textColor = UIColor.white
@@ -88,7 +88,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         self.lightNode = lightNode
         
         // Load the house scene from the Scenes folder
-        guard let houseScene = SCNScene(named: "scene5and6.scn") else {
+        guard let houseScene = SCNScene(named: "scene5and6ely.scn") else {
             print("Warning: House scene 'Scene5and6.scn' not found")
             return
         }
@@ -135,7 +135,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         dollNode = rootNode.childNode(withName: "doll", recursively: true)
         
         if let doorNode = rootNode.childNode(withName: "doorFamilyRoom", recursively: true) {
-            attachAudio(to: doorNode, audioFileName: "doorClose.mp3", volume: 3, delay: 0)
+            attachAudio(to: doorNode, audioFileName: "door_close.mp3", volume: 3, delay: 0)
         }
         
         if let woodNode = rootNode.childNode(withName: "woodenFloor", recursively: false) {
@@ -184,41 +184,61 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 26.0) { [weak self] in
             self?.isDollJumpscare = true
             self?.dollNode.isHidden = false
-            
+            self?.cameraComponent.lockCamera()
+
             self?.cameraNode.look(at: self!.dollNode.position)
             
             self?.attachAudio(to: self!.dollNode!, audioFileName: "jumpscare3.wav", volume: 40.0, delay: 0)
 
             self?.attachAudio(to: self!.dollNode!, audioFileName: "doll1.wav", volume: 4.5, delay: 1.0)
-                        
-            GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-65.851, -200.316, -80), duration: 0.2) {
+            
+            guard let cameraNode = self?.cameraNode else { return }
+            
+            // Get current Euler angles and only adjust X and Z axes
+            let eulerAngles = cameraNode.eulerAngles
+            cameraNode.eulerAngles = SCNVector3(
+                eulerAngles.x, // Round X-axis
+                eulerAngles.y, // Keep Y-axis unchanged
+                .pi // Round Z-axis
+            )
+            
+            GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-65.851, -200.316, -80), duration: 0.1) {
                 self?.cameraNode.look(at: self!.dollNode.position)
-
+                
                 // Animate zooming in by adjusting the camera's field of view
                 SCNTransaction.begin()
                 SCNTransaction.animationDuration = 0.2
-                self?.cameraNode.camera?.fieldOfView = 25  // Adjust this value for closer zoom
+                self?.cameraNode.camera?.fieldOfView = 20  // Adjust this value for closer zoom
                 SCNTransaction.commit()
-                
-                self?.cameraNode.look(at: self!.dollNode.position)
             }
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 36.0) { [weak self] in
             self?.cameraNode.camera?.fieldOfView = 75  // Default value for normal view
             
+            guard let cameraNode = self?.cameraNode else { return }
+
+            // Get current Euler angles and only adjust X and Z axes
+            let eulerAngles = cameraNode.eulerAngles
+            cameraNode.eulerAngles = SCNVector3(
+                .pi, // Round X-axis
+                eulerAngles.y, // Keep Y-axis unchanged
+                .pi  // Round Z-axis
+            )
+            
             GameViewController.playerEntity?.movementComponent.movePlayer(to: playerPosition, duration: 1.5) {
                 self?.isDollJumpscare = false
                 self?.isJumpscareDone = true
+                self?.cameraComponent.unlockCamera()
                 
                 guard let cameraNode = self?.cameraNode else { return }
 
                 // Get current Euler angles and only adjust X and Z axes
                 let eulerAngles = cameraNode.eulerAngles
                 cameraNode.eulerAngles = SCNVector3(
-                    (self?.roundedAngle(eulerAngles.x * 180 / .pi) ?? 0) * .pi / 180, // Round X-axis
+                    .pi, // Round X-axis
                     eulerAngles.y, // Keep Y-axis unchanged
-                    (self?.roundedAngle(eulerAngles.z * 180 / .pi) ?? 0) * .pi / 180  // Round Z-axis
+                    .pi  // Round Z-axis
                 )
             }
             
@@ -226,14 +246,6 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
                 self?.cameraNode.look(at: grandmaAudioNode.position)
             }
         }
-    }
-    
-    func roundedAngle(_ angle: Float) -> Float {
-        // Define the set of target angles
-        let targets: [Float] = [-180, -90, 0, 90, 180]
-        
-        // Find the closest target angle
-        return targets.min(by: { abs($0 - angle) < abs($1 - angle) }) ?? angle
     }
     
     func displayPuzzlePieces(on view: UIView) {
@@ -387,6 +399,27 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         currentCombination = [] // Initialize currentCombination if not already done
     }
 
+    func displayJumpscareLabel(on view: UIView) {
+        puzzleLabel.text = "Find ritual items... Kirana is coming for you!"
+        puzzleLabel.numberOfLines = -1 // Enable multiline
+        puzzleLabel.lineBreakMode = .byWordWrapping
+
+        view.addSubview(puzzleLabel)
+        
+        // Position the camera instruction label above the center of the screen
+        let offsetFromTop: CGFloat = 170
+        puzzleLabel.frame = CGRect(
+            x: (view.bounds.width - 250) / 2,
+            y: (view.bounds.height) / 2 - offsetFromTop,
+            width: 255,
+            height: 50
+        )
+        // Fade in the label
+        UIView.animate(withDuration: 0.5) {
+            self.puzzleLabel.alpha = 1.0
+        }
+    }
+    
     func displayPhotoObtainedLabel(on view: UIView) {
         puzzleLabel.text = isPhotoObtained ? "Kirana's photo is obtained" : "You failed! Try again."
         view.addSubview(puzzleLabel)
@@ -695,7 +728,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
             self.isCodeDone = true
             self.doorCloseNode.isHidden = true
             self.doorOpenNode.isHidden = false
-            self.attachAudio(to: self.doorOpenNode, audioFileName: "doorOpen.mp3", volume: 3, delay: 0)
+            self.attachAudio(to: self.doorOpenNode, audioFileName: "door_open.mp3", volume: 3, delay: 0)
         }
     }
     

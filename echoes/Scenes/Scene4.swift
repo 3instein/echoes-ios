@@ -26,7 +26,7 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
         scnView?.pointOfView = cameraNode
         
         // Load the house scene from the Scenes folder
-        guard let houseScene = SCNScene(named: "scene4.scn") else {
+        guard let houseScene = SCNScene(named: "scene4ely.scn") else {
             print("Warning: House scene 'Scene 4.scn' not found")
             return
         }

@@ -20,7 +20,7 @@ class SceneManager {
         lightNode = SCNNode()
         let light = SCNLight()
         light.type = .omni
-        light.intensity = 0
+        light.intensity = 1000
         light.color = UIColor(red: 0.5, green: 0.5, blue: 1.0, alpha: 1.0) // Blueish tint
         lightNode?.light = light
     }
