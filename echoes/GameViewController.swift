@@ -30,19 +30,19 @@ class GameViewController: UIViewController, Scene2Delegate {
         GameViewController.joystickComponent.attachToView(self.view)
         
         // Load the initial game scene
-        SceneManager.shared.loadScene7()
+        SceneManager.shared.loadScene2()
         
         // Set up the PlayerEntity for Scene2
-        if let gameScene = self.scnView.scene as? Scene7 {
+        if let gameScene = self.scnView.scene as? Scene2 {
             GameViewController.playerEntity = gameScene.playerEntity
             // Set delegate to handle Scene2 transition
-//            gameScene.delegate = self
+            gameScene.delegate = self
             
             // Create a movement component to handle player movement, including the light node
             let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode)
             GameViewController.playerEntity.movementComponent = movementComponent
             
-//            GameViewController.joystickComponent.hideJoystick()
+            GameViewController.joystickComponent.hideJoystick()
             
             // Link the joystick with the movement component
             if let movementComponent = gameScene.playerEntity.movementComponent {
@@ -59,7 +59,7 @@ class GameViewController: UIViewController, Scene2Delegate {
             gameScene.setupGestureRecognizers(for: self.scnView)
             
             // Start the walking sequence and cutscene in Scene2
-//            gameScene.startWalkingToHouse()
+            gameScene.startWalkingToHouse()
         }
         
         // Configure the SCNView
