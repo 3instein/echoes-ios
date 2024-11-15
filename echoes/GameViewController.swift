@@ -437,6 +437,11 @@ class GameViewController: UIViewController, Scene2Delegate {
                 GameViewController.joystickComponent.joystickView.isHidden = true
             }
         }
+        
+        // Scene 10
+        if let gameScene = scnView.scene as? Scene10 {
+            gameScene.checkProximity()
+        }
     }
     
     @objc func interactWithCake() {
