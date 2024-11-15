@@ -30,6 +30,7 @@ class VirtualJoystickComponent: GKComponent {
     let knobSize: CGFloat = 70.0
     var idleTimer: Timer?
     private var hasShownCameraInstruction = false
+    private var hasShownBasicTutorial = false // Track if basic tutorial has been shown
     
     override init() {
         super.init()
@@ -95,8 +96,9 @@ class VirtualJoystickComponent: GKComponent {
         joystickView.addGestureRecognizer(panGestureRecognizer)
     }
     
+    // Show "Drag to move" instruction
     func showBasicTutorial() {
-        // Show joystick instruction label with a delay
+        hasShownBasicTutorial = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
             UIView.animate(withDuration: 0.5) {
                 self?.instructionLabel.alpha = 1.0
@@ -104,47 +106,16 @@ class VirtualJoystickComponent: GKComponent {
         }
     }
     
-    // Handle joystick interactions
-    @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
-        let location = gesture.location(in: joystickView)
-        let offset = CGPoint(x: location.x - joystickView.bounds.midX, y: location.y - joystickView.bounds.midY)
-        let distance = sqrt(offset.x * offset.x + offset.y * offset.y)
-        let maxDistance = joystickSize / 2
-        
-        switch gesture.state {
-        case .began:
-            isTouching = true
-            resetIdleTimer()
-            animateJoystickAlpha(to: 0.5)
-            hideInstructionLabelWithDelay()
-            showCameraInstructionLabel()
-            startHideCameraInstructionTimer()
-        case .changed:
-            let limitedDistance = min(distance, maxDistance)
-            let angle = atan2(offset.y, offset.x)
-            direction = CGPoint(x: cos(angle), y: sin(angle))
-            let xPosition = limitedDistance * cos(angle) + joystickView.bounds.midX - knobSize / 2
-            let yPosition = limitedDistance * sin(angle) + joystickView.bounds.midY - knobSize / 2
-            joystickKnob.frame.origin = CGPoint(x: xPosition, y: yPosition)
-            resetIdleTimer()
-        case .ended, .cancelled:
-            resetJoystick()
-            startIdleTimer()
-        default:
-            break
-        }
-    }
-    
+    // Hide "Drag to move" instruction
     private func hideInstructionLabelWithDelay() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) { [weak self] in
-            if self?.isTouching == true { // Only hide if joystick has been touched
-                UIView.animate(withDuration: 1.5) {
-                    self?.instructionLabel.alpha = 0.0
-                }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+            UIView.animate(withDuration: 1.5) {
+                self?.instructionLabel.alpha = 0.0
             }
         }
     }
     
+    // Show "Look around" instruction
     private func showCameraInstructionLabel() {
         guard !hasShownCameraInstruction else { return }
         hasShownCameraInstruction = true
@@ -153,8 +124,9 @@ class VirtualJoystickComponent: GKComponent {
         }
     }
     
+    // Hide "Look around" instruction
     private func startHideCameraInstructionTimer() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) { [weak self] in
             UIView.animate(withDuration: 1.5) {
                 self?.cameraInstructionLabel.alpha = 0.0
             }
@@ -203,6 +175,39 @@ class VirtualJoystickComponent: GKComponent {
         joystickView.isHidden = false
         UIView.animate(withDuration: 0.5) {
             self.joystickView.alpha = 0.3
+        }
+    }
+    
+    // Handle joystick interactions
+    @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
+        let location = gesture.location(in: joystickView)
+        let offset = CGPoint(x: location.x - joystickView.bounds.midX, y: location.y - joystickView.bounds.midY)
+        let distance = sqrt(offset.x * offset.x + offset.y * offset.y)
+        let maxDistance = joystickSize / 2
+        
+        switch gesture.state {
+        case .began:
+            isTouching = true
+            resetIdleTimer()
+            animateJoystickAlpha(to: 0.5)
+            hideInstructionLabelWithDelay()
+            if hasShownBasicTutorial {
+                showCameraInstructionLabel()
+                startHideCameraInstructionTimer()
+            }
+        case .changed:
+            let limitedDistance = min(distance, maxDistance)
+            let angle = atan2(offset.y, offset.x)
+            direction = CGPoint(x: cos(angle), y: sin(angle))
+            let xPosition = limitedDistance * cos(angle) + joystickView.bounds.midX - knobSize / 2
+            let yPosition = limitedDistance * sin(angle) + joystickView.bounds.midY - knobSize / 2
+            joystickKnob.frame.origin = CGPoint(x: xPosition, y: yPosition)
+            resetIdleTimer()
+        case .ended, .cancelled:
+            resetJoystick()
+            startIdleTimer()
+        default:
+            break
         }
     }
 }
