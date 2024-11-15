@@ -90,42 +90,6 @@ class GameViewController: UIViewController, Scene2Delegate {
         displayLink.add(to: .main, forMode: .default)
     }
     
-//    func transitionToScene10() {
-//        SceneManager.shared.loadScene10()
-//        
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-//            GameViewController.joystickComponent.showJoystick()
-//        }
-//        scnView.backgroundColor = UIColor.clear
-//        
-//        if let gameScene = self.scnView.scene as? Scene10 {
-//            GameViewController.playerEntity = gameScene.playerEntity
-//            
-//            // Create a movement component to handle player movement, including the light node
-//            let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode)
-//            GameViewController.playerEntity.movementComponent = movementComponent
-//            
-//            // Link the joystick with the movement component
-//            if let movementComponent = gameScene.playerEntity.movementComponent {
-//                movementComponent.joystickComponent = GameViewController.joystickComponent
-//                self.scnView.scene?.physicsWorld.contactDelegate = movementComponent
-//            }
-//            
-//            // Set up fog properties for the scene
-//            gameScene.fogStartDistance = 25.0
-//            gameScene.fogEndDistance = 300.0
-//            gameScene.fogDensityExponent = 0.2
-//            gameScene.fogColor = UIColor.black
-//            
-//            gameScene.setupGestureRecognizers(for: self.scnView)
-//            
-//            // After scene loads, set the background back to black
-//            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-//                self.scnView.backgroundColor = UIColor.black
-//            }
-//        }
-//    }
-    
     func transitionToScene4() {
         // Load Scene4 after Scene2 finishes
         SceneManager.shared.loadScene4()
@@ -168,33 +132,33 @@ class GameViewController: UIViewController, Scene2Delegate {
     
 //    func transitionToScene10() {
 //        SceneManager.shared.loadScene10()
-//        
+//
 //        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
 //            GameViewController.joystickComponent.showJoystick()
 //        }
 //        scnView.backgroundColor = UIColor.clear
-//        
+//
 //        if let gameScene = self.scnView.scene as? Scene10 {
 //            GameViewController.playerEntity = gameScene.playerEntity
-//            
+//
 //            // Create a movement component to handle player movement, including the light node
 //            let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode)
 //            GameViewController.playerEntity.movementComponent = movementComponent
-//            
+//
 //            // Link the joystick with the movement component
 //            if let movementComponent = gameScene.playerEntity.movementComponent {
 //                movementComponent.joystickComponent = GameViewController.joystickComponent
 //                self.scnView.scene?.physicsWorld.contactDelegate = movementComponent
 //            }
-//            
+//
 //            // Set up fog properties for the scene
 //            gameScene.fogStartDistance = 25.0
 //            gameScene.fogEndDistance = 300.0
 //            gameScene.fogDensityExponent = 0.2
 //            gameScene.fogColor = UIColor.black
-//            
+//
 //            gameScene.setupGestureRecognizers(for: self.scnView)
-//            
+//
 //            // After scene loads, set the background back to black
 //            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
 //                self.scnView.backgroundColor = UIColor.black
@@ -310,9 +274,9 @@ class GameViewController: UIViewController, Scene2Delegate {
             }
         }
         
-        //SCENE 8
+        // SCENE 8
         if let gameScene = scnView.scene as? Scene8 {
-//             Check if the player is near the transition point
+            // Check if the player is near the transition point
 //            if gameScene.isJumpscareDone && gameScene.checkProximityToTransition() {
 //                if let doorNode = gameScene.rootNode.childNode(withName: "doorFamilyRoom", recursively: true) {
 //                    attachAudio(to: doorNode, audioFileName: "door_open.mp3", volume: 3, delay: 0)
@@ -446,10 +410,10 @@ class GameViewController: UIViewController, Scene2Delegate {
             if let path = Bundle.main.path(forResource: "NodeTechnique", ofType: "plist"),
                let dict = NSDictionary(contentsOfFile: path) as? [String: AnyObject] {
                 let technique = SCNTechnique(dictionary: dict)
-
+                
                 let glowColor = SCNVector3(0.0, 1.0, 1.0)  // Cyan outline
                 technique?.setValue(NSValue(scnVector3: glowColor), forKeyPath: "glowColorSymbol")
-
+                
                 scnView.technique = technique
             }
             
@@ -463,7 +427,7 @@ class GameViewController: UIViewController, Scene2Delegate {
             } else {
                 GameViewController.joystickComponent.joystickView.isHidden = false
             }
-
+            
             
             if gameScene.isGrandmaFinishedTalking || gameScene.isSwanLakePlaying{
                 GameViewController.joystickComponent.joystickView.isHidden = false
@@ -482,7 +446,7 @@ class GameViewController: UIViewController, Scene2Delegate {
         } else {
             print("Error: Scene5and6 not loaded correctly")
         }
-
+        
         // Handle interactions in Scene7
         if let loadedScene = scnView.scene as? Scene7 {
             // Check if the piano puzzle has been completed
@@ -500,7 +464,7 @@ class GameViewController: UIViewController, Scene2Delegate {
         } else {
             print("Error: Scene7 not loaded correctly")
         }
-
+        
         if let loadedScene = scnView.scene as? Scene8 {
             if loadedScene.isPipeClicked {
                 loadedScene.examinePipe(on: self.view)
