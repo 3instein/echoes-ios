@@ -88,6 +88,7 @@ class SceneOpening: UIViewController {
             if success {
                 print("Scene 4 assets successfully prepared.")
                 self?.scene4AssetsPrepared = true
+                self?.showSkipButton()
             } else {
                 print("Error: Failed to prepare Scene 4 assets.")
                 self?.scene4AssetsPrepared = false
