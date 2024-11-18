@@ -1,9 +1,4 @@
-//
 //  Scene8.swift
-//  echoes
-//
-//  Created by Angeline Ivana on 26/10/24.
-//
 
 import SceneKit
 import UIKit
@@ -111,7 +106,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "scene8ely.scn") else {
-            fatalError("Scene 'scene8ely.scn' not found.")
+            fatalError("Error: Scene named 'scene8ely.scn' not found")
         }
         
         // Add the house's nodes to the root node of the GameScene

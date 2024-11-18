@@ -40,8 +40,7 @@ class Scene2: SCNScene {
         self.lightNode = lightNode
         
         guard let combinedScene = SCNScene(named: "scene2.scn") else {
-            print("Warning: Scene named 'scene2.scn' not found")
-            return
+            fatalError("Error: Scene named 'scene2.scn' not found")
         }
         
         // Add all nodes from the combined scene to rootNode
@@ -51,16 +50,16 @@ class Scene2: SCNScene {
         
         setupSceneComponents()
         attachAmbientSounds()
-        prepareScene5And6Assets()
+        prepareScene4Assets()
     }
     
     // MARK: - Asset Preloading
-    private func prepareScene5And6Assets() {
-        AssetPreloader.preloadScenes5and6 { success in
+    private func prepareScene4Assets() {
+        AssetPreloader.preloadScene4 { success in
             if success {
-                print("Scene5and6 assets successfully prepared.")
+                print("Scene4 assets successfully prepared.")
             } else {
-                print("Error: Failed to prepare Scene5and6 assets.")
+                print("Error: Failed to prepare Scene4 assets.")
             }
         }
     }

@@ -44,6 +44,14 @@ class SceneManager {
         let scene2 = Scene2(lightNode: lightNode)
         scnView?.scene = scene2
         currentScene = scene2
+        
+        AssetPreloader.preloadScene4 { success in
+            if success {
+                print("Scene4 assets ready.")
+            } else {
+                print("Failed to preload Scene4 assets.")
+            }
+        }
     }
     
     func loadScene4() {
@@ -51,19 +59,36 @@ class SceneManager {
             print("Error: Light node is not initialized.")
             return
         }
-        let scene4 = Scene4(lightNode: lightNode) 
+        
+        let scene4 = Scene4(lightNode: lightNode)
         scnView?.scene = scene4
         currentScene = scene4
+        
+        AssetPreloader.preloadScenes5and6 { success in
+            if success {
+                print("Scene5and6 assets ready.")
+            } else {
+                print("Failed to preload Scene5and6 assets.")
+            }
+        }
     }
-
+    
     func loadScene5and6() {
         guard let lightNode = lightNode else {
             print("Error: Light node is not initialized.")
             return
         }
+        
         let scene5and6 = Scene5and6(lightNode: lightNode)
         scnView?.scene = scene5and6
-        currentScene = scene5and6
+        
+        AssetPreloader.preloadScene7 { success in
+            if success {
+                print("Scene7 assets ready.")
+            } else {
+                print("Failed to preload Scene7 assets.")
+            }
+        }
     }
     
     func loadScene7() {
@@ -74,6 +99,14 @@ class SceneManager {
         let scene7 = Scene7(lightNode: lightNode)
         scnView?.scene = scene7
         currentScene = scene7
+        
+        AssetPreloader.preloadScene7 { success in
+            if success {
+                print("Scene7 assets ready.")
+            } else {
+                print("Failed to preload Scene7 assets.")
+            }
+        }
     }
     
     func loadScene8() {
@@ -84,6 +117,14 @@ class SceneManager {
         let scene8 = Scene8(lightNode: lightNode)
         scnView?.scene = scene8
         currentScene = scene8
+        
+        AssetPreloader.preloadScene8 { success in
+            if success {
+                print("Scene8 assets ready.")
+            } else {
+                print("Failed to preload Scene8 assets.")
+            }
+        }
     }
     
     func loadScene10() {

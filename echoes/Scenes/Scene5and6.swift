@@ -1,7 +1,8 @@
+//  Scene5and6.swift
+
 import SceneKit
 import UIKit
 
-//TAMBAHIN NODE doorClose & doorOpen, sesuaiin api sama titik di depan kamar, tambahin node "doll" di file .scn
 class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
     var playerEntity: PlayerEntity!
     var cameraComponent: CameraComponent!
@@ -89,8 +90,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "scene5and6ely.scn") else {
-            print("Warning: House scene 'Scene5and6.scn' not found")
-            return
+            fatalError("Error: Scene named 'scene5and6ely.scn' not found")
         }
         
         // Add the house's nodes to the root node of the GameScene
@@ -125,6 +125,9 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         
         rootNode.addChildNode(lightNode)
         
+        // Prepare scene 7 assets
+        prepareScene7Assets()
+        
         // Find Obj_Cake_003 node in the scene
         objCakeNode = rootNode.childNode(withName: "Puzzle_1", recursively: true)
         
@@ -135,7 +138,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         dollNode = rootNode.childNode(withName: "doll", recursively: true)
         
         if let doorNode = rootNode.childNode(withName: "doorFamilyRoom", recursively: true) {
-            attachAudio(to: doorNode, audioFileName: "door_close.mp3", volume: 3, delay: 0)
+            attachAudio(to: doorNode, audioFileName: "doorClose.MP3", volume: 3, delay: 0)
         }
         
         if let woodNode = rootNode.childNode(withName: "woodenFloor", recursively: false) {
@@ -176,6 +179,16 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         
         // Apply font to necklaceLabel safely
         applyCustomFont(to: puzzleLabel, fontSize: 14)
+    }
+    
+    private func prepareScene7Assets() {
+        AssetPreloader.preloadScene7 { success in
+            if success {
+                print("Scene7 assets successfully prepared.")
+            } else {
+                print("Error: Failed to prepare Scene7 assets.")
+            }
+        }
     }
         
     func jumpscareDoll() {
@@ -728,7 +741,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
             self.isCodeDone = true
             self.doorCloseNode.isHidden = true
             self.doorOpenNode.isHidden = false
-            self.attachAudio(to: self.doorOpenNode, audioFileName: "door_open.mp3", volume: 3, delay: 0)
+            self.attachAudio(to: self.doorOpenNode, audioFileName: "doorOpen.MP3", volume: 3, delay: 0)
         }
     }
     

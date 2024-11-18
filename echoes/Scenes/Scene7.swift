@@ -80,7 +80,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "scene7.scn") else {
-            fatalError("Scene named 'scene7.scn' not found")
+            fatalError("Error: Scene named 'scene7.scn' not found")
         }
         
         // Add the house's nodes to the root node of the GameScene
@@ -129,11 +129,22 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         phoneNode = rootNode.childNode(withName: "phone", recursively: true)
         
         setupPianoKeys()
+        prepareScene8Assets()
         
         applyCustomFont(to: candleLabel, fontSize: 14)
         applyCustomFont(to: FailLabel, fontSize: 14)
         
         self.physicsWorld.contactDelegate = self
+    }
+    
+    private func prepareScene8Assets() {
+        AssetPreloader.preloadScene8 { success in
+            if success {
+                print("Scene8 assets successfully prepared.")
+            } else {
+                print("Error: Failed to prepare Scene8 assets.")
+            }
+        }
     }
     
     func displayNumberPad(on view: UIView) {
@@ -1116,5 +1127,3 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         // Add any additional setup for the scene here
     }
 }
-
-

@@ -5,7 +5,7 @@ import SceneKit
 class AssetPreloader {
     static func preloadScene2(completion: @escaping (Bool) -> Void) {
         let sceneName = "scene2.scn"
-        let audioFiles = ["doorOpen.MP3", "doorClose.MP3", "s3-grandma.mp3", "s3-andra.mp3", "wind.wav", "crow.wav", "outsideRain.wav"]
+        let audioFiles = ["doorOpen.MP3", "doorClose.MP3", "s3-grandma.mp3", "s3-andra.mp3", "wind.wav", "crow.wav", "outsideRain.wav", "grassFootsteps.wav", "woodFootsteps.wav"]
         preloadSceneWithAudio(named: sceneName, audioFiles: audioFiles, completion: completion)
     }
     
@@ -17,7 +17,39 @@ class AssetPreloader {
     
     static func preloadScenes5and6(completion: @escaping (Bool) -> Void) {
         let sceneName = "scene5and6ely.scn"
-        let audioFiles = ["woodenFloor.wav", "clockTicking.wav", "muffledRain.wav", "s5-grandma.wav", "s5-andra.wav", "fallingCup.mp3"]
+        let audioFiles = ["woodenFloor.wav", "clockTicking.wav", "muffledRain.wav", "s5-grandma.wav", "s5-andra.wav", "fallingCup.mp3", "puzzleFinish.wav", "doorOpen.MP3", "doorClose.MP3"]
+        preloadSceneWithAudio(named: sceneName, audioFiles: audioFiles, completion: completion)
+    }
+    
+    static func preloadScene7(completion: @escaping (Bool) -> Void) {
+        let sceneName = "scene7.scn"
+        let audioFiles = [
+            "muffledRain.wav",
+            "MusicBox.MP3",
+            "jumpascareGrandma.MP3",
+            "s7-grandma.MP3",
+            "SwanLakeRingtone.MP3"
+        ]
+        preloadSceneWithAudio(named: sceneName, audioFiles: audioFiles, completion: completion)
+    }
+    
+    static func preloadScene8(completion: @escaping (Bool) -> Void) {
+        let sceneName = "scene8ely.scn"
+        let audioFiles = [
+            "muffledRain.wav",
+            "s8-andra1.mp3",
+            "pipeNecklace.mp3",
+            "s8-andra2.mp3",
+            "pipeAfterOut.wav",
+            "fallingNecklace.mp3",
+            "s8-andra3.mp3",
+            "s8-andra4.mp3",
+            "jumpscare1.wav",
+            "doll2.wav",
+            "whisperJumpscare.mp3",
+            "waterNecklacePipe.mp3",
+            "door_close.mp3"
+        ]
         preloadSceneWithAudio(named: sceneName, audioFiles: audioFiles, completion: completion)
     }
     

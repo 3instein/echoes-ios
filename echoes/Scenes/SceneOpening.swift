@@ -14,7 +14,7 @@ class SceneOpening: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Prepare Scene 2 and Scene 4 assets
+        // Prepare Scene 2 assets
         prepareScene2Assets()
         
         // Load and play the opening video
@@ -75,23 +75,10 @@ class SceneOpening: UIViewController {
             if success {
                 print("Scene 2 assets successfully prepared.")
                 self?.scene2AssetsPrepared = true
-                self?.prepareScene4Assets() // Chain preloading for Scene 4
+                self?.showSkipButton()
             } else {
                 print("Error: Failed to prepare Scene 2 assets.")
                 self?.scene2AssetsPrepared = false
-            }
-        }
-    }
-    
-    private func prepareScene4Assets() {
-        AssetPreloader.preloadScene4 { [weak self] success in
-            if success {
-                print("Scene 4 assets successfully prepared.")
-                self?.scene4AssetsPrepared = true
-                self?.showSkipButton()
-            } else {
-                print("Error: Failed to prepare Scene 4 assets.")
-                self?.scene4AssetsPrepared = false
             }
         }
     }
