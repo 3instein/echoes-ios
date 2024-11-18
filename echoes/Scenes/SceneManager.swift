@@ -20,7 +20,7 @@ class SceneManager {
         lightNode = SCNNode()
         let light = SCNLight()
         light.type = .omni
-        light.intensity = 1000
+        light.intensity = 0
         light.color = UIColor(red: 0.5, green: 0.5, blue: 1.0, alpha: 1.0) // Blueish tint
         lightNode?.light = light
     }
@@ -82,6 +82,16 @@ class SceneManager {
             return
         }
         let scene8 = Scene8(lightNode: lightNode)
+        scnView?.scene = scene8
+        currentScene = scene8
+    }
+
+    func loadScene9() {
+        guard let lightNode = lightNode else {
+            print("Error: Light node is not initialized.")
+            return
+        }
+        let scene8 = Scene9(lightNode: lightNode, scnView: scnView!)
         scnView?.scene = scene8
         currentScene = scene8
     }

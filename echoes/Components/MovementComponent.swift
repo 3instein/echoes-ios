@@ -6,7 +6,7 @@ import SceneKit
 
 class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
     let playerNode: SCNNode
-    let movementSpeed: Float = 60
+    var movementSpeed: Float = 60
     var joystickComponent: VirtualJoystickComponent?
     var cameraNode: SCNNode?
     var movingProgramatically: Bool = false
