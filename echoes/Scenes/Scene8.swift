@@ -111,8 +111,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "scene8ely.scn") else {
-            print("Warning: House scene 'Scene 8.scn' not found")
-            return
+            fatalError("Scene 'scene8ely.scn' not found.")
         }
         
         // Add the house's nodes to the root node of the GameScene
