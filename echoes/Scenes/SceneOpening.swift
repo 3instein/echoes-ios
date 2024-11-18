@@ -123,11 +123,14 @@ class SceneOpening: UIViewController {
         }
         
         if let button = skipButton {
+            // Adjust button size and position
+            let buttonWidth: CGFloat = 60
+            let buttonHeight: CGFloat = 30
             button.frame = CGRect(
-                x: self.view.bounds.width - 80,
-                y: 40,
-                width: 60,
-                height: 30
+                x: self.view.bounds.width - buttonWidth - 20,
+                y: 20,
+                width: buttonWidth,
+                height: buttonHeight
             )
             self.view.addSubview(button)
             button.addTarget(self, action: #selector(skipVideo), for: .touchUpInside)
