@@ -100,11 +100,11 @@ class SceneManager {
         scnView?.scene = scene7
         currentScene = scene7
         
-        AssetPreloader.preloadScene7 { success in
+        AssetPreloader.preloadScene8 { success in
             if success {
-                print("Scene7 assets ready.")
+                print("Scene8 assets ready.")
             } else {
-                print("Failed to preload Scene7 assets.")
+                print("Failed to preload Scene8 assets.")
             }
         }
     }
@@ -118,23 +118,23 @@ class SceneManager {
         scnView?.scene = scene8
         currentScene = scene8
         
-        AssetPreloader.preloadScene8 { success in
+        AssetPreloader.preloadScene9 { success in
             if success {
-                print("Scene8 assets ready.")
+                print("Scene9 assets ready.")
             } else {
-                print("Failed to preload Scene8 assets.")
+                print("Failed to preload Scene9 assets.")
             }
         }
     }
-
+    
     func loadScene9() {
         guard let lightNode = lightNode else {
             print("Error: Light node is not initialized.")
             return
         }
-        let scene8 = Scene9(lightNode: lightNode, scnView: scnView!)
-        scnView?.scene = scene8
-        currentScene = scene8
+        let scene9 = Scene9(lightNode: lightNode, scnView: scnView!)
+        scnView?.scene = scene9
+        currentScene = scene9
     }
     
     func loadScene10() {

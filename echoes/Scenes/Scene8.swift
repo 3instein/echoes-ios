@@ -140,6 +140,9 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         rootNode.addChildNode(lightNode)
         
+        // Prepare scene 9 assets
+        prepareScene9Assets()
+        
         if let muffledNode = rootNode.childNode(withName: "muffledRain", recursively: true) {
             attachAudio(to: muffledNode, audioFileName: "muffledRain.wav", volume: 0.5, delay: 0)
         }
@@ -176,6 +179,16 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         // Apply font to necklaceLabel safely
         applyCustomFont(to: necklaceLabel, fontSize: 14)
+    }
+    
+    private func prepareScene9Assets() {
+        AssetPreloader.preloadScene9 { success in
+            if success {
+                print("Scene9 assets successfully prepared.")
+            } else {
+                print("Error: Failed to prepare Scene9 assets.")
+            }
+        }
     }
 
     @objc func examinePipe(on view: UIView) {
