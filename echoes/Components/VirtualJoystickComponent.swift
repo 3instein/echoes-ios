@@ -18,6 +18,7 @@ extension UIColor {
 }
 
 class VirtualJoystickComponent: GKComponent {
+    var isEnabled: Bool = true
     static var shared = VirtualJoystickComponent()
     var joystickView: UIView!
     var joystickKnob: UIView!
@@ -145,7 +146,6 @@ class VirtualJoystickComponent: GKComponent {
         let offset = CGPoint(x: location.x - joystickView.bounds.midX, y: location.y - joystickView.bounds.midY)
         let distance = sqrt(offset.x * offset.x + offset.y * offset.y)
         let maxDistance = joystickSize / 2
-        
         switch gesture.state {
         case .began:
             isTouching = true
@@ -182,7 +182,6 @@ class VirtualJoystickComponent: GKComponent {
         idleTimer?.invalidate()
         idleTimer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(handleIdleState), userInfo: nil, repeats: false)
     }
-    
     func resetIdleTimer() {
         idleTimer?.invalidate()
         idleTimer = nil
@@ -200,16 +199,13 @@ class VirtualJoystickComponent: GKComponent {
             self.joystickView.alpha = alpha
         }
     }
-    
     // Function to hide the joystick
     func hideJoystick() {
         UIView.animate(withDuration: 0.5) {
-            self.joystickView.alpha = 0.0
         } completion: { _ in
             self.joystickView.isHidden = true
         }
     }
-    
     // Function to show the joystick
     func showJoystick() {
         joystickView.isHidden = false
