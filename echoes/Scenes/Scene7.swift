@@ -17,17 +17,17 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
     var grandmaEntity: NPCEntity!
     var doorCloseNode : SCNNode?
     
-    var objCakeNode: SCNNode!  // Add a reference for Obj_Cake_003
-    let proximityDistance: Float = 150.0  // Define a proximity distance
+    var objCakeNode: SCNNode! // Add a reference for Obj_Cake_003
+    let proximityDistance: Float = 150.0 // Define a proximity distance
     
     weak var scnView: SCNView?
     var puzzleBackground: UIView?
-    var playButton: UIButton?  // Store a reference to the play button
+    var playButton: UIButton? // Store a reference to the play button
     
     var isPuzzleDisplayed: Bool = false
-    var isGameCompleted: Bool = false  // Track if the game is completed
+    var isGameCompleted: Bool = false // Track if the game is completed
     
-    var pianoKeys: [UIButton] = []  // Store piano keys
+    var pianoKeys: [UIButton] = [] // Store piano keys
     var audioPlayer: AVAudioPlayer? // To play piano sounds
     var userPlayedNotes: [String] = [] // Store user input notes
     let targetMelody: [String] = ["Upper_Mi", "La", "Si", "Upper_Do", "Upper_Re", "Upper_Mi", "Upper_Do", "Upper_Mi"] // Target melody to match

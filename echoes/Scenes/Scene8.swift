@@ -17,14 +17,13 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     
     weak var scnView: SCNView?
     
-    var playButton: UIButton?  // Store a reference to the play button
+    var playButton: UIButton?
     var clueCabinetNode: SCNNode!
     var cluePipeNode: SCNNode!
     
     var hasKey = true  // Track if the player has the key
     var isCabinetOpened = false  // Track if the player has the key
     var isCabinetDone = false  // Track if the player has the key
-
     var isPlayingPipe = false  // Track if the player has the key
     
     let proximityDistance: Float = 180.0  // Define a proximity distance
@@ -55,7 +54,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     
     var isPipeClicked = false
     
-    var rotatingPipeNode: SCNNode?  // Node for the rotating pipe
+    var rotatingPipeNode: SCNNode?
     
     var wipeDirections: [String: String] = [
         "pipeclue-2": "down",

@@ -1,17 +1,9 @@
-//
 //  Scene9.swift
-//  echoes
-//
-//  Created by Pelangi Masita Wati on 27/10/24.
-//
 
 import SceneKit
 import UIKit
 
 class Scene9: SCNScene, SCNPhysicsContactDelegate {
-    var rezaFollowTimer: Timer?
-    private var doorAnimationPlayed = false
-    var stepSound: SCNAudioSource!
     var playerEntity: PlayerEntity!
     var cameraComponent: CameraComponent!
     var joystickComponent: VirtualJoystickComponent!
@@ -19,15 +11,16 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
     var lightNode: SCNNode!
     var movementComponent: MovementComponent?
     var positionTimer: Timer?
-
-    weak var scnView: SCNView?
+    var rezaFollowTimer: Timer?
+    var stepSound: SCNAudioSource!
     var playButton: UIButton?
+    weak var scnView: SCNView?
+    private var doorAnimationPlayed = false
     
     let doorTriggerPosition1 = SCNVector3(-7.592, 494.06, 35.81)
     let doorTriggerPosition2 = SCNVector3(151.224, 504.715, 35.81)
     let doorTriggerPosition3 = SCNVector3(151.224, 504.715, 35.81)
     let doorTriggerDistance: Float = 5.0
-    
     let transitionTriggerPosition = SCNVector3(-239.248, 81.08, 35.81);
     let triggerDistance: Float = 100.0
     let fourthTargetPosition = SCNVector3(-239.248, 81.08, 35.81)
@@ -46,8 +39,7 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
         self.lightNode = lightNode
         
         guard let houseScene = SCNScene(named: "Scene9.scn") else {
-            print("Warning: House scene 'Scene 9.scn' not found")
-            return
+            fatalError("Error: Scene named 'Scene9.scn' not found")
         }
         
         setupPlayerEntityAndMovementComponent()
@@ -93,7 +85,7 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
         }
         
         guard let outsideRain = rootNode.childNode(withName: "outsideRain", recursively: true) else {
-            print("Warning: LightRain node named 'lightRain' not found in house model")
+            print("Warning: outsideRain node named 'outsideRain' not found in house model")
             return
         }
         
@@ -116,9 +108,9 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
             let glowLight = SCNLight()
             glowLight.type = .omni
             glowLight.color = UIColor.blue
-            glowLight.intensity = 1000               // Higher intensity for a strong glow
+            glowLight.intensity = 1000 // Higher intensity for a strong glow
             glowLight.attenuationStartDistance = 0
-            glowLight.attenuationEndDistance = 10    // Adjust distance for the glow effect
+            glowLight.attenuationEndDistance = 10 // Adjust distance for the glow effect
             
             let lightNode = SCNNode()
             lightNode.light = glowLight
@@ -140,7 +132,7 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
         //                }
         //            }
         //        }
-        
+        //
         //        if let url = Bundle.main.url(forResource: "reza idle", withExtension: "dae") {
         //            let sceneSource = SCNSceneSource(url: url, options: nil)
         //            let animationKeys = sceneSource?.identifiersOfEntries(withClass: CAAnimation.self) ?? []
@@ -162,7 +154,7 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
         joystickComponent?.hideJoystick()
         cameraComponent?.lockCamera()
     }
-
+    
     private func unlockPlayerControls() {
         print("Unlocking player controls")
         joystickComponent?.isEnabled = true
@@ -196,7 +188,7 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
                 }
             }
             
-
+            
         }
     }
     
@@ -722,19 +714,19 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
             print("Error: Reza or Player node not found in Scene9")
             return
         }
-
+        
         rezaNode.removeAllActions()
-
-        let minimumDistance: Float = 1.0  // Adjust minimum distance for close proximity check
-        let moveSpeed: Float = 0.05       // Reduced speed for Reza
-
+        
+        let minimumDistance: Float = 1.0 // Adjust minimum distance for close proximity check
+        let moveSpeed: Float = 0.05 // Reduced speed for Reza
+        
         let followPlayerAction = SCNAction.run { [weak self] _ in
             guard let self = self else { return }
-
+            
             let playerPosition = playerNode.position
             let rezaPosition = rezaNode.position
             let distanceToPlayer = playerPosition.distance(to: rezaPosition)
-
+            
             if distanceToPlayer > minimumDistance {
                 let direction = SCNVector3(
                     (playerPosition.x - rezaPosition.x) * moveSpeed,
@@ -751,15 +743,15 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
                 self.showTryAgainPopup()
             }
         }
-
+        
         let repeatFollowAction = SCNAction.repeatForever(SCNAction.sequence([followPlayerAction, SCNAction.wait(duration: 0.1)]))
         rezaNode.runAction(repeatFollowAction)
     }
-
+    
     // Function to display a "Try Again" popup
     private func showTryAgainPopup() {
         guard let view = scnView else { return }
-
+        
         DispatchQueue.main.async {
             let tryAgainLabel = UILabel()
             tryAgainLabel.text = "Try Again"
@@ -770,16 +762,16 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
             tryAgainLabel.translatesAutoresizingMaskIntoConstraints = false
             tryAgainLabel.layer.cornerRadius = 10
             tryAgainLabel.layer.masksToBounds = true
-
+            
             view.addSubview(tryAgainLabel)
-
+            
             NSLayoutConstraint.activate([
                 tryAgainLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
                 tryAgainLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
                 tryAgainLabel.widthAnchor.constraint(equalToConstant: 200),
                 tryAgainLabel.heightAnchor.constraint(equalToConstant: 100)
             ])
-
+            
             // Fade out the label after showing it
             UIView.animate(withDuration: 2.0, delay: 1.0, options: [], animations: {
                 tryAgainLabel.alpha = 0
