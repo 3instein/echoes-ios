@@ -338,7 +338,7 @@ class Scene2: SCNScene {
             blackOverlay.alpha = 0
             scnView.addSubview(blackOverlay)
             
-            UIView.animate(withDuration: 2.0, animations: {
+            UIView.animate(withDuration: 1.0, animations: {
                 blackOverlay.alpha = 1.0
             }, completion: { _ in
                 blackOverlay.removeFromSuperview()
