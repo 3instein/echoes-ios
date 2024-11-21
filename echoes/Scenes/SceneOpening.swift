@@ -14,11 +14,11 @@ class SceneOpening: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Prepare Scene 2 assets
-        prepareScene2Assets()
-        
         // Load and play the opening video
         playOpeningVideo()
+        
+        // Prepare Scene 2 assets
+        prepareScene2Assets()
     }
     
     // MARK: - Video Playback
