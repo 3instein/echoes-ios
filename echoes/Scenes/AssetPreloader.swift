@@ -3,7 +3,7 @@
 import SceneKit
 
 class AssetPreloader {
-    // Preload Scene2
+    // MARK: - Public Methods
     static func preloadScene2(completion: @escaping (Bool) -> Void) {
         let sceneName = "scene2.scn"
         let audioFiles = [
@@ -20,7 +20,6 @@ class AssetPreloader {
         preloadSceneWithAudio(named: sceneName, audioFiles: audioFiles, completion: completion)
     }
     
-    // Preload Scene4
     static func preloadScene4(completion: @escaping (Bool) -> Void) {
         let sceneName = "scene4ely.scn"
         let audioFiles = [
@@ -34,7 +33,6 @@ class AssetPreloader {
         preloadSceneWithAudio(named: sceneName, audioFiles: audioFiles, completion: completion)
     }
     
-    // Preload Scenes5and6
     static func preloadScenes5and6(completion: @escaping (Bool) -> Void) {
         let sceneName = "scene5and6ely.scn"
         let audioFiles = [
@@ -51,7 +49,6 @@ class AssetPreloader {
         preloadSceneWithAudio(named: sceneName, audioFiles: audioFiles, completion: completion)
     }
     
-    // Preload Scene7
     static func preloadScene7(completion: @escaping (Bool) -> Void) {
         let sceneName = "scene7.scn"
         let audioFiles = [
@@ -64,7 +61,6 @@ class AssetPreloader {
         preloadSceneWithAudio(named: sceneName, audioFiles: audioFiles, completion: completion)
     }
     
-    // Preload Scene8
     static func preloadScene8(completion: @escaping (Bool) -> Void) {
         let sceneName = "scene8ely.scn"
         let audioFiles = [
@@ -85,7 +81,6 @@ class AssetPreloader {
         preloadSceneWithAudio(named: sceneName, audioFiles: audioFiles, completion: completion)
     }
     
-    // Preload Scene9
     static func preloadScene9(completion: @escaping (Bool) -> Void) {
         let sceneName = "scene9.scn"
         let audioFiles = [
@@ -103,59 +98,71 @@ class AssetPreloader {
         preloadSceneWithAudio(named: sceneName, audioFiles: audioFiles, completion: completion)
     }
     
-    // Generalized function to preload both scene and its audio assets
+    // MARK: - Core Preloading Logic
     static func preloadSceneWithAudio(named sceneName: String, audioFiles: [String], completion: @escaping (Bool) -> Void) {
-        preloadScene(named: sceneName) { sceneSuccess in
-            if !sceneSuccess {
-                completion(false)
-                return
-            }
-            
-            preloadAudioFiles(audioFiles) { audioSuccess in
-                completion(audioSuccess)
+        DispatchQueue.global(qos: .userInitiated).async {
+            preloadScene(named: sceneName) { sceneSuccess in
+                if !sceneSuccess {
+                    DispatchQueue.main.async {
+                        completion(false)
+                    }
+                    return
+                }
+                
+                preloadAudioFiles(audioFiles) { audioSuccess in
+                    DispatchQueue.main.async {
+                        completion(audioSuccess)
+                    }
+                }
             }
         }
     }
     
-    // Preload scene nodes, geometries, materials, textures, and animations
+    // MARK: - Scene Preloading
     private static func preloadScene(named sceneName: String, completion: @escaping (Bool) -> Void) {
         guard let scene = SCNScene(named: sceneName) else {
-            print("Scene \(sceneName) not found.")
+            print("Scene named '\(sceneName)' not found.")
             completion(false)
             return
         }
         
-        // Preload all child nodes and their properties
         let scnView = SCNView()
-        scnView.prepare(scene.rootNode.childNodes) { success in
-            if success {
-                print("Scene \(sceneName) nodes successfully prepared.")
-                scene.rootNode.enumerateChildNodes { node, _ in
-                    preloadNodeProperties(node)
-                }
+        let childNodes = scene.rootNode.childNodes
+        
+        var success = true
+        for node in childNodes {
+            let nodePrepared = scnView.prepare(node, shouldAbortBlock: nil)
+            if !nodePrepared {
+                print("Failed to prepare node \(node.name ?? "Unnamed Node")")
+                success = false
             } else {
-                print("Failed to prepare \(sceneName) nodes.")
-            }
-            completion(success)
-        }
-    }
-    
-    // Preload node properties: geometry, materials, textures, animations
-    private static func preloadNodeProperties(_ node: SCNNode) {
-        // Access geometry
-        if let geometry = node.geometry {
-            _ = geometry.materials // Access materials
-            geometry.materials.forEach { material in
-                if let texture = material.diffuse.contents as? UIImage {
-                    _ = texture.cgImage // Force texture loading
-                }
+                preloadNodeProperties(node)
             }
         }
         
-        // Access animations
+        if success {
+            print("Scene \(sceneName) nodes successfully prepared.")
+        } else {
+            print("Some nodes in \(sceneName) failed to prepare.")
+        }
+        completion(success)
+    }
+    
+    // MARK: - Node Property Preloading
+    private static func preloadNodeProperties(_ node: SCNNode) {
+        // Preload geometry and materials
+        if let geometry = node.geometry {
+            geometry.materials.forEach { material in
+                _ = material.diffuse.contents as? UIImage
+                _ = material.normal.contents as? UIImage
+                _ = material.ambient.contents as? UIImage
+            }
+        }
+        
+        // Preload animations
         node.animationKeys.forEach { key in
             if let animationPlayer = node.animationPlayer(forKey: key) {
-                node.addAnimationPlayer(animationPlayer, forKey: key)
+                animationPlayer.stop() // Ensure it's initialized
             }
         }
         
@@ -163,13 +170,14 @@ class AssetPreloader {
         node.childNodes.forEach { preloadNodeProperties($0) }
     }
     
-    // Preload audio assets
+    // MARK: - Audio Preloading
     private static func preloadAudioFiles(_ audioFiles: [String], completion: @escaping (Bool) -> Void) {
         var loadedAudioSources = [SCNAudioSource]()
         
         for fileName in audioFiles {
             if let audioSource = SCNAudioSource(fileNamed: fileName) {
-                audioSource.shouldStream = false
+                audioSource.shouldStream = fileName.hasSuffix(".mp3") // Stream large files
+                audioSource.loops = fileName.contains("loop") // Loop ambient sounds
                 audioSource.load()
                 loadedAudioSources.append(audioSource)
             } else {
