@@ -26,8 +26,7 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
         self.lightNode = lightNode
         scnView?.pointOfView = cameraNode
         
-        loadScene4Assets()
-        prepareScene5And6Assets()
+        loadSceneAssets()
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -35,7 +34,7 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
     }
     
     // MARK: - Asset Loading
-    private func loadScene4Assets() {
+    private func loadSceneAssets() {
         guard let houseScene = SCNScene(named: "scene4ely.scn") else {
             fatalError("Error: Scene named 'scene4ely.scn' not found")
         }
@@ -48,16 +47,6 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
         initializePlayerEntity()
         attachAudioAssets()
         addBlueFireAnimationNode()
-    }
-    
-    private func prepareScene5And6Assets() {
-        AssetPreloader.preloadScenes5and6 { success in
-            if success {
-                print("Scene5and6 assets successfully prepared.")
-            } else {
-                print("Error: Failed to prepare Scene5and6 assets.")
-            }
-        }
     }
     
     // MARK: - Player Setup

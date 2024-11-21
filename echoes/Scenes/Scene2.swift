@@ -50,18 +50,6 @@ class Scene2: SCNScene {
         
         setupSceneComponents()
         attachAmbientSounds()
-        prepareScene4Assets()
-    }
-    
-    // MARK: - Asset Preloading
-    private func prepareScene4Assets() {
-        AssetPreloader.preloadScene4 { success in
-            if success {
-                print("Scene4 assets successfully prepared.")
-            } else {
-                print("Error: Failed to prepare Scene4 assets.")
-            }
-        }
     }
     
     // MARK: - Scene Setup
@@ -318,32 +306,41 @@ class Scene2: SCNScene {
         
         let playSoundAction = SCNAction.playAudio(doorCloseSound, waitForCompletion: false)
         let fadeToBlackAction = SCNAction.run { [weak self] _ in
-            self?.fadeScreenToBlack()
+            self?.fadeScreenToBlackAndLoadScene4()
         }
         
         let groupAction = SCNAction.group([playSoundAction, fadeToBlackAction])
         rootNode.runAction(groupAction) { [weak self] in
             print("Scene 2 ended")
-            // Notify GameViewController to load Scene4
-            self?.delegate?.transitionToScene4()
         }
     }
     
-    func fadeScreenToBlack() {
+    func fadeScreenToBlackAndLoadScene4() {
         guard let scnView = scnView else { return }
         
         DispatchQueue.main.async {
-            let blackOverlay = UIView(frame: scnView.bounds)
-            blackOverlay.backgroundColor = .black
-            blackOverlay.alpha = 0
-            scnView.addSubview(blackOverlay)
+            let loadingView = LoadingView(frame: scnView.bounds)
+            scnView.addSubview(loadingView)
             
-            UIView.animate(withDuration: 1.0, animations: {
-                blackOverlay.alpha = 1.0
-            }, completion: { _ in
-                blackOverlay.removeFromSuperview()
-                print("Fade to black complete")
-            })
+            loadingView.fadeIn {
+                // Prepare Scene 4
+                AssetPreloader.preloadScene4 { success in
+                    DispatchQueue.main.async {
+                        if success {
+                            print("Scene 4 assets successfully prepared.")
+                            
+                            // Transition to Scene 4
+                            self.delegate?.transitionToScene4()
+                            
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                loadingView.stopLoading()
+                            }
+                        } else {
+                            print("Error: Failed to prepare Scene 4 assets.")
+                        }
+                    }
+                }
+            }
         }
     }
     

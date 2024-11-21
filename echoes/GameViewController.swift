@@ -64,7 +64,7 @@ class GameViewController: UIViewController, Scene2Delegate {
         
         // Configure the SCNView
         scnView.allowsCameraControl = false
-        //        scnView.showsStatistics = true
+        // scnView.showsStatistics = true
         scnView.backgroundColor = UIColor.black
         
         // Create and configure the interaction button
@@ -99,9 +99,6 @@ class GameViewController: UIViewController, Scene2Delegate {
         }
         GameViewController.joystickComponent.showJoystickTutorial()
         
-        // Temporarily reset the background color to clear (prevents black background flash)
-        scnView.backgroundColor = UIColor.clear
-        
         if let gameScene = self.scnView.scene as? Scene4 {
             GameViewController.playerEntity = gameScene.playerEntity
             
@@ -122,11 +119,6 @@ class GameViewController: UIViewController, Scene2Delegate {
             gameScene.fogColor = UIColor.black
             
             gameScene.setupGestureRecognizers(for: self.scnView)
-            
-            // After scene loads, set the background back to black
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                self.scnView.backgroundColor = UIColor.black
-            }
         }
     }
     
@@ -276,7 +268,7 @@ class GameViewController: UIViewController, Scene2Delegate {
         
         //SCENE 8
         if let gameScene = scnView.scene as? Scene8 {
-//             Check if the player is near the transition point
+            // Check if the player is near the transition point
             if gameScene.isJumpscareDone && gameScene.checkProximityToTransition() {
                 if let doorNode = gameScene.rootNode.childNode(withName: "doorFamilyRoom", recursively: true) {
                     attachAudio(to: doorNode, audioFileName: "door_open.mp3", volume: 3, delay: 0)
