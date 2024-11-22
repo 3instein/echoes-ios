@@ -125,9 +125,6 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         
         rootNode.addChildNode(lightNode)
         
-        // Prepare scene 7 assets
-        prepareScene7Assets()
-        
         // Find Obj_Cake_003 node in the scene
         objCakeNode = rootNode.childNode(withName: "Puzzle_1", recursively: true)
         
@@ -179,16 +176,6 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         
         // Apply font to necklaceLabel safely
         applyCustomFont(to: puzzleLabel, fontSize: 14)
-    }
-    
-    private func prepareScene7Assets() {
-        AssetPreloader.preloadScene7 { success in
-            if success {
-                print("Scene7 assets successfully prepared.")
-            } else {
-                print("Error: Failed to prepare Scene7 assets.")
-            }
-        }
     }
         
     func jumpscareDoll() {
