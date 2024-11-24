@@ -386,28 +386,34 @@ class GameViewController: UIViewController, Scene2Delegate {
         
         // Scene 8
         if let gameScene = scnView.scene as? Scene8 {
-            // Check if the player is near the transition point
-            if gameScene.isJumpscareDone && gameScene.checkProximityToTransition() {
+            // Ensure the transition logic is executed only once
+            if !isTransitioning && gameScene.isJumpscareDone && gameScene.checkProximityToTransition() {
+                isTransitioning = true // Set the flag to prevent multiple triggers
+
+                // Play the door opening sound
                 if let doorNode = gameScene.rootNode.childNode(withName: "doorFamilyRoom", recursively: true) {
                     attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 3, delay: 0)
                 }
-                
+
                 // Display the loading screen
                 let loadingView = LoadingView(frame: scnView.bounds)
                 scnView.addSubview(loadingView)
                 loadingView.fadeIn { [weak self] in
                     guard let self = self else { return }
-                    
+
                     // Preload Scene9 assets
                     AssetPreloader.preloadScene9 { success in
                         DispatchQueue.main.async {
                             if success {
                                 print("Scene9 assets successfully prepared.")
+
+                                // Load Scene9
                                 SceneManager.shared.loadScene9()
-                                
+
+                                // Configure Scene9 after loading
                                 if let gameScene = self.scnView.scene as? Scene9 {
                                     GameViewController.playerEntity = gameScene.playerEntity
-                                    
+
                                     // Create a movement component to handle player movement, including the light node
                                     let movementComponent = MovementComponent(
                                         playerNode: gameScene.playerEntity.playerNode!,
@@ -415,22 +421,23 @@ class GameViewController: UIViewController, Scene2Delegate {
                                         lightNode: gameScene.lightNode
                                     )
                                     GameViewController.playerEntity.movementComponent = movementComponent
-                                    
+
                                     // Link the joystick with the movement component
                                     if let movementComponent = gameScene.playerEntity.movementComponent {
                                         movementComponent.joystickComponent = GameViewController.joystickComponent
                                         self.scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
                                     }
-                                    
+
                                     // Set up fog properties for the scene
                                     gameScene.fogStartDistance = 25.0
                                     gameScene.fogEndDistance = 300.0
                                     gameScene.fogDensityExponent = 0.3
                                     gameScene.fogColor = UIColor.black
-                                    
+
+                                    // Configure gesture recognizers
                                     gameScene.setupGestureRecognizers(for: self.scnView)
                                 }
-                                
+
                                 // Stop the loading screen after Scene9 is fully loaded
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                                     loadingView.stopLoading()
@@ -439,49 +446,53 @@ class GameViewController: UIViewController, Scene2Delegate {
                                 print("Error: Failed to prepare Scene9 assets.")
                                 loadingView.stopLoading()
                             }
+
+                            // Reset the transition state
+                            self.isTransitioning = false
                         }
                     }
                 }
             }
-            
-            let cabinetNodeName = "smallCabinet"
-            if let cabinetNode = gameScene.rootNode.childNode(withName: cabinetNodeName, recursively: true) {
-                // Set the category bitmask for post-processing
+
+            // Set the category bitmask for cabinet and pipe nodes for post-processing
+            if let cabinetNode = gameScene.rootNode.childNode(withName: "smallCabinet", recursively: true) {
                 cabinetNode.categoryBitMask = 2
             }
-            
-            let pipeNodeName = "pipe_1"
-            if let pipeNode = gameScene.rootNode.childNode(withName: pipeNodeName, recursively: true) {
-                // Set the category bitmask for post-processing
+
+            if let pipeNode = gameScene.rootNode.childNode(withName: "pipe_1", recursively: true) {
                 pipeNode.categoryBitMask = 2
             }
-            
+
+            // Load and apply the SCNTechnique for the glow effect
             if let path = Bundle.main.path(forResource: "NodeTechnique", ofType: "plist"),
                let dict = NSDictionary(contentsOfFile: path) as? [String: AnyObject] {
                 let technique = SCNTechnique(dictionary: dict)
-                
-                // Optionally set a custom color for the glow
-                let glowColor = SCNVector3(0.0, 1.0, 1.0)  // Cyan outline
+
+                let glowColor = SCNVector3(0.0, 1.0, 1.0) // Cyan outline
                 technique?.setValue(NSValue(scnVector3: glowColor), forKeyPath: "glowColorSymbol")
-                
+
                 scnView.technique = technique
             }
-            
+
+            // Update proximity and glow for interactable objects
             gameScene.updateProximityAndGlow(interactButton: interactButton)
-            
+
+            // Handle button interactions
             if interactButton.titleLabel?.text == "Examine Pipe" && interactButton.isTouchInside {
                 gameScene.isPipeClicked = true
             } else if interactButton.titleLabel?.text == "Open Cabinet" && interactButton.isTouchInside {
                 gameScene.isCabinetOpened = true
             }
-            
+
+            // Toggle joystick and button visibility based on game state
             if gameScene.isPlayingPipe || (!gameScene.isCabinetDone && gameScene.isCabinetOpened) || gameScene.isDollJumpscare {
                 GameViewController.joystickComponent.joystickView.isHidden = true
                 interactButton.isHidden = true
             } else if !gameScene.isCabinetOpened || (gameScene.isCabinetOpened && !gameScene.isPlayingPipe) || (!gameScene.isDollJumpscare && gameScene.isNecklaceObtained) {
                 GameViewController.joystickComponent.joystickView.isHidden = false
             }
-            
+
+            // Handle necklace or pipe game state
             if gameScene.isNecklaceFalling {
                 gameScene.displayNecklaceObtainedLabel(on: self.view)
                 gameScene.isNecklaceFalling = false
@@ -489,10 +500,11 @@ class GameViewController: UIViewController, Scene2Delegate {
                 gameScene.displayNecklaceObtainedLabel(on: self.view)
                 gameScene.isPipeFailed = false
             }
-            
+
+            // Handle jumpscare events
             if gameScene.isDollJumpscare && !gameScene.isJumpscareDone {
                 gameScene.displayJumpscareLabel(on: self.view)
-                
+
                 DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) {
                     UIView.animate(withDuration: 0.5) {
                         gameScene.necklaceLabel.alpha = 0.0
