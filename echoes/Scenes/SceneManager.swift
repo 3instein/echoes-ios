@@ -25,6 +25,12 @@ class SceneManager {
         lightNode?.light = light
     }
     
+    // Func to clear previous scene before load the new one
+    private func cleanupCurrentScene() {
+        currentScene?.rootNode.childNodes.forEach { $0.removeFromParentNode() }
+        currentScene = nil
+    }
+    
     // Function to load Scene1 and pass the lightNode
     func loadScene1() {
         guard let lightNode = lightNode else {
@@ -37,6 +43,7 @@ class SceneManager {
     }
     
     func loadScene2() {
+        cleanupCurrentScene()
         guard let lightNode = lightNode else {
             print("Error: Light node is not initialized.")
             return
@@ -47,6 +54,7 @@ class SceneManager {
     }
     
     func loadScene4() {
+        cleanupCurrentScene()
         guard let lightNode = lightNode else {
             print("Error: Light node is not initialized.")
             return
@@ -58,6 +66,7 @@ class SceneManager {
     }
     
     func loadScene5and6() {
+        cleanupCurrentScene()
         guard let lightNode = lightNode else {
             print("Error: Light node is not initialized.")
             return
@@ -68,6 +77,7 @@ class SceneManager {
     }
     
     func loadScene7() {
+        cleanupCurrentScene()
         guard let lightNode = lightNode else {
             print("Error: Light node is not initialized.")
             return
@@ -78,6 +88,7 @@ class SceneManager {
     }
     
     func loadScene8() {
+        cleanupCurrentScene()
         guard let lightNode = lightNode else {
             print("Error: Light node is not initialized.")
             return
@@ -88,6 +99,7 @@ class SceneManager {
     }
     
     func loadScene9() {
+        cleanupCurrentScene()
         guard let lightNode = lightNode else {
             print("Error: Light node is not initialized.")
             return
@@ -98,6 +110,7 @@ class SceneManager {
     }
     
     func loadScene10() {
+        cleanupCurrentScene()
         guard let lightNode = lightNode, let scnView = scnView else {
             print("Error: Light node or SCNView is not initialized.")
             return
