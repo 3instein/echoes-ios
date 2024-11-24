@@ -14,6 +14,7 @@ class GameViewController: UIViewController, Scene2Delegate {
     
     var scnView: SCNView!
     var interactButton: UIButton!
+    var isTransitioning: Bool = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -95,8 +96,11 @@ class GameViewController: UIViewController, Scene2Delegate {
         
         // Scene 4
         if let gameScene = scnView.scene as? Scene4 {
-            // Check if the player is near the transition point
-            if gameScene.checkProximityToTransition() {
+            // Ensure the transition logic is executed only once
+            if !isTransitioning && gameScene.checkProximityToTransition() {
+                isTransitioning = true // Set the flag to prevent multiple triggers
+                
+                // Play the door opening sound
                 if let doorNode = gameScene.rootNode.childNode(withName: "doorFamilyRoom", recursively: true) {
                     attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 3, delay: 0)
                 }
@@ -112,8 +116,11 @@ class GameViewController: UIViewController, Scene2Delegate {
                         DispatchQueue.main.async {
                             if success {
                                 print("Scene5and6 assets successfully prepared.")
+                                
+                                // Load Scene5and6
                                 SceneManager.shared.loadScene5and6()
                                 
+                                // Configure Scene5and6 after loading
                                 if let gameScene = self.scnView.scene as? Scene5and6 {
                                     GameViewController.playerEntity = gameScene.playerEntity
                                     
@@ -137,15 +144,21 @@ class GameViewController: UIViewController, Scene2Delegate {
                                     gameScene.fogDensityExponent = 0.3
                                     gameScene.fogColor = UIColor.black
                                     
+                                    // Configure gesture recognizers
                                     gameScene.setupGestureRecognizers(for: self.scnView)
                                 }
                                 
                                 // Stop the loading screen after Scene5and6 is fully loaded
-                                loadingView.stopLoading()
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                                    loadingView.stopLoading()
+                                }
                             } else {
                                 print("Error: Failed to prepare Scene5and6 assets.")
                                 loadingView.stopLoading()
                             }
+                            
+                            // Reset the transition state
+                            self.isTransitioning = false
                         }
                     }
                 }
@@ -154,7 +167,11 @@ class GameViewController: UIViewController, Scene2Delegate {
         
         // Scene 5 and 6
         if let gameScene = scnView.scene as? Scene5and6 {
-            if gameScene.checkProximityToTransition() {
+            // Ensure the transition logic is executed only once
+            if !isTransitioning && gameScene.checkProximityToTransition() {
+                isTransitioning = true // Set the flag to prevent multiple triggers
+                
+                // Play the door opening sound
                 if let doorNode = gameScene.rootNode.childNode(withName: "doorKiranaBedroom", recursively: true) {
                     attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 3, delay: 0)
                 }
@@ -170,8 +187,11 @@ class GameViewController: UIViewController, Scene2Delegate {
                         DispatchQueue.main.async {
                             if success {
                                 print("Scene7 assets successfully prepared.")
+                                
+                                // Load Scene7
                                 SceneManager.shared.loadScene7()
                                 
+                                // Configure Scene7 after loading
                                 if let gameScene = self.scnView.scene as? Scene7 {
                                     GameViewController.playerEntity = gameScene.playerEntity
                                     
@@ -195,15 +215,21 @@ class GameViewController: UIViewController, Scene2Delegate {
                                     gameScene.fogDensityExponent = 0.5
                                     gameScene.fogColor = UIColor.black
                                     
+                                    // Configure gesture recognizers
                                     gameScene.setupGestureRecognizers(for: self.scnView)
                                 }
                                 
                                 // Stop the loading screen after Scene7 is fully loaded
-                                loadingView.stopLoading()
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                                    loadingView.stopLoading()
+                                }
                             } else {
                                 print("Error: Failed to prepare Scene7 assets.")
                                 loadingView.stopLoading()
                             }
+                            
+                            // Reset the transition state
+                            self.isTransitioning = false
                         }
                     }
                 }
@@ -250,27 +276,34 @@ class GameViewController: UIViewController, Scene2Delegate {
         
         // Scene 7
         if let gameScene = scnView.scene as? Scene7 {
-            if gameScene.checkProximityToTransition() {
+            // Ensure the transition logic is executed only once
+            if !isTransitioning && gameScene.checkProximityToTransition() {
+                isTransitioning = true // Set the flag to prevent multiple triggers
+
+                // Play the door opening sound
                 if let doorNode = gameScene.rootNode.childNode(withName: "doorToilet", recursively: true) {
                     attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 3, delay: 0)
                 }
-                
+
                 // Display the loading screen
                 let loadingView = LoadingView(frame: scnView.bounds)
                 scnView.addSubview(loadingView)
                 loadingView.fadeIn { [weak self] in
                     guard let self = self else { return }
-                    
+
                     // Preload Scene8 assets
                     AssetPreloader.preloadScene8 { success in
                         DispatchQueue.main.async {
                             if success {
                                 print("Scene8 assets successfully prepared.")
+
+                                // Load Scene8
                                 SceneManager.shared.loadScene8()
-                                
+
+                                // Configure Scene8 after loading
                                 if let gameScene = self.scnView.scene as? Scene8 {
                                     GameViewController.playerEntity = gameScene.playerEntity
-                                    
+
                                     // Create a movement component to handle player movement, including the light node
                                     let movementComponent = MovementComponent(
                                         playerNode: gameScene.playerEntity.playerNode!,
@@ -278,67 +311,74 @@ class GameViewController: UIViewController, Scene2Delegate {
                                         lightNode: gameScene.lightNode
                                     )
                                     GameViewController.playerEntity.movementComponent = movementComponent
-                                    
+
                                     // Link the joystick with the movement component
                                     if let movementComponent = gameScene.playerEntity.movementComponent {
                                         movementComponent.joystickComponent = GameViewController.joystickComponent
                                         self.scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
                                     }
-                                    
+
                                     // Set up fog properties for the scene
                                     gameScene.fogStartDistance = 25.0
                                     gameScene.fogEndDistance = 300.0
                                     gameScene.fogDensityExponent = 0.5
                                     gameScene.fogColor = UIColor.black
-                                    
+
+                                    // Configure gesture recognizers
                                     gameScene.setupGestureRecognizers(for: self.scnView)
                                 }
-                                
+
                                 // Stop the loading screen after Scene8 is fully loaded
-                                loadingView.stopLoading()
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                                    loadingView.stopLoading()
+                                }
                             } else {
                                 print("Error: Failed to prepare Scene8 assets.")
                                 loadingView.stopLoading()
                             }
+
+                            // Reset the transition state
+                            self.isTransitioning = false
                         }
                     }
                 }
             }
-            
+
+            // Configure glow effect for specific nodes
             if let musicBoxNode = gameScene.rootNode.childNode(withName: "musicBox", recursively: true) {
                 musicBoxNode.categoryBitMask = 2
             }
-            
+
             if let phoneNode = gameScene.rootNode.childNode(withName: "phone", recursively: true) {
                 phoneNode.categoryBitMask = 2
             }
-            
+
             // Load and apply the SCNTechnique for the glow effect
             if let path = Bundle.main.path(forResource: "NodeTechnique", ofType: "plist"),
                let dict = NSDictionary(contentsOfFile: path) as? [String: AnyObject] {
                 let technique = SCNTechnique(dictionary: dict)
-                
-                let glowColor = SCNVector3(0.0, 1.0, 1.0)  // Cyan outline
+
+                let glowColor = SCNVector3(0.0, 1.0, 1.0) // Cyan outline
                 technique?.setValue(NSValue(scnVector3: glowColor), forKeyPath: "glowColorSymbol")
-                
+
                 scnView.technique = technique
             }
-            
+
             // Check proximity to interactable objects and show button
             gameScene.updateProximityAndGlow(interactButton: interactButton)
-            
-            // Hide joystick and button when puzzle is open
+
+            // Hide joystick and button when a puzzle is open
             if gameScene.isPlayingPiano || gameScene.isOpenPhone {
                 GameViewController.joystickComponent.joystickView.isHidden = true
-                interactButton.isHidden = true  // Hide interact button
+                interactButton.isHidden = true // Hide interact button
             } else {
                 GameViewController.joystickComponent.joystickView.isHidden = false
             }
-            
+
             if gameScene.isGrandmaFinishedTalking || gameScene.isSwanLakePlaying {
                 GameViewController.joystickComponent.joystickView.isHidden = false
             }
-            
+
             if gameScene.isGrandmaisTalking {
                 GameViewController.joystickComponent.joystickView.isHidden = true
             }
@@ -392,7 +432,9 @@ class GameViewController: UIViewController, Scene2Delegate {
                                 }
                                 
                                 // Stop the loading screen after Scene9 is fully loaded
-                                loadingView.stopLoading()
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                                    loadingView.stopLoading()
+                                }
                             } else {
                                 print("Error: Failed to prepare Scene9 assets.")
                                 loadingView.stopLoading()

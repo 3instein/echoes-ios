@@ -82,7 +82,7 @@ class AssetPreloader {
     }
     
     static func preloadScene9(completion: @escaping (Bool) -> Void) {
-        let sceneName = "scene9.scn"
+        let sceneName = "Scene9.scn"
         let audioFiles = [
             "woodenFloor.wav",
             "clockTicking.wav",
