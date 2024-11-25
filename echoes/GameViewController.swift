@@ -112,6 +112,9 @@ class GameViewController: UIViewController, Scene2Delegate {
                 loadingView.fadeIn { [weak self] in
                     guard let self = self else { return }
                     
+                    // Clean up the current scene first
+                    SceneManager.shared.cleanupCurrentScene()
+                    
                     // Preload Scene5and6 assets
                     AssetPreloader.preloadScenes5and6 { success in
                         DispatchQueue.main.async {
@@ -184,6 +187,9 @@ class GameViewController: UIViewController, Scene2Delegate {
                 scnView.addSubview(loadingView)
                 loadingView.fadeIn { [weak self] in
                     guard let self = self else { return }
+                    
+                    // Clean up the current scene first
+                    SceneManager.shared.cleanupCurrentScene()
                     
                     // Preload Scene7 assets
                     AssetPreloader.preloadScene7 { success in
@@ -296,6 +302,9 @@ class GameViewController: UIViewController, Scene2Delegate {
                 loadingView.fadeIn { [weak self] in
                     guard let self = self else { return }
                     
+                    // Clean up the current scene first
+                    SceneManager.shared.cleanupCurrentScene()
+                    
                     // Preload Scene8 assets
                     AssetPreloader.preloadScene8 { success in
                         DispatchQueue.main.async {
@@ -407,6 +416,9 @@ class GameViewController: UIViewController, Scene2Delegate {
                 scnView.addSubview(loadingView)
                 loadingView.fadeIn { [weak self] in
                     guard let self = self else { return }
+                    
+                    // Clean up the current scene first
+                    SceneManager.shared.cleanupCurrentScene()
                     
                     // Preload Scene9 assets
                     AssetPreloader.preloadScene9 { success in
