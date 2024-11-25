@@ -29,8 +29,10 @@ class VirtualJoystickComponent: GKComponent {
     let joystickSize: CGFloat = 140.0
     let knobSize: CGFloat = 70.0
     var idleTimer: Timer?
+    var isEnabled: Bool = true
     private var hasShownCameraInstruction = false
     private var hasShownBasicTutorial = false
+    
     
     override init() {
         super.init()
