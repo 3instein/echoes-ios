@@ -78,6 +78,8 @@ class LoadingView: UIView {
     
     // MARK: - Public Methods
     func fadeIn(completion: (() -> Void)? = nil) {
+        GameViewController.joystickComponent.hideJoystick()
+        
         self.alpha = 0.0
         UIView.animate(withDuration: 1.0, animations: {
             self.alpha = 0.9
@@ -96,6 +98,9 @@ class LoadingView: UIView {
     
     func stopLoading() {
         fadeOut { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                GameViewController.joystickComponent.showJoystick()
+            }
             self?.removeFromSuperview()
         }
     }
