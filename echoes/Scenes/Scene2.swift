@@ -148,8 +148,11 @@ class Scene2: SCNScene {
         let firstPosition = SCNVector3(x: -15.441, y: -30.882, z: 0.253)
         let secondPosition = SCNVector3(x: -15.388, y: -30.067, z: 0.728)
         
-        // Play grass footsteps and move to the first position
-        playFootstepAudio(named: "grassFootsteps.wav", player: &grassFootstepAudioPlayer)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) { [self] in
+            // Play grass footsteps and move to the first position
+            playFootstepAudio(named: "grassFootsteps.wav", player: &grassFootstepAudioPlayer)
+        }
+        
         playerEntity.movementComponent.movePlayer(to: firstPosition, duration: 18.0) { [weak self] in
             // Stop grass footsteps when reaching the first position
             self?.stopFootstepAudio(player: &self!.grassFootstepAudioPlayer)
