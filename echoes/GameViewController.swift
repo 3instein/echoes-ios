@@ -98,7 +98,8 @@ class GameViewController: UIViewController, Scene2Delegate {
         if let gameScene = scnView.scene as? Scene4 {
             // Ensure the transition logic is executed only once
             if !isTransitioning && gameScene.checkProximityToTransition() {
-                isTransitioning = true // Set the flag to prevent multiple triggers
+                isTransitioning = true
+                GameViewController.joystickComponent.hideJoystick()
                 
                 // Play the door opening sound
                 if let doorNode = gameScene.rootNode.childNode(withName: "doorFamilyRoom", recursively: true) {
@@ -155,6 +156,7 @@ class GameViewController: UIViewController, Scene2Delegate {
                             } else {
                                 print("Error: Failed to prepare Scene5and6 assets.")
                                 loadingView.stopLoading()
+                                GameViewController.joystickComponent.showJoystick()
                             }
                             
                             // Reset the transition state
@@ -169,7 +171,8 @@ class GameViewController: UIViewController, Scene2Delegate {
         if let gameScene = scnView.scene as? Scene5and6 {
             // Ensure the transition logic is executed only once
             if !isTransitioning && gameScene.checkProximityToTransition() {
-                isTransitioning = true // Set the flag to prevent multiple triggers
+                isTransitioning = true
+                GameViewController.joystickComponent.hideJoystick()
                 
                 // Play the door opening sound
                 if let doorNode = gameScene.rootNode.childNode(withName: "doorKiranaBedroom", recursively: true) {
@@ -222,6 +225,7 @@ class GameViewController: UIViewController, Scene2Delegate {
                                 // Stop the loading screen after Scene7 is fully loaded
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                                     loadingView.stopLoading()
+                                    GameViewController.joystickComponent.showJoystick()
                                 }
                             } else {
                                 print("Error: Failed to prepare Scene7 assets.")
@@ -278,7 +282,8 @@ class GameViewController: UIViewController, Scene2Delegate {
         if let gameScene = scnView.scene as? Scene7 {
             // Ensure the transition logic is executed only once
             if !isTransitioning && gameScene.checkProximityToTransition() {
-                isTransitioning = true // Set the flag to prevent multiple triggers
+                isTransitioning = true
+                GameViewController.joystickComponent.hideJoystick()
                 
                 // Play the door opening sound
                 if let doorNode = gameScene.rootNode.childNode(withName: "doorToilet", recursively: true) {
@@ -335,6 +340,7 @@ class GameViewController: UIViewController, Scene2Delegate {
                             } else {
                                 print("Error: Failed to prepare Scene8 assets.")
                                 loadingView.stopLoading()
+                                GameViewController.joystickComponent.showJoystick()
                             }
                             
                             // Reset the transition state
@@ -388,7 +394,8 @@ class GameViewController: UIViewController, Scene2Delegate {
         if let gameScene = scnView.scene as? Scene8 {
             // Ensure the transition logic is executed only once
             if !isTransitioning && gameScene.isJumpscareDone && gameScene.checkProximityToTransition() {
-                isTransitioning = true // Set the flag to prevent multiple triggers
+                isTransitioning = true
+                GameViewController.joystickComponent.hideJoystick()
                 
                 // Play the door opening sound
                 if let doorNode = gameScene.rootNode.childNode(withName: "doorFamilyRoom", recursively: true) {
@@ -445,6 +452,7 @@ class GameViewController: UIViewController, Scene2Delegate {
                             } else {
                                 print("Error: Failed to prepare Scene9 assets.")
                                 loadingView.stopLoading()
+                                GameViewController.joystickComponent.showJoystick()
                             }
                             
                             // Reset the transition state
