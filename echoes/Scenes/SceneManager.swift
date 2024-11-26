@@ -1,8 +1,9 @@
-// SceneManager.swift
+//  SceneManager.swift
 
 import SceneKit
 
 class SceneManager {
+    // MARK: - Properties & Initialization
     static let shared = SceneManager()
     private var currentScene: SCNScene?
     private var scnView: SCNView?
@@ -25,7 +26,42 @@ class SceneManager {
         lightNode?.light = light
     }
     
-    // Function to load Scene1 and pass the lightNode
+    // MARK: - Clean Current Scene Mechanism
+    func cleanupCurrentScene() {
+        guard let currentScene = currentScene else { return }
+        
+        print("Cleaning up scene: \(currentScene)")
+        
+        currentScene.rootNode.childNodes.forEach { node in
+            // Clear materials
+            node.geometry?.materials.forEach { material in
+                material.diffuse.contents = nil
+                material.normal.contents = nil
+                material.ambient.contents = nil
+                material.specular.contents = nil
+            }
+            // Remove animations and actions
+            node.removeAllAnimations()
+            node.removeAllActions()
+            node.childNodes.forEach { $0.removeFromParentNode() }
+        }
+        
+        // Ensure all child nodes are removed from the rootNode
+        while !currentScene.rootNode.childNodes.isEmpty {
+            currentScene.rootNode.childNodes.first?.removeFromParentNode()
+        }
+        
+        currentScene.rootNode.removeAllAnimations()
+        currentScene.rootNode.removeAllActions()
+        
+        SCNTransaction.flush()  // Force completion of rendering tasks
+        scnView?.scene = nil  // Unlink the scene from the SCNView
+        self.currentScene = nil
+        
+        print("Scene cleanup complete.")
+    }
+    
+    // MARK: - Scene Loader
     func loadScene1() {
         guard let lightNode = lightNode else {
             print("Error: Light node is not initialized.")
@@ -47,23 +83,25 @@ class SceneManager {
     }
     
     func loadScene4() {
+        cleanupCurrentScene()
         guard let lightNode = lightNode else {
             print("Error: Light node is not initialized.")
             return
         }
-        let scene4 = Scene4(lightNode: lightNode) 
+        
+        let scene4 = Scene4(lightNode: lightNode)
         scnView?.scene = scene4
         currentScene = scene4
     }
-
+    
     func loadScene5and6() {
         guard let lightNode = lightNode else {
             print("Error: Light node is not initialized.")
             return
         }
+        
         let scene5and6 = Scene5and6(lightNode: lightNode)
         scnView?.scene = scene5and6
-        currentScene = scene5and6
     }
     
     func loadScene7() {
@@ -85,15 +123,15 @@ class SceneManager {
         scnView?.scene = scene8
         currentScene = scene8
     }
-
+    
     func loadScene9() {
         guard let lightNode = lightNode else {
             print("Error: Light node is not initialized.")
             return
         }
-        let scene8 = Scene9(lightNode: lightNode, scnView: scnView!)
-        scnView?.scene = scene8
-        currentScene = scene8
+        let scene9 = Scene9(lightNode: lightNode, scnView: scnView!)
+        scnView?.scene = scene9
+        currentScene = scene9
     }
     
     func loadScene10() {

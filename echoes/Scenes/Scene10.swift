@@ -19,9 +19,8 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
     private var miniGameCompleted = false
     private var isMiniGameActive = false
     private var trapDoorEntered = false
-    
-    let doorTriggerDistance: Float = 135.0  // Distance within which "Lock" button for door room should appear
-    let trapdoorTriggerDistance: Float = 110.0  // Distance within which "Enter" button for trap door should appear
+    let doorTriggerDistance: Float = 135.0  // Distance "Lock" button for door room should appear
+    let trapdoorTriggerDistance: Float = 110.0  // Distance "Enter" button for trap door should appear
     
     init(lightNode: SCNNode, scnView: SCNView) {
         super.init()
@@ -30,8 +29,7 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         
         // Load room assets
         guard let roomScene = SCNScene(named: "scene10.scn") else {
-            print("Warning: Scene named 'scene10.scn' not found")
-            return
+            fatalError("Error: Scene named 'scene10.scn' not found")
         }
         
         for childNode in roomScene.rootNode.childNodes {
@@ -282,7 +280,7 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         UIView.animate(withDuration: 1.0, animations: {
             self.scnView?.alpha = 0.0
         }) { _ in
-//            SceneManager.shared.loadScene11()
+            // SceneManager.shared.loadScene11()
         }
     }
     

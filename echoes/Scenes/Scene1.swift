@@ -1,4 +1,4 @@
-// Scene1.swif
+//  Scene1.swift
 
 import SceneKit
 import UIKit

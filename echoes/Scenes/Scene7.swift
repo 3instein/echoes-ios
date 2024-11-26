@@ -1,16 +1,9 @@
 //  Scene7.swift
-//  echoes
-//
-//  Created by Elyora Dior on 30/10/24.
-//
-
 
 import SceneKit
 import UIKit
 import AVFoundation
 import AVKit
-
-
 
 class Scene7: SCNScene, SCNPhysicsContactDelegate {
     var playerEntity: PlayerEntity!
@@ -24,17 +17,17 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
     var grandmaEntity: NPCEntity!
     var doorCloseNode : SCNNode?
     
-    var objCakeNode: SCNNode!  // Add a reference for Obj_Cake_003
-    let proximityDistance: Float = 150.0  // Define a proximity distance
+    var objCakeNode: SCNNode! // Add a reference for Obj_Cake_003
+    let proximityDistance: Float = 150.0 // Define a proximity distance
     
     weak var scnView: SCNView?
     var puzzleBackground: UIView?
-    var playButton: UIButton?  // Store a reference to the play button
+    var playButton: UIButton? // Store a reference to the play button
     
     var isPuzzleDisplayed: Bool = false
-    var isGameCompleted: Bool = false  // Track if the game is completed
+    var isGameCompleted: Bool = false // Track if the game is completed
     
-    var pianoKeys: [UIButton] = []  // Store piano keys
+    var pianoKeys: [UIButton] = [] // Store piano keys
     var audioPlayer: AVAudioPlayer? // To play piano sounds
     var userPlayedNotes: [String] = [] // Store user input notes
     let targetMelody: [String] = ["Upper_Mi", "La", "Si", "Upper_Do", "Upper_Re", "Upper_Mi", "Upper_Do", "Upper_Mi"] // Target melody to match
@@ -87,8 +80,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "scene7.scn") else {
-            print("Warning: House scene 'Scene 7.scn' not found")
-            return
+            fatalError("Error: Scene named 'scene7.scn' not found")
         }
         
         // Add the house's nodes to the root node of the GameScene
@@ -105,20 +97,12 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         }
         
         if let muffledNode = rootNode.childNode(withName: "muffledRain", recursively: true) {
-              attachAudio(to: muffledNode, audioFileName: "muffledRain.wav", volume: 0.5, delay: 0)
-          }
+            attachAudio(to: muffledNode, audioFileName: "muffledRain.wav", volume: 0.5, delay: 0)
+        }
         
         // Add player node to the GameScene's rootNode
         rootNode.addChildNode(playerNode)
         
-        //        let grandmaLightNode = SCNNode()
-        //        grandmaLightNode.light = SCNLight()
-        //        rootNode.addChildNode(grandmaLightNode)
-        
-        // Add grandma entity and its echolocation component
-        //        grandmaEntity = NPCEntity(npcNode: grandmaNode, lightNode: grandmaLightNode)
-        
-        //         Get the grandma node and hide it initially
         grandmaNode = rootNode.childNode(withName: "grandma", recursively: true)
         grandmaNode?.isHidden = true
         
@@ -397,8 +381,6 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
             return
         }
         
-        
-        
         // Create an AVPlayer
         let player = AVPlayer(url: videoURL)
         let playerLayer = AVPlayerLayer(player: player)
@@ -406,7 +388,6 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         playerLayer.videoGravity = .resizeAspect
         videoContainer.layer.addSublayer(playerLayer)
         player.volume = 1.0
-        
         
         // Play the video
         player.play()
@@ -428,7 +409,6 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         }
     }
     
-    
     private func updateCameraPositionAndOrientation() {
         guard let playerNode = playerEntity.playerNode else { return }
         
@@ -441,8 +421,6 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         cameraNode.eulerAngles = playerNode.eulerAngles
     }
     
-    
-    
     func setupPianoKeys() {
         // Define notes from middle Do to upper Mi and their corresponding numbers
         let notes = ["Do", "Re", "Mi", "Fa", "Sol", "La", "Si", "Upper_Do", "Upper_Re", "Upper_Mi"]
@@ -451,7 +429,6 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         let keyWidth: CGFloat = 50
         let keyHeight: CGFloat = 150
         let spacing: CGFloat = 0
-        
         
         // Clear existing keys to avoid duplication
         pianoKeys.removeAll()
@@ -513,7 +490,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
             for position in blackKeyPositions {
                 let blackKey = UIImageView(frame: CGRect(x: position * keyWidth - blackKeyWidth / 2, y: 0, width: blackKeyWidth, height: blackKeyHeight))
                 blackKey.image = blackKeyImage
-                //                    blackKey.contentMode = .scaleAspectFit // Ensures the image fits the key
+                // blackKey.contentMode = .scaleAspectFit // Ensures the image fits the key
                 blackKeys.append(blackKey) // Add to an array for later display
             }
         }
@@ -529,7 +506,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         containerView?.removeFromSuperview()
         
         let screenWidth = view.bounds.width
-
+        
         // Define heights for each component
         let partitureHeight: CGFloat = 130
         let progressBarHeight: CGFloat = 50
@@ -540,12 +517,12 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         let totalHeight = partitureHeight + progressBarHeight + pianoHeight + 20 // Adjust spacing as needed
         
         // Create a container view centered vertically and horizontally in the main view
-        let containerWidth: CGFloat = screenWidth / 2 + 50 // Adjust as needed
+        let containerWidth: CGFloat = screenWidth / 2 + 50
         containerView = UIView(frame: CGRect(
             x: (view.bounds.width - containerWidth) / 2, // Center horizontally
-            y: (view.bounds.height - totalHeight) / 2,  // Center vertically
-            width: containerWidth,                        // Set container width
-            height: totalHeight                           // Use the calculated height for the puzzle
+            y: (view.bounds.height - totalHeight) / 2, // Center vertically
+            width: containerWidth, // Set container width
+            height: totalHeight // Use the calculated height for the puzzle
         ))
         view.addSubview(containerView!)
         
@@ -592,7 +569,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         // Add white keys to the piano
         for (index, key) in pianoKeys.enumerated() {
             key.frame = CGRect(
-                x: CGFloat(index) * (40 + 2), // Width + spacing
+                x: CGFloat(index) * (40 + 2),
                 y: 0,
                 width: 40,
                 height: 130
@@ -609,8 +586,6 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         isPuzzleDisplayed = true
         isPlayingPiano = true
     }
-
-    
     
     func setupTimer() {
         timeRemaining = 120
@@ -649,7 +624,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         // Dismiss the piano puzzle view first
         containerView?.removeFromSuperview() // Remove the container view from the superview
         containerView = nil // Optionally, set to nil to avoid dangling references
-
+        
         // Reset the timer
         timeRemaining = 120
         timerLabel.text = formatTime(timeRemaining)
@@ -673,34 +648,15 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         
         // Show the fail label if the puzzle has not been completed successfully
         if isPianoPuzzleCompleted == false {
-                if let keyWindow = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
-                    self.displayFailLabel(on: keyWindow)
-                }
+            if let keyWindow = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) {
+                self.displayFailLabel(on: keyWindow)
             }
-
-        // Optionally, if you want to redisplay the piano puzzle UI
-        // Uncomment the following lines if you want to show the piano puzzle again after reset
-//         if let superview = containerView?.superview {
-//             displayPianoPuzzle(on: superview) // Refresh the puzzle display if needed
-//         }
+        }
     }
-
-
-
-
     
     // Define the full list of notes
     let notes = ["Do", "Re", "Mi", "Fa", "Sol", "La", "Si", "Upper_Do", "Upper_Re", "Upper_Mi"]
-    
-//    func setupProgressBar(on view: UIView) {
-//        let barWidth = UIScreen.main.bounds.width - 40 // Full width for the progress bar
-//        progressBar = UIView(frame: CGRect(x: 20, y: 250, width: 0, height: 10)) // Example position and height
-//        progressBar.backgroundColor = .green // Set the color for completed progress
-//        view.addSubview(progressBar)
-//    }
-    
     @objc func playPianoKey(_ sender: UIButton) {
-        
         
         guard sender.tag < notes.count else { return }
         
@@ -730,7 +686,6 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         }
     }
     
-    
     func resetMelodyCheck() {
         userPlayedNotes.removeAll()
         targetIndex = 0
@@ -740,11 +695,7 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         for circle in progressCircles {
             circle.image = UIImage(named: "MusicNote_Null")
         }
-        
-        // Reset the progress bar visually as well
-        /*progressCircles.frame.size.width = 0*/ // Reset progress bar width
     }
-    
     
     // Property to hold the progress circle views
     var progressCircles: [UIImageView] = []
@@ -755,11 +706,11 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
             circle.removeFromSuperview()
         }
         progressCircles.removeAll() // Clear the array holding the circles
-
+        
         let numberOfCircles = 8 // Example number of circles
         let circleDiameter: CGFloat = 40 // Example diameter for circles
         let circleSpacing: CGFloat = 10 // Space between circles
-
+        
         for i in 0..<numberOfCircles {
             let circle = UIImageView(frame: CGRect(
                 x: (containerView.bounds.width - (circleDiameter * CGFloat(numberOfCircles) + circleSpacing * CGFloat(numberOfCircles - 1))) / 2 + CGFloat(i) * (circleDiameter + circleSpacing),
@@ -772,7 +723,6 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
             containerView.addSubview(circle)
         }
     }
-
     
     func updateProgressBar() {
         print("Updating progress bar. Current played notes: \(userPlayedNotes)")
@@ -784,7 +734,6 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
             }
         }
     }
-    
     
     func playSound(named note: String) {
         guard let soundURL = Bundle.main.url(forResource: note, withExtension: "mp3") else {
@@ -937,24 +886,23 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
             }
         }
     }
-
-    private func addBlueFireAnimationNode() {
-          // Create the fire particle system
-          let fireParticleSystem = SCNParticleSystem(named: "smoothFire.scnp", inDirectory: nil)
-          
-          // Create a new SCNNode for the fire effect
-          let fireNode = SCNNode()
-          fireNode.position = transitionTriggerPosition
-          
-          // Attach the particle system to the fire node
-          fireNode.addParticleSystem(fireParticleSystem!)
-          
-          scnView?.antialiasingMode = .multisampling4X // Apply anti-aliasing for smoother visuals
-
-          // Add the fire node to the scene
-          rootNode.addChildNode(fireNode)
-      }
     
+    private func addBlueFireAnimationNode() {
+        // Create the fire particle system
+        let fireParticleSystem = SCNParticleSystem(named: "smoothFire.scnp", inDirectory: nil)
+        
+        // Create a new SCNNode for the fire effect
+        let fireNode = SCNNode()
+        fireNode.position = transitionTriggerPosition
+        
+        // Attach the particle system to the fire node
+        fireNode.addParticleSystem(fireParticleSystem!)
+        
+        scnView?.antialiasingMode = .multisampling4X // Apply anti-aliasing for smoother visuals
+        
+        // Add the fire node to the scene
+        rootNode.addChildNode(fireNode)
+    }
     
     func displaycandleLabel(on view: UIView) {
         candleLabel.text = "Candle and keys are obtained!"
@@ -999,9 +947,6 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         }
     }
     
-    
-    
-    
     // Define the label for displaying the message
     private let candleLabel: UILabel = {
         let label = UILabel()
@@ -1035,10 +980,6 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
             }
         }
     }
-
-    
-    
-    
     
     // Define the label for displaying the message
     private let FailLabel: UILabel = {
@@ -1057,7 +998,6 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
             print("Failed to load SpecialElite-Regular font.")
         }
     }
-    
     
     func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
         guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
@@ -1082,7 +1022,6 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         node.runAction(sequenceAction)
     }
     
-    
     func updateProximityAndGlow(interactButton: UIButton) {
         guard let playerNode = playerEntity.playerNode else {
             print("Error: Player node not found")
@@ -1092,8 +1031,6 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         // Measure distances to each puzzle object
         let distanceToMusicBox = playerNode.position.distance(to: musicBoxNode.position)
         let distanceToPhone = playerNode.position.distance(to: phoneNode.position)
-        
-//        print("Distance to Music Box: \(distanceToMusicBox), Distance to Phone: \(distanceToPhone)") // Debugging distances
         
         // Check if the piano puzzle is completed
         if isPianoPuzzleCompleted {
@@ -1134,8 +1071,6 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         }
     }
     
-    
-    
     // This function would be called when the piano puzzle is completed
     func completePianoPuzzle() {
         isPhonePuzzleCompleted = true
@@ -1144,7 +1079,6 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         toggleGlowEffect(on: phoneNode, isEnabled: false)
         print("puzzle completed! Phone puzzle is now active.")
     }
-    
     
     func completePiano2Puzzle() {
         isPianoPuzzleCompleted = true
@@ -1158,24 +1092,20 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         
     }
     
-    
     func toggleGlowEffect(on node: SCNNode, isEnabled: Bool) {
         if isEnabled {
             node.categoryBitMask = 2 // Enable glow effect for the specified node
-//            print("Glow enabled for \(node.name ?? "")") // Debugging
         } else {
             node.categoryBitMask = 1 // Disable glow effect for the specified node
-//            print("Glow disabled for \(node.name ?? "")") // Debugging
         }
     }
     
     // Check if the player is close to the transition trigger point
-        func checkProximityToTransition() -> Bool {
-            guard let playerPosition = playerEntity.playerNode?.position else { return false }
-            let distance = playerPosition.distance(to: transitionTriggerPosition)
-            return distance < triggerDistance
-        }
-    
+    func checkProximityToTransition() -> Bool {
+        guard let playerPosition = playerEntity.playerNode?.position else { return false }
+        let distance = playerPosition.distance(to: transitionTriggerPosition)
+        return distance < triggerDistance
+    }
     
     func setupGestureRecognizers(for view: UIView) {
         cameraComponent.setupGestureRecognizers(for: view)
@@ -1186,5 +1116,3 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
         // Add any additional setup for the scene here
     }
 }
-
-

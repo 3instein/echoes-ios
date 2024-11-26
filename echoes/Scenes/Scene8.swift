@@ -1,9 +1,4 @@
-//
 //  Scene8.swift
-//  echoes
-//
-//  Created by Angeline Ivana on 26/10/24.
-//
 
 import SceneKit
 import UIKit
@@ -12,7 +7,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     var playerEntity: PlayerEntity!
     var cameraComponent: CameraComponent!
     var joystickComponent: VirtualJoystickComponent!
-
+    
     var cameraNode: SCNNode!
     var lightNode: SCNNode!
     var necklaceNode: SCNNode!
@@ -22,14 +17,13 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     
     weak var scnView: SCNView?
     
-    var playButton: UIButton?  // Store a reference to the play button
+    var playButton: UIButton?
     var clueCabinetNode: SCNNode!
     var cluePipeNode: SCNNode!
     
     var hasKey = true  // Track if the player has the key
     var isCabinetOpened = false  // Track if the player has the key
     var isCabinetDone = false  // Track if the player has the key
-
     var isPlayingPipe = false  // Track if the player has the key
     
     let proximityDistance: Float = 180.0  // Define a proximity distance
@@ -60,7 +54,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     
     var isPipeClicked = false
     
-    var rotatingPipeNode: SCNNode?  // Node for the rotating pipe
+    var rotatingPipeNode: SCNNode?
     
     var wipeDirections: [String: String] = [
         "pipeclue-2": "down",
@@ -111,8 +105,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "scene8ely.scn") else {
-            print("Warning: House scene 'Scene 8.scn' not found")
-            return
+            fatalError("Error: Scene named 'scene8ely.scn' not found")
         }
         
         // Add the house's nodes to the root node of the GameScene
@@ -166,25 +159,25 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         cluePipeNode = rootNode.childNode(withName: "pipe_1", recursively: true)
         
         necklaceNode = rootNode.childNode(withName: "necklace", recursively: true)
-                
+        
         dollNode = rootNode.childNode(withName: "doll", recursively: true)
         
         toiletDoorOpenNode = rootNode.childNode(withName: "toiletDoorOpen", recursively: true)
         
         toiletDoorCloseNode = rootNode.childNode(withName: "toiletDoorClose", recursively: true)
-
+        
         attachAudio(to: toiletDoorCloseNode, audioFileName: "door_close.mp3", volume: 3, delay: 0)
-
+        
         dollNode.isHidden = true
         
         toiletDoorOpenNode.isHidden = true
-
+        
         self.physicsWorld.contactDelegate = self
         
         // Apply font to necklaceLabel safely
         applyCustomFont(to: necklaceLabel, fontSize: 14)
     }
-
+    
     @objc func examinePipe(on view: UIView) {
         isPipeFailed = false
         isPlayingPipe = true
@@ -229,7 +222,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             imageView.contentMode = .scaleAspectFit
             imageView.isUserInteractionEnabled = true
             imageView.accessibilityIdentifier = pieceImage
-
+            
             // Rotate the imageView by 90 degrees
             if pieceImage != "pipeclue-1" && pieceImage != "pipeclue-24" {
                 // Random rotation angle: 0, 90, 180, or 270 degrees (in radians)
@@ -299,7 +292,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         animation.repeatCount = Float.greatestFiniteMagnitude
         view.layer.add(animation, forKey: "scaling")
     }
-
+    
     @objc func rotatePipePiece(_ sender: UITapGestureRecognizer) {
         guard let imageView = sender.view as? UIImageView,
               let pipeName = imageView.accessibilityIdentifier else {
@@ -412,7 +405,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         return true // All specified pieces are correctly rotated
     }
-
+    
     // Function to animate the next pipe
     private func animateNextPipe(pipes: [String]) {
         timeLabel.removeFromSuperview()
@@ -552,7 +545,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         subview.image = UIImage(named: pipeName)
     }
-        
+    
     func animateNecklaceFalling(from pipeNode: SCNNode) {
         let moveLeft = SCNAction.moveBy(x: 10.0, y: 0, z: 0, duration: 1.5) // Adjust the x-offset and duration as needed
         // Define the falling action
@@ -565,7 +558,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         attachAudio(to: playerEntity.playerNode!, audioFileName: "s8-andra4.mp3", volume: 5, delay: 0)
     }
-            
+    
     func updateProximityAndGlow(interactButton: UIButton) {
         guard let playerNode = playerEntity.playerNode, let cluePipeNode = cluePipeNode, let clueCabinetNode = clueCabinetNode else {
             print("Error: Player node or Cake node not found")
@@ -603,7 +596,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             if distanceToPipe < proximityDistance {
                 toggleGlowEffect(on: cluePipeNode, isEnabled: true)
                 toggleGlowEffect(on: clueCabinetNode, isEnabled: false)
-
+                
                 // Update interact button content
                 interactButton.setTitle("Examine Pipe", for: .normal)
                 interactButton.isHidden = false
@@ -620,7 +613,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     func toggleGlowEffect(on node: SCNNode, isEnabled: Bool) {
         if isEnabled {
             node.categoryBitMask = 2 // Enable glow effect for the specified node
-
+            
             if node == clueCabinetNode! {
                 let cabinetNodeName = "smallCabinetDoor"
                 if let cabinetNode = rootNode.childNode(withName: cabinetNodeName, recursively: true) {
@@ -660,7 +653,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             }
         }
     }
-        
+    
     func startTimer() {
         applyCustomFont(to: timeLabel, fontSize: 24)
         
@@ -671,7 +664,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
     @objc func updateTime() {
         timeLimit -= 1
         updateTimeLabel()
-                
+        
         if timeLimit <= 0 {
             timer?.invalidate()
         }
@@ -707,7 +700,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
                 pipeNode.isHidden = false
             }
         }
-
+        
         isNecklaceObtained = false
         isPlayingPipe = false
         isPipeFailed = true
@@ -722,7 +715,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         if currentPipeIndex == 15 {
             print("Puzzle solved! The necklace is revealed.")
             timer?.invalidate()
-
+            
             pipeBackground?.removeFromSuperview()
             timeLabel.removeFromSuperview()
             
@@ -749,23 +742,23 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
                 
                 GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-272.92, 406.476, -80), duration: 3.0) {
                     self?.cameraNode.look(at: self!.necklaceNode.position)
-
+                    
                     SCNTransaction.begin()
                     SCNTransaction.animationDuration = 2.0
                     self?.cameraNode.camera?.fieldOfView = 50  // Adjust this value for closer zoom
                     SCNTransaction.commit()
-
+                    
                     self?.attachAudio(to: self!.cluePipeNode!, audioFileName: "pipeAfterOut.wav", volume: 0.4, delay: 0)
-
+                    
                     self?.animateNecklaceFalling(from: self!.cluePipeNode!)
                 }
             }
             
             DispatchQueue.main.asyncAfter(deadline: .now() + 11.5) { [weak self] in
                 self?.cameraNode.camera?.fieldOfView = 75
-
+                
                 GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-290.91, 406.476, 25), duration: 2.0) {
-
+                    
                 }
                 self?.isPlayingPipe = false
                 self?.isNecklaceFalling = true
@@ -783,7 +776,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         // Your existing code for opening the cabinet
         isCabinetOpened = true
         GameViewController.joystickComponent.joystickView.isHidden = true
-
+        
         attachAudio(to: playerEntity.playerNode!, audioFileName: "s8-andra2.mp3", volume: 5, delay: 4)
         
         guard let cameraNode = self.cameraNode else { return }
@@ -824,7 +817,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 11.0) {
             self.cameraNode.camera?.fieldOfView = 75  // Adjust this value for closer zoom
-
+            
             guard let cameraNode = self.cameraNode else { return }
             
             // Get current Euler angles and only adjust X and Z axes
@@ -843,17 +836,17 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             }
         }
     }
-
+    
     func jumpscareDoll() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
             self?.dollNode.isHidden = false
             self?.isDollJumpscare = true
             self?.cameraComponent.lockCamera()
-
+            
             self?.attachAudio(to: self!.dollNode!, audioFileName: "jumpscare1.wav", volume: 40.0, delay: 0)
-
+            
             self?.attachAudio(to: self!.dollNode!, audioFileName: "doll2.wav", volume: 4.5, delay: 1.0)
-
+            
             self?.attachAudio(to: self!.dollNode!, audioFileName: "whisperJumpscare.mp3", volume: 1.0, delay: 3.0)
             
             guard let cameraNode = self?.cameraNode else { return }
@@ -865,10 +858,10 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
                 eulerAngles.y, // Keep Y-axis unchanged
                 .pi // Round Z-axis
             )
-                        
+            
             GameViewController.playerEntity?.movementComponent.movePlayer(to: SCNVector3(-293, 501.033, 10), duration: 0.1) {
                 self?.cameraNode.look(at: self!.dollNode.position)
-
+                
                 // Animate zooming in by adjusting the camera's field of view
                 SCNTransaction.begin()
                 SCNTransaction.animationDuration = 0.2
@@ -881,7 +874,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 15.0) { [weak self] in
             self?.cameraNode.camera?.fieldOfView = 75  // Default value for normal view
-
+            
             guard let cameraNode = self?.cameraNode else { return }
             
             // Get current Euler angles and only adjust X and Z axes
@@ -906,7 +899,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         necklaceLabel.text = "Do the ritual now! Kirana is waiting!"
         necklaceLabel.numberOfLines = -1 // Enable multiline
         necklaceLabel.lineBreakMode = .byWordWrapping
-
+        
         view.addSubview(necklaceLabel)
         
         // Position the camera instruction label above the center of the screen
@@ -935,7 +928,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         fireNode.addParticleSystem(fireParticleSystem!)
         
         scnView?.antialiasingMode = .multisampling4X // Apply anti-aliasing for smoother visuals
-
+        
         // Add the fire node to the scene
         rootNode.addChildNode(fireNode)
     }
@@ -950,16 +943,16 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         audioSource.shouldStream = false
         audioSource.load()
         audioSource.volume = volume
-
+        
         // Set looping for specific audio files if needed
         if audioFileName == "muffledRain.wav" || audioFileName == "pipeNecklace.mp3" || audioFileName == "pipeAfterOut.wav" {
             audioSource.loops = true
         }
-
+        
         // Create a new node to attach the audio and position it
         let audioNode = SCNNode()
         node.addChildNode(audioNode)
-
+        
         // Play audio with delay
         let playAudioAction = SCNAction.sequence([
             SCNAction.wait(duration: delay),
@@ -971,7 +964,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             // Define the radius of the circular path
             let radius: Float = 1.5
             let duration: TimeInterval = 4.0  // Duration for one full circle
-
+            
             // Circular movement effect
             let circularMovement = SCNAction.customAction(duration: duration) { node, elapsedTime in
                 let angle = Float(elapsedTime / duration) * 2 * Float.pi
@@ -1010,7 +1003,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             }
         }
     }
-        
+    
     // Apply the custom font to a label
     private func applyCustomFont(to label: UILabel, fontSize: CGFloat) {
         if let customFont = UIFont(name: "SpecialElite-Regular", size: fontSize) {
