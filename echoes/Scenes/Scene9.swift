@@ -1,9 +1,17 @@
+//
 //  Scene9.swift
+//  echoes
+//
+//  Created by Pelangi Masita Wati on 27/10/24.
+//
 
 import SceneKit
 import UIKit
 
 class Scene9: SCNScene, SCNPhysicsContactDelegate {
+    var rezaFollowTimer: Timer?
+    private var doorAnimationPlayed = false
+    var stepSound: SCNAudioSource!
     var playerEntity: PlayerEntity!
     var cameraComponent: CameraComponent!
     var joystickComponent: VirtualJoystickComponent!
@@ -11,35 +19,40 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
     var lightNode: SCNNode!
     var movementComponent: MovementComponent?
     var positionTimer: Timer?
-    var rezaFollowTimer: Timer?
-    var stepSound: SCNAudioSource!
-    var playButton: UIButton?
+
     weak var scnView: SCNView?
-    private var doorAnimationPlayed = false
+    var playButton: UIButton?
     
     let doorTriggerPosition1 = SCNVector3(-7.592, 494.06, 35.81)
     let doorTriggerPosition2 = SCNVector3(151.224, 504.715, 35.81)
     let doorTriggerPosition3 = SCNVector3(151.224, 504.715, 35.81)
     let doorTriggerDistance: Float = 5.0
+    
     let transitionTriggerPosition = SCNVector3(-239.248, 81.08, 35.81);
     let triggerDistance: Float = 100.0
     let fourthTargetPosition = SCNVector3(-239.248, 81.08, 35.81)
     let initialPlayerPosition = SCNVector3(211.776, 778.045, -15.809)
-    let initialRezaPosition = SCNVector3(181.743, 767.443, 2.355)
+    let initialRezaPosition = SCNVector3(181.743, 767.443, 32.361)
     let fifthTargetPosition = SCNVector3(211.776, 778.045, 2.355)
     let rezaDestination1 = SCNVector3(161.442, 516.906, 32.361)
     let rezaDestination2 = SCNVector3(-32.376, 516.906, 32.361)
     let rezaDestination3 = SCNVector3(-50.514, 585.614, 32.361)
-    let finalRezaDestination = SCNVector3(-222.207, 89.067, 26.907)
+    let finalRezaDestination = SCNVector3(-222.207, 89.067, 32.361)
+    let winningPoint = SCNVector3(-41.819, 741.735, 35.809)
+    let winningDistanceThreshold: Float = 5.0
+    
+    private let proximityThreshold: Float = 10.0
     
     init(lightNode: SCNNode, scnView: SCNView) {
         self.scnView = scnView
-        GameViewController.joystickComponent.showJoystick()
+        GameViewController.joystickComponent.hideJoystick()
+        //GameViewController.joystickComponent.showJoystick()
         super.init()
         self.lightNode = lightNode
         
         guard let houseScene = SCNScene(named: "Scene9.scn") else {
-            fatalError("Error: Scene named 'Scene9.scn' not found")
+            print("Warning: House scene 'Scene 9.scn' not found")
+            return
         }
         
         setupPlayerEntityAndMovementComponent()
@@ -85,7 +98,7 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
         }
         
         guard let outsideRain = rootNode.childNode(withName: "outsideRain", recursively: true) else {
-            print("Warning: outsideRain node named 'outsideRain' not found in house model")
+            print("Warning: LightRain node named 'lightRain' not found in house model")
             return
         }
         
@@ -108,9 +121,9 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
             let glowLight = SCNLight()
             glowLight.type = .omni
             glowLight.color = UIColor.blue
-            glowLight.intensity = 1000 // Higher intensity for a strong glow
+            glowLight.intensity = 1000               // Higher intensity for a strong glow
             glowLight.attenuationStartDistance = 0
-            glowLight.attenuationEndDistance = 10 // Adjust distance for the glow effect
+            glowLight.attenuationEndDistance = 10    // Adjust distance for the glow effect
             
             let lightNode = SCNNode()
             lightNode.light = glowLight
@@ -119,32 +132,11 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
             ritualNode.addChildNode(lightNode)
         }
         
-        //        if let url = Bundle.main.url(forResource: "reza idle", withExtension: "dae") {
-        //            let sceneSource = SCNSceneSource(url: url, options: nil)
-        //            let animationKeys = sceneSource?.identifiersOfEntries(withClass: CAAnimation.self) ?? []
-        //
-        //            if let rezaNode = rootNode.childNode(withName: "reza", recursively: true) {
-        //                for key in animationKeys {
-        //                    if let animation = sceneSource?.entryWithIdentifier(key, withClass: CAAnimation.self) {
-        //                        animation.repeatCount = .infinity
-        //                        rezaNode.addAnimation(animation, forKey: key)
-        //                    }
-        //                }
-        //            }
-        //        }
-        //
-        //        if let url = Bundle.main.url(forResource: "reza idle", withExtension: "dae") {
-        //            let sceneSource = SCNSceneSource(url: url, options: nil)
-        //            let animationKeys = sceneSource?.identifiersOfEntries(withClass: CAAnimation.self) ?? []
-        //
-        //            for key in animationKeys {
-        //                print("Available animation key: \(key)")
-        //            }
-        //        }
-        
         if let doorNode = rootNode.childNode(withName: "doorNode", recursively: true) {
             animateDoorRotation(doorNode)
         }
+        
+        addWinningPointIndicator()
         
     }
     
@@ -154,7 +146,7 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
         joystickComponent?.hideJoystick()
         cameraComponent?.lockCamera()
     }
-    
+
     private func unlockPlayerControls() {
         print("Unlocking player controls")
         joystickComponent?.isEnabled = true
@@ -188,7 +180,7 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
                 }
             }
             
-            
+
         }
     }
     
@@ -544,9 +536,19 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
     
     private func performJumpscareAndFollowUp() {
         performJumpscare { [weak self] in
-            self?.playAndraSound { [weak self] in
-                self?.playReza2Sound { [weak self] in
-                    self?.showButton()
+            guard let self = self, let movementComponent = self.playerEntity?.movementComponent else { return }
+            
+            let newTargetPosition = SCNVector3(211.776, 778.045, 35.809)
+            
+            movementComponent.movePlayer(to: newTargetPosition, duration: 1.0) {
+                print("Player has reached the new target position.")
+                
+                GameViewController.joystickComponent.showJoystick()
+                
+                self.playAndraSound { [weak self] in
+                    self?.playReza2Sound { [weak self] in
+                        self?.showButton()
+                    }
                 }
             }
         }
@@ -680,9 +682,9 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
         DispatchQueue.main.async {
             self.playButton = UIButton(type: .system)
             self.playButton?.setTitle("Run", for: .normal)
-            self.playButton?.backgroundColor = UIColor(hex: "3C3EBB") // Matching joystick color
+            self.playButton?.backgroundColor = UIColor(hex: "3C3EBB")
             self.playButton?.setTitleColor(.white, for: .normal)
-            self.playButton?.layer.cornerRadius = 50 // Make it circular, similar to the joystick
+            self.playButton?.layer.cornerRadius = 50
             self.playButton?.layer.masksToBounds = true
             self.playButton?.translatesAutoresizingMaskIntoConstraints = false
             self.playButton?.titleLabel?.font = UIFont(name: "SpecialElite-Regular", size: 24) ?? UIFont.systemFont(ofSize: 24)
@@ -714,20 +716,26 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
             print("Error: Reza or Player node not found in Scene9")
             return
         }
-        
+
         rezaNode.removeAllActions()
-        
-        let minimumDistance: Float = 1.0 // Adjust minimum distance for close proximity check
-        let moveSpeed: Float = 0.05 // Reduced speed for Reza
-        
+
+        let minimumDistance: Float = 1.0
+        let moveSpeed: Float = 0.06
+
         let followPlayerAction = SCNAction.run { [weak self] _ in
             guard let self = self else { return }
-            
+
             let playerPosition = playerNode.position
             let rezaPosition = rezaNode.position
             let distanceToPlayer = playerPosition.distance(to: rezaPosition)
-            
-            if distanceToPlayer > minimumDistance {
+            let distanceToWinningPoint = playerPosition.distance(to: self.winningPoint)
+
+            // Check if the player is within the winning proximity range
+            if distanceToWinningPoint < self.proximityThreshold {
+                self.showWinningMessage()
+                rezaNode.removeAllActions() // Stop Reza from following
+            } else if distanceToPlayer > minimumDistance {
+                // Move Reza toward the player if they haven't won yet
                 let direction = SCNVector3(
                     (playerPosition.x - rezaPosition.x) * moveSpeed,
                     (playerPosition.y - rezaPosition.y) * moveSpeed,
@@ -739,67 +747,159 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
                     rezaPosition.z + direction.z
                 )
             } else {
-                // Distance is close to zero, indicating Reza caught up to the player
+                // Player failed to escape
                 self.showTryAgainPopup()
             }
         }
-        
+
         let repeatFollowAction = SCNAction.repeatForever(SCNAction.sequence([followPlayerAction, SCNAction.wait(duration: 0.1)]))
         rezaNode.runAction(repeatFollowAction)
     }
     
-    // Function to display a "Try Again" popup
-    private func showTryAgainPopup() {
+    private func showWinningMessage() {
         guard let view = scnView else { return }
-        
+
         DispatchQueue.main.async {
-            let tryAgainLabel = UILabel()
-            tryAgainLabel.text = "Try Again"
-            tryAgainLabel.font = UIFont.systemFont(ofSize: 36, weight: .bold)
-            tryAgainLabel.textColor = .red
-            tryAgainLabel.backgroundColor = UIColor.black.withAlphaComponent(0.7)
-            tryAgainLabel.textAlignment = .center
-            tryAgainLabel.translatesAutoresizingMaskIntoConstraints = false
-            tryAgainLabel.layer.cornerRadius = 10
-            tryAgainLabel.layer.masksToBounds = true
-            
-            view.addSubview(tryAgainLabel)
-            
+            let overlayView = UIView()
+            overlayView.backgroundColor = UIColor.white.withAlphaComponent(0.1)
+            overlayView.layer.cornerRadius = 10
+            overlayView.translatesAutoresizingMaskIntoConstraints = false
+
+            view.addSubview(overlayView)
+
+            let winLabel = UILabel()
+            winLabel.text = "You Escaped! Continue to Next Scene"
+            winLabel.font = UIFont(name: "SpecialElite-Regular", size: 16) ?? UIFont.systemFont(ofSize: 16)
+            winLabel.textColor = .black
+            winLabel.textAlignment = .center
+            winLabel.translatesAutoresizingMaskIntoConstraints = false
+
+            overlayView.addSubview(winLabel)
+
+            let continueButton = UIButton(type: .system)
+            continueButton.setTitle("Continue", for: .normal)
+            continueButton.titleLabel?.font = UIFont(name: "SpecialElite-Regular", size: 18) ?? UIFont.systemFont(ofSize: 18)
+            continueButton.setTitleColor(.white, for: .normal)
+            continueButton.backgroundColor = UIColor(hex: "4B4EE8")
+            continueButton.layer.cornerRadius = 10
+            continueButton.translatesAutoresizingMaskIntoConstraints = false
+
+            continueButton.addTarget(self, action: #selector(self.continueToNextScene), for: .touchUpInside)
+
+            overlayView.addSubview(continueButton)
+
             NSLayoutConstraint.activate([
-                tryAgainLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-                tryAgainLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-                tryAgainLabel.widthAnchor.constraint(equalToConstant: 200),
-                tryAgainLabel.heightAnchor.constraint(equalToConstant: 100)
+                overlayView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                overlayView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+                overlayView.widthAnchor.constraint(equalToConstant: 300),
+                overlayView.heightAnchor.constraint(equalToConstant: 150),
+
+                winLabel.centerXAnchor.constraint(equalTo: overlayView.centerXAnchor),
+                winLabel.topAnchor.constraint(equalTo: overlayView.topAnchor, constant: 20),
+                winLabel.widthAnchor.constraint(equalTo: overlayView.widthAnchor, constant: -40),
+                winLabel.heightAnchor.constraint(equalToConstant: 40),
+
+                continueButton.centerXAnchor.constraint(equalTo: overlayView.centerXAnchor),
+                continueButton.bottomAnchor.constraint(equalTo: overlayView.bottomAnchor, constant: -20),
+                continueButton.widthAnchor.constraint(equalToConstant: 150),
+                continueButton.heightAnchor.constraint(equalToConstant: 40)
             ])
-            
-            // Fade out the label after showing it
-            UIView.animate(withDuration: 2.0, delay: 1.0, options: [], animations: {
-                tryAgainLabel.alpha = 0
-            }, completion: { _ in
-                tryAgainLabel.removeFromSuperview()
-            })
         }
     }
-    
-    private func moveRezaToSequence() {
-        guard let rezaNode = rootNode.childNode(withName: "reza", recursively: true) else {
-            print("Error: Reza node not found in Scene9")
+
+    @objc private func continueToNextScene() {
+        print("Continuing to the next scene...")
+        // Logic to transition
+    }
+
+    private func showTryAgainPopup() {
+        guard let view = scnView else { return }
+
+        DispatchQueue.main.async {
+            let overlayView = UIView()
+            overlayView.backgroundColor = UIColor.white.withAlphaComponent(0.1)
+            overlayView.layer.cornerRadius = 10
+            overlayView.translatesAutoresizingMaskIntoConstraints = false
+
+            view.addSubview(overlayView)
+
+            let failLabel = UILabel()
+            failLabel.text = "You failed to escape from Reza"
+            failLabel.font = UIFont(name: "SpecialElite-Regular", size: 14) ?? UIFont.systemFont(ofSize: 24)
+            failLabel.textColor = .black
+            failLabel.textAlignment = .center
+            failLabel.translatesAutoresizingMaskIntoConstraints = false
+
+            overlayView.addSubview(failLabel)
+
+            let tryAgainButton = UIButton(type: .system)
+            tryAgainButton.setTitle("Try Again", for: .normal)
+            tryAgainButton.titleLabel?.font = UIFont(name: "SpecialElite-Regular", size: 24) ?? UIFont.systemFont(ofSize: 24)
+            tryAgainButton.setTitleColor(.white, for: .normal)
+            tryAgainButton.backgroundColor = UIColor(hex: "4B4EE8")
+            tryAgainButton.layer.cornerRadius = 10
+            tryAgainButton.translatesAutoresizingMaskIntoConstraints = false
+
+            tryAgainButton.addTarget(self, action: #selector(self.resetPositions), for: .touchUpInside)
+
+            overlayView.addSubview(tryAgainButton)
+
+            NSLayoutConstraint.activate([
+                overlayView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                overlayView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+                overlayView.widthAnchor.constraint(equalToConstant: 300),
+                overlayView.heightAnchor.constraint(equalToConstant: 150),
+
+                failLabel.centerXAnchor.constraint(equalTo: overlayView.centerXAnchor),
+                failLabel.topAnchor.constraint(equalTo: overlayView.topAnchor, constant: 20),
+                failLabel.widthAnchor.constraint(equalTo: overlayView.widthAnchor, constant: -40),
+                failLabel.heightAnchor.constraint(equalToConstant: 40),
+
+                tryAgainButton.centerXAnchor.constraint(equalTo: overlayView.centerXAnchor),
+                tryAgainButton.bottomAnchor.constraint(equalTo: overlayView.bottomAnchor, constant: -20),
+                tryAgainButton.widthAnchor.constraint(equalToConstant: 150),
+                tryAgainButton.heightAnchor.constraint(equalToConstant: 40)
+            ])
+        }
+    }
+
+    @objc private func resetPositions() {
+        guard let playerNode = playerEntity?.playerNode, let rezaNode = rootNode.childNode(withName: "reza", recursively: true) else {
+            print("Player or Reza node not found.")
             return
         }
         
-        // Define the sequence of positions for Reza
-        let moveToPosition1 = SCNAction.move(to: rezaDestination1, duration: 5.0)
-        let moveToPosition2 = SCNAction.move(to: rezaDestination2, duration: 5.0)
-        let moveToPosition3 = SCNAction.move(to: rezaDestination3, duration: 5.0)
+        playerNode.position = initialPlayerPosition
+        rezaNode.position = initialRezaPosition
         
-        // Create a sequence action for moving through each position
-        let sequenceAction = SCNAction.sequence([moveToPosition1, moveToPosition2, moveToPosition3])
-        
-        // Run the action on Reza
-        rezaNode.runAction(sequenceAction) {
-            print("Reza has reached all designated target positions.")
+        DispatchQueue.main.async {
+            self.scnView?.subviews.forEach { subview in
+                if let overlayView = subview as? UIView, overlayView.subviews.contains(where: { ($0 as? UILabel)?.text == "You failed to escape from Reza" }) {
+                    overlayView.removeFromSuperview()
+                }
+            }
         }
     }
+    
+    private func addWinningPointIndicator() {
+        guard let blueFireParticleSystem = SCNParticleSystem(named: "smoothFire.scnp", inDirectory: nil) else {
+            print("Error: Particle system 'smoothFire.scnp' not found.")
+            return
+        }
+        
+        let blueFireNode = SCNNode()
+        blueFireNode.position = winningPoint
+        blueFireNode.addParticleSystem(blueFireParticleSystem)
+        
+        // Optional: add a rotating effect if needed
+        let rotateAction = SCNAction.rotateBy(x: 0, y: CGFloat.pi * 2, z: 0, duration: 5)
+        let repeatRotateAction = SCNAction.repeatForever(rotateAction)
+        blueFireNode.runAction(repeatRotateAction)
+        
+        rootNode.addChildNode(blueFireNode)
+        print("Blue fire particle system added at the winning point \(winningPoint)")
+    }
+
     
     @objc private func increaseSpeed() {
         print("Run button pressed, increasing speed")
