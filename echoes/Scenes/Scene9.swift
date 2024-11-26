@@ -27,9 +27,10 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
     let doorTriggerPosition2 = SCNVector3(151.224, 504.715, 35.81)
     let doorTriggerPosition3 = SCNVector3(151.224, 504.715, 35.81)
     let doorTriggerDistance: Float = 5.0
+    let transitionTriggerPosition = SCNVector3(-47.163, 737.242, 45.179)
     
-    let transitionTriggerPosition = SCNVector3(-239.248, 81.08, 35.81);
-    let triggerDistance: Float = 100.0
+    //let transitionTriggerPosition = SCNVector3(-239.248, 81.08, 35.81);
+    let transitionTriggerDistance: Float = 5.0
     let fourthTargetPosition = SCNVector3(-239.248, 81.08, 35.81)
     let initialPlayerPosition = SCNVector3(211.776, 778.045, -15.809)
     let initialRezaPosition = SCNVector3(181.743, 767.443, 32.361)
@@ -184,6 +185,31 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
         }
     }
     
+    private func addBlueFireAnimationNode() {
+        // Create the fire particle system
+        let fireParticleSystem = SCNParticleSystem(named: "smoothFire.scnp", inDirectory: nil)
+        
+        // Create a new SCNNode for the fire effect
+        let fireNode = SCNNode()
+        fireNode.position = transitionTriggerPosition
+        
+        // Attach the particle system to the fire node
+        fireNode.addParticleSystem(fireParticleSystem!)
+        
+        scnView?.antialiasingMode = .multisampling4X // Apply anti-aliasing for smoother visuals
+        
+        // Add the fire node to the scene
+        rootNode.addChildNode(fireNode)
+    }
+    
+    func checkProximityToTransition() -> Bool {
+        guard let playerNode = playerEntity?.playerNode else { return false }
+        
+        let distance = playerNode.position.distance(to: transitionTriggerPosition)
+        return distance < transitionTriggerDistance
+    }
+
+    
     private func setupBlueFireEffect() {
         guard let blueFireParticleSystem = SCNParticleSystem(named: "smoothFire.scnp", inDirectory: nil) else {
             print("Error: Particle system 'smoothFire.scnp' not found.")
@@ -225,7 +251,7 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
     }
     
     func joystickMoved() {
-        playStepSound()
+        //playStepSound()
     }
     
     private func playKiranaSound1(on node: SCNNode, completion: (() -> Void)? = nil) {
@@ -461,11 +487,11 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
         }
     }
     
-    func checkProximityToTransition() -> Bool {
-        guard let playerPosition = playerEntity.playerNode?.position else { return false }
-        let distance = playerPosition.distance(to: transitionTriggerPosition)
-        return distance < triggerDistance
-    }
+//    func checkProximityToTransition() -> Bool {
+//        guard let playerPosition = playerEntity.playerNode?.position else { return false }
+//        let distance = playerPosition.distance(to: transitionTriggerPosition)
+//        return distance < triggerDistance
+//    }
     
     func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
         guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {

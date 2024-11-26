@@ -98,6 +98,19 @@ class AssetPreloader {
         preloadSceneWithAudio(named: sceneName, audioFiles: audioFiles, completion: completion)
     }
     
+    static func preloadScene10(completion: @escaping (Bool) -> Void) {
+        let sceneName = "Scene10.scn"
+        let audioFiles = [
+            "ritualSuccess.wav",
+            "doorCreaking.mp3",
+            "finalDialogue1.wav",
+            "finalDialogue2.wav",
+            "backgroundAmbience.mp3"
+        ]
+        preloadSceneWithAudio(named: sceneName, audioFiles: audioFiles, completion: completion)
+    }
+
+    
     // MARK: - Core Preloading Logic
     static func preloadSceneWithAudio(named sceneName: String, audioFiles: [String], completion: @escaping (Bool) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
