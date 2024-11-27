@@ -2,6 +2,7 @@ import SceneKit
 import UIKit
 
 class Scene6: SCNScene, SCNPhysicsContactDelegate {
+    weak var delegate: Scene6Delegate?
     var playerEntity: PlayerEntity!
     var cameraComponent: CameraComponent!
     var joystickComponent: VirtualJoystickComponent!
@@ -11,7 +12,7 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     var completedCombinations: [[UIView]] = []  // Track completed combinations
     
     var objCakeNode: SCNNode!  // Add a reference for Obj_Cake_003
-    let proximityDistance: Float = 150.0  // Define a proximity distance
+    let proximityDistance: Float = 180.0  // Define a proximity distance
     
     weak var scnView: SCNView?
     var puzzleBackground: UIView?
@@ -22,7 +23,7 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
     let snapDistance: CGFloat = 50.0
     
     var timer: Timer?
-    var timeLimit: Int = 600 // 5-minute timer
+    var timeLimit: Int = 210 // 5-minute timer
     var timeLabel: UILabel?
     
     var hasGroupedTwoPieces = false  // Track if two pieces have been grouped
@@ -47,7 +48,7 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         "puzzle_piece_16.png": ["puzzle_piece_11.png": CGPoint(x: -45, y: -40), "puzzle_piece_12.png": CGPoint(x: 20, y: -20)],
         "puzzle_piece_17.png": ["puzzle_piece_13.png": CGPoint(x: -75, y: -30), "puzzle_piece_14.png": CGPoint(x: -30, y: -25)]
     ]
-    
+        
     init(lightNode: SCNNode) {
         super.init()
         self.lightNode = lightNode
@@ -98,6 +99,89 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         addBackgroundSound()  // Add this line to play background sound
         
         self.physicsWorld.contactDelegate = self
+        
+        guard let clueNode = rootNode.childNode(withName: "SoundClue", recursively: true) else {
+            print("Warning: SounClue node named not found in house model")
+            return
+        }
+        
+        attachAudio(to: clueNode, audioFileName: "clue.wav", volume: 1.0)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)
+    }
+
+    // Flip the puzzle image to the thank you card and show the transition button
+    func flipToThankYouCard(imageView: UIImageView) {
+        UIView.transition(with: imageView, duration: 1, options: [.transitionFlipFromLeft], animations: {
+            imageView.image = UIImage(named: "thankyou card.png")
+            imageView.frame.size = CGSize(width: 450, height: 350)
+        }, completion: { [weak self] _ in
+            self?.delegate?.didDisplayThankYouCard()
+//            self?.addTransitionButton(on: imageView)
+        })
+    }
+
+    // Add a button on the thank you card to transition to Scene9
+//    func addTransitionButton(on imageView: UIImageView) {
+//        let transitionButton = UIButton(type: .system)
+//        transitionButton.setTitle("Go to Next Scene", for: .normal)
+//        transitionButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 18)
+//        transitionButton.setTitleColor(.white, for: .normal)
+//        transitionButton.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+//        transitionButton.layer.cornerRadius = 10
+//        transitionButton.frame = CGRect(x: 0, y: 0, width: 200, height: 50)
+//
+//        // Position the button on the image view
+//        transitionButton.center = CGPoint(x: imageView.bounds.midX, y: imageView.bounds.maxY - 40)
+//        transitionButton.addTarget(GameViewController.shared, action: #selector(GameViewController.transitionToScene9), for: .touchUpInside)
+//
+//        imageView.addSubview(transitionButton)
+//    }
+
+    // Trigger the puzzle completion transition and display the thank you card
+    func triggerPuzzleCompletionTransition() {
+        isGameCompleted = true
+        puzzleBackground?.backgroundColor = UIColor.white.withAlphaComponent(0)
+
+        guard let superview = combinedPieces.keys.first?.superview else { return }
+        
+        timeLabel?.removeFromSuperview()
+        
+        // Get the center of the screen
+        let screenCenter = CGPoint(x: superview.bounds.midX, y: superview.bounds.midY)
+        
+        let fullPuzzleImageView = UIImageView(image: UIImage(named: "puzzle_full.png"))
+        fullPuzzleImageView.frame.size = CGSize(width: 450, height: 350)
+        fullPuzzleImageView.contentMode = .scaleAspectFit
+        fullPuzzleImageView.alpha = 0
+        superview.addSubview(fullPuzzleImageView)
+        
+        UIView.animate(withDuration: 0.5, delay: 0, options: [.curveEaseInOut], animations: {
+            for (piece, _) in self.combinedPieces {
+                piece.center = screenCenter
+                piece.alpha = 0
+            }
+        }, completion: { _ in
+            // Cleanup and prepare thank you card transition
+            for (piece, _) in self.combinedPieces {
+                piece.removeFromSuperview()
+            }
+            self.combinedPieces.removeAll()
+
+            fullPuzzleImageView.alpha = 0
+            fullPuzzleImageView.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
+            fullPuzzleImageView.center = screenCenter
+            UIView.animate(withDuration: 2.0, delay: 0, usingSpringWithDamping: 1.0, initialSpringVelocity: 0.2, options: [.curveEaseInOut], animations: {
+                fullPuzzleImageView.alpha = 1
+                fullPuzzleImageView.transform = CGAffineTransform.identity
+            }, completion: { finished in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                    self.flipToThankYouCard(imageView: fullPuzzleImageView)
+                }
+            })
+        })
     }
     
     func displayPuzzlePieces(on view: UIView) {
@@ -473,64 +557,64 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
         }
     }
     
-    func triggerPuzzleCompletionTransition() {
-        isGameCompleted = true
-        puzzleBackground?.backgroundColor = UIColor.white.withAlphaComponent(0)
-        
-        guard let superview = combinedPieces.keys.first?.superview else { return }
-        
-        timeLabel?.removeFromSuperview()
-        
-        // Get the center of the screen
-        let screenCenter = CGPoint(x: superview.bounds.midX, y: superview.bounds.midY)
-        
-        // Create an imageView for the completed puzzle image
-        let fullPuzzleImageView = UIImageView(image: UIImage(named: "puzzle_full.png"))
-        fullPuzzleImageView.frame.size = CGSize(width: 450, height: 350)
-        fullPuzzleImageView.contentMode = .scaleAspectFit
-        fullPuzzleImageView.alpha = 0  // Start with hidden image
-        superview.addSubview(fullPuzzleImageView)
-        
-        // Animate each piece to the center of the screen
-        UIView.animate(withDuration: 0.5, delay: 0, options: [.curveEaseInOut], animations: {
-            for (piece, _) in self.combinedPieces {
-                piece.center = screenCenter  // Move each piece to the center
-                piece.alpha = 0  // Fade out the pieces
-            }
-        }, completion: { _ in
-            // Remove all individual pieces from the view after animation
-            for (piece, _) in self.combinedPieces {
-                piece.removeFromSuperview()
-            }
-            self.combinedPieces.removeAll()
-            // Set initial properties for the fullPuzzleImageView
-            fullPuzzleImageView.alpha = 0  // Start with the image hidden
-            fullPuzzleImageView.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)  // Start small
-            
-            // Center the image on the screen
-            fullPuzzleImageView.center = screenCenter
-            // Fade in the full puzzle image after the pieces are removed
-            UIView.animate(withDuration: 2.0, delay: 0, usingSpringWithDamping: 1.0, initialSpringVelocity: 0.2, options: [.curveEaseInOut], animations: {
-                fullPuzzleImageView.alpha = 1
-                fullPuzzleImageView.transform = CGAffineTransform.identity
-            }, completion: { finished in
-                // Automatically flip the puzzle image to the "Thank you" card after 3 seconds
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                    self.flipToThankYouCard(imageView: fullPuzzleImageView)
-                }
-            })
-        })
-    }
-
-    func flipToThankYouCard(imageView: UIImageView) {
-        // Create a flip animation
-        UIView.transition(with: imageView, duration: 1, options: [.transitionFlipFromLeft], animations: {
-            // Change the image to the "Thankyou card" image
-            imageView.image = UIImage(named: "thankyou card.png")
-            imageView.frame.size = CGSize(width: 450, height: 350)
-
-        }, completion: nil)
-    }
+//    func triggerPuzzleCompletionTransition() {
+//        isGameCompleted = true
+//        puzzleBackground?.backgroundColor = UIColor.white.withAlphaComponent(0)
+//        
+//        guard let superview = combinedPieces.keys.first?.superview else { return }
+//        
+//        timeLabel?.removeFromSuperview()
+//        
+//        // Get the center of the screen
+//        let screenCenter = CGPoint(x: superview.bounds.midX, y: superview.bounds.midY)
+//        
+//        // Create an imageView for the completed puzzle image
+//        let fullPuzzleImageView = UIImageView(image: UIImage(named: "puzzle_full.png"))
+//        fullPuzzleImageView.frame.size = CGSize(width: 450, height: 350)
+//        fullPuzzleImageView.contentMode = .scaleAspectFit
+//        fullPuzzleImageView.alpha = 0  // Start with hidden image
+//        superview.addSubview(fullPuzzleImageView)
+//        
+//        // Animate each piece to the center of the screen
+//        UIView.animate(withDuration: 0.5, delay: 0, options: [.curveEaseInOut], animations: {
+//            for (piece, _) in self.combinedPieces {
+//                piece.center = screenCenter  // Move each piece to the center
+//                piece.alpha = 0  // Fade out the pieces
+//            }
+//        }, completion: { _ in
+//            // Remove all individual pieces from the view after animation
+//            for (piece, _) in self.combinedPieces {
+//                piece.removeFromSuperview()
+//            }
+//            self.combinedPieces.removeAll()
+//            // Set initial properties for the fullPuzzleImageView
+//            fullPuzzleImageView.alpha = 0  // Start with the image hidden
+//            fullPuzzleImageView.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)  // Start small
+//            
+//            // Center the image on the screen
+//            fullPuzzleImageView.center = screenCenter
+//            // Fade in the full puzzle image after the pieces are removed
+//            UIView.animate(withDuration: 2.0, delay: 0, usingSpringWithDamping: 1.0, initialSpringVelocity: 0.2, options: [.curveEaseInOut], animations: {
+//                fullPuzzleImageView.alpha = 1
+//                fullPuzzleImageView.transform = CGAffineTransform.identity
+//            }, completion: { finished in
+//                // Automatically flip the puzzle image to the "Thank you" card after 3 seconds
+//                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+//                    self.flipToThankYouCard(imageView: fullPuzzleImageView)
+//                }
+//            })
+//        })
+//    }
+//
+////    func flipToThankYouCard(imageView: UIImageView) {
+//        // Create a flip animation
+//        UIView.transition(with: imageView, duration: 1, options: [.transitionFlipFromLeft], animations: {
+//            // Change the image to the "Thankyou card" image
+//            imageView.image = UIImage(named: "thankyou card.png")
+//            imageView.frame.size = CGSize(width: 450, height: 350)
+//
+//        }, completion: nil)
+//    }
 
     func findPiece(byName name: String, in superview: UIView?) -> UIView? {
         guard let superview = superview else { return nil }
@@ -659,14 +743,32 @@ class Scene6: SCNScene, SCNPhysicsContactDelegate {
             // Add the sound node to the root node
             rootNode.addChildNode(soundNode)
         }
+    
+    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float = 1.0) {
+        guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
+            print("Warning: Audio file '\(audioFileName)' not found")
+            return
+        }
+
+        audioSource.loops = true
+        audioSource.isPositional = true
+        audioSource.shouldStream = false
+        audioSource.load()
+        
+        audioSource.volume = volume
+
+        let playAudioAction = SCNAction.playAudio(audioSource, waitForCompletion: false)
+        
+        node.runAction(playAudioAction)
+    }
        
     
     func setupGestureRecognizers(for view: UIView) {
         cameraComponent.setupGestureRecognizers(for: view)
     }
     
-    required init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
-        // Add any additional setup for the scene here
-    }
+}
+
+protocol Scene6Delegate: AnyObject {
+    func didDisplayThankYouCard()
 }
