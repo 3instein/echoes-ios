@@ -704,6 +704,23 @@ class GameViewController: UIViewController, Scene2Delegate {
             GameViewController.joystickComponent.showJoystick()
 
             print("Scene10 loaded successfully.")
+
+            DispatchQueue.main.async {
+                if let runButton = self.view.subviews.first(where: { $0 is UIButton && ($0 as? UIButton)?.title(for: .normal) == "Run" }) {
+                    runButton.removeFromSuperview()
+                    print("Run button removed from Scene10.")
+                }
+            }
+
+            DispatchQueue.main.async {
+                self.scnView.subviews.forEach { subview in
+                    if let loadingView = subview as? LoadingView {
+                        loadingView.stopLoading()
+                        loadingView.removeFromSuperview()
+                        print("Loading view removed.")
+                    }
+                }
+            }
         } else {
             print("Error: Scene10 not loaded correctly.")
         }
