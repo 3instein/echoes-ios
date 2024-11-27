@@ -545,9 +545,41 @@ class GameViewController: UIViewController, Scene2Delegate {
             }
         }
         
-        // Scene 9
+        // UpdateScene logic for Scene9
         if let gameScene = scnView.scene as? Scene9 {
-            // Transition to Scene 10 here...
+            print("Currently in Scene9. Checking proximity to winning point...")
+
+            if !isTransitioning && gameScene.checkProximityToWinningPoint() {
+                print("Player is close enough to the winning point. Preparing transition to Scene10...")
+                isTransitioning = true
+
+                // Hide joystick and prepare loading view
+                GameViewController.joystickComponent.hideJoystick()
+                let loadingView = LoadingView(frame: scnView.bounds)
+                scnView.addSubview(loadingView)
+
+                // Fade in the loading view and transition to Scene10
+                loadingView.fadeIn { [weak self] in
+                    guard let self = self else { return }
+
+                    // Clean up Scene9 and preload Scene10
+                    print("Cleaning up Scene9...")
+                    SceneManager.shared.cleanupCurrentScene()
+
+                    AssetPreloader.preloadScene10 { success in
+                        DispatchQueue.main.async {
+                            loadingView.stopLoading()
+                            if success {
+                                print("Scene10 assets loaded successfully.")
+                                self.loadScene10()
+                            } else {
+                                print("Error: Failed to preload Scene10.")
+                                self.isTransitioning = false // Allow retry
+                            }
+                        }
+                    }
+                }
+            }
         }
         
         // Scene 10
@@ -645,6 +677,35 @@ class GameViewController: UIViewController, Scene2Delegate {
         // Present the next view controller
         if let currentVC = UIApplication.shared.keyWindow?.rootViewController {
             currentVC.present(nextVC, animated: true, completion: nil)
+        }
+    }
+    
+    func loadScene10() {
+        print("Loading Scene10...")
+        SceneManager.shared.loadScene10()
+
+        // Configure Scene10
+        if let gameScene = scnView.scene as? Scene10 {
+            GameViewController.playerEntity = gameScene.playerEntity
+
+            let movementComponent = MovementComponent(
+                playerNode: gameScene.playerEntity.playerNode!,
+                cameraNode: gameScene.cameraNode,
+                lightNode: gameScene.lightNode
+            )
+            GameViewController.playerEntity.movementComponent = movementComponent
+
+            if let movementComponent = gameScene.playerEntity.movementComponent {
+                movementComponent.joystickComponent = GameViewController.joystickComponent
+                scnView.scene?.physicsWorld.contactDelegate = movementComponent
+            }
+
+            gameScene.setupGestureRecognizers(for: scnView)
+            GameViewController.joystickComponent.showJoystick()
+
+            print("Scene10 loaded successfully.")
+        } else {
+            print("Error: Scene10 not loaded correctly.")
         }
     }
     
