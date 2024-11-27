@@ -29,8 +29,7 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
     let doorTriggerDistance: Float = 5.0
     let transitionTriggerPosition = SCNVector3(-47.163, 737.242, 45.179)
     
-    //let transitionTriggerPosition = SCNVector3(-239.248, 81.08, 35.81);
-    let transitionTriggerDistance: Float = 5.0
+    let triggerDistance: Float = 5.0
     let fourthTargetPosition = SCNVector3(-239.248, 81.08, 35.81)
     let initialPlayerPosition = SCNVector3(211.776, 778.045, -15.809)
     let initialRezaPosition = SCNVector3(181.743, 767.443, 32.361)
@@ -42,7 +41,7 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
     let winningPoint = SCNVector3(-41.819, 741.735, 35.809)
     let winningDistanceThreshold: Float = 5.0
     
-    private let proximityThreshold: Float = 10.0
+    private let proximityThreshold: Float = 50.0
     
     init(lightNode: SCNNode, scnView: SCNView) {
         self.scnView = scnView
@@ -117,6 +116,8 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
         
         setupBlueFireEffect()
         startPositionLogging()
+        addWinningPointTrigger()
+        self.physicsWorld.contactDelegate = self
         
         if let ritualNode = rootNode.childNode(withName: "ritual", recursively: true) {
             let glowLight = SCNLight()
@@ -140,6 +141,38 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
         addWinningPointIndicator()
         
     }
+    
+    private func addWinningPointTrigger() {
+        // Create an invisible node to act as the trigger
+        let triggerNode = SCNNode()
+        triggerNode.position = winningPoint
+        triggerNode.geometry = SCNSphere(radius: 5.0) // Adjust the radius to match your proximity threshold
+        triggerNode.geometry?.firstMaterial?.diffuse.contents = UIColor.clear // Make it invisible
+
+        // Add a physics body to detect collisions
+        triggerNode.physicsBody = SCNPhysicsBody(type: .static, shape: SCNPhysicsShape(node: triggerNode, options: nil))
+        triggerNode.physicsBody?.isAffectedByGravity = false
+        triggerNode.physicsBody?.categoryBitMask = 1 // Assign a unique category
+        triggerNode.physicsBody?.contactTestBitMask = 2 // Detect collisions with player
+
+        rootNode.addChildNode(triggerNode)
+    }
+    
+    func physicsWorld(_ world: SCNPhysicsWorld, didBegin contact: SCNPhysicsContact) {
+        // Ensure the category bitmask matches the player and the trigger node
+        let playerCategoryBitMask = 2 // Match this with the player's assigned bitmask
+        let triggerCategoryBitMask = 1 // Match this with the trigger's assigned bitmask
+
+        // Check if either nodeA or nodeB belongs to the player and the trigger
+        if (contact.nodeA.physicsBody?.categoryBitMask == triggerCategoryBitMask &&
+            contact.nodeB.physicsBody?.categoryBitMask == playerCategoryBitMask) ||
+           (contact.nodeB.physicsBody?.categoryBitMask == triggerCategoryBitMask &&
+            contact.nodeA.physicsBody?.categoryBitMask == playerCategoryBitMask) {
+            print("Player has reached the winning point.")
+            transitionToScene10()
+        }
+    }
+
     
     private func lockPlayerControls() {
         print("Locking player controls")
@@ -202,11 +235,27 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
         rootNode.addChildNode(fireNode)
     }
     
-    func checkProximityToTransition() -> Bool {
-        guard let playerNode = playerEntity?.playerNode else { return false }
+    func checkProximityToWinningPoint() -> Bool {
+        guard let playerNode = playerEntity.playerNode else {
+            print("Error: Player node not found.")
+            return false
+        }
+
+        let distanceToWinningPoint = playerNode.position.distance(to: winningPoint)
+        print("Distance to Winning Point: \(distanceToWinningPoint)")
+        return distanceToWinningPoint <= proximityThreshold
+    }
+    
+    func updateScene() {
+        guard let playerNode = playerEntity?.playerNode else { return }
         
-        let distance = playerNode.position.distance(to: transitionTriggerPosition)
-        return distance < transitionTriggerDistance
+        let distanceToWinningPoint = playerNode.position.distance(to: winningPoint)
+        print("Player's current position: \(playerNode.position)")
+        
+        // Trigger transition only when close enough to the winning point
+        if distanceToWinningPoint <= proximityThreshold {
+            transitionToScene10()
+        }
     }
 
     
@@ -487,12 +536,6 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
         }
     }
     
-//    func checkProximityToTransition() -> Bool {
-//        guard let playerPosition = playerEntity.playerNode?.position else { return false }
-//        let distance = playerPosition.distance(to: transitionTriggerPosition)
-//        return distance < triggerDistance
-//    }
-    
     func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
         guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
             print("Warning: Audio file '\(audioFileName)' not found")
@@ -757,10 +800,13 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
             let distanceToWinningPoint = playerPosition.distance(to: self.winningPoint)
 
             // Check if the player is within the winning proximity range
-            if distanceToWinningPoint < self.proximityThreshold {
-                self.showWinningMessage()
-                rezaNode.removeAllActions() // Stop Reza from following
-            } else if distanceToPlayer > minimumDistance {
+            if checkProximityToWinningPoint() {
+                print("Player reached the winning point.")
+                DispatchQueue.main.async {
+                    self.transitionToScene10()
+                }
+            }
+            else if distanceToPlayer > minimumDistance {
                 // Move Reza toward the player if they haven't won yet
                 let direction = SCNVector3(
                     (playerPosition.x - rezaPosition.x) * moveSpeed,
@@ -782,20 +828,73 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
         rezaNode.runAction(repeatFollowAction)
     }
     
+    func transitionToScene10() {
+        guard let scnView = self.scnView else {
+            print("Error: SCNView not found.")
+            return
+        }
+        
+        // Show loading screen
+        let loadingView = LoadingView(frame: scnView.bounds)
+        scnView.addSubview(loadingView)
+        
+        loadingView.fadeIn { [weak self] in
+            guard let self = self else { return }
+            
+            SceneManager.shared.cleanupCurrentScene()
+            
+            AssetPreloader.preloadScene10 { success in
+                DispatchQueue.main.async {
+                    loadingView.stopLoading()
+                    
+                    if success {
+                        print("Scene10 assets loaded successfully.")
+                        SceneManager.shared.loadScene10()
+                        
+                        if let gameScene = scnView.scene as? Scene10 {
+                            GameViewController.playerEntity = gameScene.playerEntity
+                            
+                            let movementComponent = MovementComponent(
+                                playerNode: gameScene.playerEntity.playerNode!,
+                                cameraNode: gameScene.cameraNode,
+                                lightNode: gameScene.lightNode
+                            )
+                            GameViewController.playerEntity.movementComponent = movementComponent
+                            
+                            if let movementComponent = gameScene.playerEntity.movementComponent {
+                                movementComponent.joystickComponent = GameViewController.joystickComponent
+                                
+                                if let scnScene = self.scnView?.scene {
+                                    scnScene.physicsWorld.contactDelegate = movementComponent
+                                }
+                            }
+                            
+                            gameScene.setupGestureRecognizers(for: scnView)
+                        } else {
+                            print("Error: Scene10 not loaded correctly.")
+                        }
+                    } else {
+                        print("Error: Failed to preload Scene10.")
+                    }
+                }
+            }
+        }
+    }
+
     private func showWinningMessage() {
         guard let view = scnView else { return }
 
         DispatchQueue.main.async {
             let overlayView = UIView()
-            overlayView.backgroundColor = UIColor.white.withAlphaComponent(0.1)
+            overlayView.backgroundColor = UIColor.white.withAlphaComponent(0.8)
             overlayView.layer.cornerRadius = 10
             overlayView.translatesAutoresizingMaskIntoConstraints = false
 
             view.addSubview(overlayView)
 
             let winLabel = UILabel()
-            winLabel.text = "You Escaped! Continue to Next Scene"
-            winLabel.font = UIFont(name: "SpecialElite-Regular", size: 16) ?? UIFont.systemFont(ofSize: 16)
+            winLabel.text = "You Escaped! Continue to the Next Scene"
+            winLabel.font = UIFont(name: "SpecialElite-Regular", size: 18) ?? UIFont.systemFont(ofSize: 18)
             winLabel.textColor = .black
             winLabel.textAlignment = .center
             winLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -804,7 +903,7 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
 
             let continueButton = UIButton(type: .system)
             continueButton.setTitle("Continue", for: .normal)
-            continueButton.titleLabel?.font = UIFont(name: "SpecialElite-Regular", size: 18) ?? UIFont.systemFont(ofSize: 18)
+            continueButton.titleLabel?.font = UIFont(name: "SpecialElite-Regular", size: 20) ?? UIFont.systemFont(ofSize: 20)
             continueButton.setTitleColor(.white, for: .normal)
             continueButton.backgroundColor = UIColor(hex: "4B4EE8")
             continueButton.layer.cornerRadius = 10
@@ -822,7 +921,7 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
 
                 winLabel.centerXAnchor.constraint(equalTo: overlayView.centerXAnchor),
                 winLabel.topAnchor.constraint(equalTo: overlayView.topAnchor, constant: 20),
-                winLabel.widthAnchor.constraint(equalTo: overlayView.widthAnchor, constant: -40),
+                winLabel.widthAnchor.constraint(equalTo: overlayView.widthAnchor, constant: -20),
                 winLabel.heightAnchor.constraint(equalToConstant: 40),
 
                 continueButton.centerXAnchor.constraint(equalTo: overlayView.centerXAnchor),
@@ -832,10 +931,60 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
             ])
         }
     }
-
+    
     @objc private func continueToNextScene() {
-        print("Continuing to the next scene...")
-        // Logic to transition
+        print("Transitioning to Scene10...")
+
+        guard let view = scnView else { return }
+
+        // Display loading screen
+        let loadingView = LoadingView(frame: view.bounds)
+        view.addSubview(loadingView)
+        loadingView.fadeIn { [weak self] in
+            guard let self = self else { return }
+
+            // Clean up Scene9 and prepare Scene10
+            SceneManager.shared.cleanupCurrentScene()
+            AssetPreloader.preloadScene10 { success in
+                DispatchQueue.main.async {
+                    if success {
+                        print("Scene10 assets successfully prepared.")
+                        SceneManager.shared.loadScene10()
+
+                        if let gameScene = self.scnView?.scene as? Scene10 {
+                            GameViewController.playerEntity = gameScene.playerEntity
+
+                            let movementComponent = MovementComponent(
+                                playerNode: gameScene.playerEntity.playerNode!,
+                                cameraNode: gameScene.cameraNode,
+                                lightNode: gameScene.lightNode
+                            )
+                            GameViewController.playerEntity.movementComponent = movementComponent
+
+                            if let movementComponent = gameScene.playerEntity.movementComponent {
+                                movementComponent.joystickComponent = GameViewController.joystickComponent
+                                self.scnView?.scene?.physicsWorld.contactDelegate = movementComponent
+                            }
+
+                            gameScene.fogStartDistance = 25.0
+                            gameScene.fogEndDistance = 300.0
+                            gameScene.fogDensityExponent = 0.3
+                            gameScene.fogColor = UIColor.black
+                            gameScene.setupGestureRecognizers(for: self.scnView ?? UIView())
+                        }
+
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                            loadingView.stopLoading()
+                            GameViewController.joystickComponent.showJoystick()
+                        }
+                    } else {
+                        print("Error: Failed to prepare Scene10 assets.")
+                        loadingView.stopLoading()
+                        GameViewController.joystickComponent.showJoystick()
+                    }
+                }
+            }
+        }
     }
 
     private func showTryAgainPopup() {

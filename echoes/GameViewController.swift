@@ -533,63 +533,37 @@ class GameViewController: UIViewController, Scene2Delegate {
             }
         }
         
-        // Scene 9
+        // UpdateScene logic for Scene9
         if let gameScene = scnView.scene as? Scene9 {
-            if !isTransitioning && gameScene.checkProximityToTransition() {
+            print("Currently in Scene9. Checking proximity to winning point...")
+
+            if !isTransitioning && gameScene.checkProximityToWinningPoint() {
+                print("Player is close enough to the winning point. Preparing transition to Scene10...")
                 isTransitioning = true
+
+                // Hide joystick and prepare loading view
                 GameViewController.joystickComponent.hideJoystick()
-                
-                if let doorNode = gameScene.rootNode.childNode(withName: "doorFamilyRoom", recursively: true) {
-                    attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 3, delay: 0)
-                }
-                
                 let loadingView = LoadingView(frame: scnView.bounds)
                 scnView.addSubview(loadingView)
+
+                // Fade in the loading view and transition to Scene10
                 loadingView.fadeIn { [weak self] in
                     guard let self = self else { return }
-                    
+
+                    // Clean up Scene9 and preload Scene10
+                    print("Cleaning up Scene9...")
                     SceneManager.shared.cleanupCurrentScene()
-                    
+
                     AssetPreloader.preloadScene10 { success in
                         DispatchQueue.main.async {
+                            loadingView.stopLoading()
                             if success {
-                                print("Scene10 assets successfully prepared.")
-                                
-                                SceneManager.shared.loadScene10()
-                                
-                                if let gameScene = self.scnView.scene as? Scene10 {
-                                    GameViewController.playerEntity = gameScene.playerEntity
-                                    
-                                    let movementComponent = MovementComponent(
-                                        playerNode: gameScene.playerEntity.playerNode!,
-                                        cameraNode: gameScene.cameraNode,
-                                        lightNode: gameScene.lightNode
-                                    )
-                                    GameViewController.playerEntity.movementComponent = movementComponent
-                                    
-                                    if let movementComponent = gameScene.playerEntity.movementComponent {
-                                        movementComponent.joystickComponent = GameViewController.joystickComponent
-                                        self.scnView.scene?.physicsWorld.contactDelegate = movementComponent
-                                    }
-                                    
-                                    gameScene.fogStartDistance = 25.0
-                                    gameScene.fogEndDistance = 300.0
-                                    gameScene.fogDensityExponent = 0.3
-                                    gameScene.fogColor = UIColor.black
-                                    
-                                    gameScene.setupGestureRecognizers(for: self.scnView)
-                                }
-                                
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                                    loadingView.stopLoading()
-                                }
+                                print("Scene10 assets loaded successfully.")
+                                self.loadScene10()
                             } else {
-                                print("Error: Failed to prepare Scene10 assets.")
-                                loadingView.stopLoading()
-                                GameViewController.joystickComponent.showJoystick()
+                                print("Error: Failed to preload Scene10.")
+                                self.isTransitioning = false // Allow retry
                             }
-                            
-                            self.isTransitioning = false
                         }
                     }
                 }
@@ -599,6 +573,35 @@ class GameViewController: UIViewController, Scene2Delegate {
         // Scene 10
         if let gameScene = scnView.scene as? Scene10 {
             gameScene.checkProximity()
+        }
+    }
+    
+    func loadScene10() {
+        print("Loading Scene10...")
+        SceneManager.shared.loadScene10()
+
+        // Configure Scene10
+        if let gameScene = scnView.scene as? Scene10 {
+            GameViewController.playerEntity = gameScene.playerEntity
+
+            let movementComponent = MovementComponent(
+                playerNode: gameScene.playerEntity.playerNode!,
+                cameraNode: gameScene.cameraNode,
+                lightNode: gameScene.lightNode
+            )
+            GameViewController.playerEntity.movementComponent = movementComponent
+
+            if let movementComponent = gameScene.playerEntity.movementComponent {
+                movementComponent.joystickComponent = GameViewController.joystickComponent
+                scnView.scene?.physicsWorld.contactDelegate = movementComponent
+            }
+
+            gameScene.setupGestureRecognizers(for: scnView)
+            GameViewController.joystickComponent.showJoystick()
+
+            print("Scene10 loaded successfully.")
+        } else {
+            print("Error: Scene10 not loaded correctly.")
         }
     }
     
