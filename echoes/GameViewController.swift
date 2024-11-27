@@ -11,6 +11,13 @@ class GameViewController: UIViewController, Scene2Delegate {
     static var shared = GameViewController()
     static var playerEntity: PlayerEntity!
     static var joystickComponent: VirtualJoystickComponent!
+    static var isGrandmaPicked: Bool = false
+    static var isRezaPicked: Bool = false
+    static var isAyuPicked: Bool = false
+
+    static var isCauseCorrect: Bool = false
+
+    static var previousPlayerChoice: String? = "Ayu" // This can be "Ayu" or "Reza"
     
     var scnView: SCNView!
     var interactButton: UIButton!
@@ -31,19 +38,19 @@ class GameViewController: UIViewController, Scene2Delegate {
         GameViewController.joystickComponent.attachToView(self.view)
         
         // Load the initial game scene
-        SceneManager.shared.loadScene2()
+        SceneManager.shared.loadScene11()
         
         // Scene 2
         if let gameScene = self.scnView.scene as? Scene2 {
             GameViewController.playerEntity = gameScene.playerEntity
             // Set delegate to handle Scene2 transition
-            gameScene.delegate = self
+            //            gameScene.delegate = self
             
             // Create a movement component to handle player movement, including the light node
             let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode)
             GameViewController.playerEntity.movementComponent = movementComponent
             
-            GameViewController.joystickComponent.hideJoystick()
+            //            GameViewController.joystickComponent.hideJoystick()
             
             // Link the joystick with the movement component
             if let movementComponent = gameScene.playerEntity.movementComponent {
@@ -52,20 +59,25 @@ class GameViewController: UIViewController, Scene2Delegate {
             }
             
             // Set up fog properties for the scene
-            gameScene.fogStartDistance = 25.0
-            gameScene.fogEndDistance = 300.0
-            gameScene.fogDensityExponent = 0.2
-            gameScene.fogColor = UIColor.black
+            //            gameScene.fogStartDistance = 100.0
+            //            gameScene.fogEndDistance = 300.0
+            //            gameScene.fogDensityExponent = 0.2
+            //            gameScene.fogColor = UIColor.black
             
             gameScene.setupGestureRecognizers(for: self.scnView)
             
             // Start the walking sequence and cutscene in Scene2
-            gameScene.startWalkingToHouse()
+            //            gameScene.startWalkingToHouse()
+        }
+        
+        if let gameScene = self.scnView.scene as? Scene11 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 20.0) { [weak self] in
+                gameScene.showPurpleBackgroundOverlay(in: self!.view!)
+            }
         }
         
         // Configure the SCNView
         scnView.allowsCameraControl = false
-        // scnView.showsStatistics = true
         scnView.backgroundColor = UIColor.black
         
         // Create and configure the interaction button
@@ -541,6 +553,98 @@ class GameViewController: UIViewController, Scene2Delegate {
         // Scene 10
         if let gameScene = scnView.scene as? Scene10 {
             gameScene.checkProximity()
+        }
+        
+        if let gameScene = scnView.scene as? Scene11 {
+            print(gameScene.isDeathPicked)
+            if gameScene.isDeathPicked {
+                // Load Scene6 if player is near transition
+                SceneManager.shared.loadScene12()
+                
+                if let gameScene = self.scnView.scene as? Scene12 {
+                    GameViewController.playerEntity = gameScene.playerEntity
+
+                    // Create a movement component to handle player movement, including the light node
+                    let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode) // Pass lightNode
+                    GameViewController.playerEntity.movementComponent = movementComponent
+                    
+                    // Link the joystick with the movement component
+                    if let movementComponent = gameScene.playerEntity.movementComponent {
+                        movementComponent.joystickComponent = GameViewController.joystickComponent
+                        self.scnView.scene?.physicsWorld.contactDelegate = movementComponent // Set the physics delegate
+                    }
+                    
+                    gameScene.setupGestureRecognizers(for: self.scnView)
+                    
+                    if (GameViewController.isGrandmaPicked && GameViewController.isCauseCorrect) ||
+                        GameViewController.isAyuPicked || GameViewController.isRezaPicked {                        DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) { [weak self] in
+                            gameScene.setupAndStartSlideshow(on: self!.view!)
+                        }
+                    }
+                }
+            }
+        }
+        
+        if let gameScene = scnView.scene as? Scene12 {
+            if gameScene.isFinished {
+                // 1. Fade to black
+                let fadeToBlackAction = SCNAction.run { [weak self] _ in
+                    gameScene.fadeScreenToBlack(on: self!.view)
+                }
+                
+                // 2. Run the fade-to-black action
+                gameScene.rootNode.runAction(fadeToBlackAction) { [weak self] in
+                    guard let self = self else { return }
+                    print("Scene ended")
+                    
+                    // 3. Display "The End" text after the screen is black
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { // 1-second delay to ensure screen is fully black
+                        self.displayEndText(on: self.view)
+                    }
+                    
+//                    // 4. Auto transition to another view controller after 5 seconds
+//                    DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) { // 5 seconds after showing "The End"
+//                        self.transitionToNextViewController()
+//                    }
+                }
+            }
+        }
+    }
+    
+    func displayEndText(on view: UIView?) {
+        guard let view = view else { return }
+        
+        // Create a label
+        let endLabel = UILabel()
+        endLabel.text = "The End"
+        endLabel.textColor = .white
+        if let customFont = UIFont(name: "MetalMania-Regular", size: 40) {
+            endLabel.font = customFont
+        } else {
+            print("Failed to load SpecialElite-Regular font.")
+        }
+        endLabel.textAlignment = .center
+        endLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Add the label to the view
+        view.addSubview(endLabel)
+        
+        // Center the label in the view
+        NSLayoutConstraint.activate([
+            endLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            endLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
+    }
+
+    func transitionToNextViewController() {
+        // Replace "NextViewController" with your target view controller
+        let nextVC = ViewController()
+        nextVC.modalPresentationStyle = .fullScreen
+        nextVC.modalTransitionStyle = .crossDissolve
+        
+        // Present the next view controller
+        if let currentVC = UIApplication.shared.keyWindow?.rootViewController {
+            currentVC.present(nextVC, animated: true, completion: nil)
         }
     }
     
