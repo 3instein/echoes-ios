@@ -1,9 +1,4 @@
-//
 //  Scene9.swift
-//  echoes
-//
-//  Created by Pelangi Masita Wati on 27/10/24.
-//
 
 import SceneKit
 import UIKit

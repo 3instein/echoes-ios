@@ -1,9 +1,4 @@
-//
 //  Scene11.swift
-//  echoes
-//
-//  Created by Reynaldi Kindarto on 05/11/24.
-//
 
 import SceneKit
 import UIKit
