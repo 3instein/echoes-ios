@@ -14,9 +14,7 @@ class GameViewController: UIViewController, Scene2Delegate {
     static var isGrandmaPicked: Bool = false
     static var isRezaPicked: Bool = false
     static var isAyuPicked: Bool = false
-    
     static var isCauseCorrect: Bool = false
-    
     static var previousPlayerChoice: String? = "Ayu" // This can be "Ayu" or "Reza"
     
     var scnView: SCNView!
@@ -38,7 +36,7 @@ class GameViewController: UIViewController, Scene2Delegate {
         GameViewController.joystickComponent.attachToView(self.view)
         
         // Load the initial game scene
-        SceneManager.shared.loadScene11()
+        SceneManager.shared.loadScene2()
         
         // Scene 2
         if let gameScene = self.scnView.scene as? Scene2 {
