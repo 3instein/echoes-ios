@@ -13,17 +13,13 @@ class Scene11: SCNScene, SCNPhysicsContactDelegate {
     var cameraComponent: CameraComponent!
     var cameraNode: SCNNode!
     var lightNode: SCNNode!
-    
     weak var scnView: SCNView?
     
     var isDeathPicked: Bool = false
-    
     var isGrandmaPicked = false
     var isAyuPicked = false
     var isRezaPicked = false
-    
     var isRacunPicked = false
-    
     var purpleOverlay: UIView?
     var deathImagesOverlay: UIView?
     
@@ -35,8 +31,7 @@ class Scene11: SCNScene, SCNPhysicsContactDelegate {
         
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "scene11.scn") else {
-            print("Warning: House scene 'Scene4.scn' not found")
-            return
+            fatalError("Error: Scene named 'scene11.scn' not found")
         }
         
         // Add the house's nodes to the root node of the GameScene
