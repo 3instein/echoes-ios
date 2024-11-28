@@ -1,9 +1,4 @@
-//
 //  Scene12.swift
-//  echoes
-//
-//  Created by Angeline Ivana on 26/10/24.
-//
 
 import SceneKit
 import UIKit
@@ -12,20 +7,16 @@ class Scene12: SCNScene, SCNPhysicsContactDelegate {
     var playerEntity: PlayerEntity!
     var cameraComponent: CameraComponent!
     var joystickComponent: VirtualJoystickComponent!
-
     var cameraNode: SCNNode!
     var lightNode: SCNNode!
     var killerNode: SCNNode!
     var grandmalastNode: SCNNode!
     var treeNode: SCNNode!
     var eyeClosingNode: SCNNode?
-    
     var slideBenar: UIView?
     var slideshowImages: [SCNNode] = []
     var slideshowTimer: Timer?
-
     weak var scnView: SCNView?
-
     var durationSalah = 0.0
     var isFinished: Bool = false
     
@@ -37,8 +28,7 @@ class Scene12: SCNScene, SCNPhysicsContactDelegate {
 
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "scene12.scn") else {
-            print("Warning: House scene 'Scene12.scn' not found")
-            return
+            fatalError("Error: Scene named 'scene12.scn' not found")
         }
         
         // Add the house's nodes to the root node of the GameScene
