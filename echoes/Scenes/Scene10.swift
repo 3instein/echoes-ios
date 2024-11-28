@@ -13,12 +13,14 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
     var knockDoorNode: SCNNode!
     var lockButton: UIButton?
     var enterButton: UIButton?
+    var trapDoorEntered = false
+    
     weak var scnView: SCNView?
     private var keyImageView: UIImageView!
     private var doorImageView: UIImageView!
     private var miniGameCompleted = false
     private var isMiniGameActive = false
-    private var trapDoorEntered = false
+    
     let doorTriggerDistance: Float = 135.0  // Distance "Lock" button for door room should appear
     let trapdoorTriggerDistance: Float = 110.0  // Distance "Enter" button for trap door should appear
     
@@ -59,8 +61,7 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         
         rootNode.addChildNode(lightNode)
         
-        // Add collision bodies to furniture (-temporarily disabled, causing crash*)
-        // setupFurnitureCollision()
+        setupFurnitureCollision()
         playAndraSound()
         
         self.physicsWorld.contactDelegate = self
@@ -87,31 +88,35 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
     }
     
     private func setupFurnitureCollision() {
-        if let bedNode = rootNode.childNode(withName: "victorian_bed", recursively: true) {
-            bedNode.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
-            bedNode.physicsBody?.categoryBitMask = 2
-            bedNode.physicsBody?.collisionBitMask = 1
-        }
+        // if let bedNode = rootNode.childNode(withName: "victorian_bed", recursively: true) {
+        //    bedNode.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
+        //    bedNode.physicsBody?.categoryBitMask = 2
+        //    bedNode.physicsBody?.collisionBitMask = 1
+        // }
+        
         if let leftEndTable = rootNode.childNode(withName: "end_table01", recursively: true) {
             leftEndTable.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
             leftEndTable.physicsBody?.categoryBitMask = 2
             leftEndTable.physicsBody?.collisionBitMask = 1
         }
+        
         if let rightEndTable = rootNode.childNode(withName: "end_table02", recursively: true) {
             rightEndTable.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
             rightEndTable.physicsBody?.categoryBitMask = 2
             rightEndTable.physicsBody?.collisionBitMask = 1
         }
+        
         if let doorNode = doorNode {
             doorNode.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
             doorNode.physicsBody?.categoryBitMask = 2
             doorNode.physicsBody?.collisionBitMask = 1
         }
-        if let trapdoorNode = trapdoorNode {
-            trapdoorNode.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
-            trapdoorNode.physicsBody?.categoryBitMask = 2
-            trapdoorNode.physicsBody?.collisionBitMask = 1
-        }
+        
+        // if let trapdoorNode = trapdoorNode {
+        //    trapdoorNode.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
+        //    trapdoorNode.physicsBody?.categoryBitMask = 2
+        //    trapdoorNode.physicsBody?.collisionBitMask = 1
+        // }
     }
     
     func checkProximity() {
@@ -277,11 +282,10 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
     @objc private func enterTrapdoor() {
         hideEnterButton()
         trapDoorEntered = true
-        UIView.animate(withDuration: 1.0, animations: {
+        UIView.animate(withDuration: 1.0) {
             self.scnView?.alpha = 0.0
-        }) { _ in
-            // SceneManager.shared.loadScene11()
         }
+        print("Trapdoor interaction completed. Scene 10 will transition to Scene 11.")
     }
     
     func setupGestureRecognizers(for view: UIView) {
