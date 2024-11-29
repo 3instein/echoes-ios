@@ -282,10 +282,16 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
     @objc private func enterTrapdoor() {
         hideEnterButton()
         trapDoorEntered = true
-        UIView.animate(withDuration: 1.0) {
-            self.scnView?.alpha = 0.0
-        }
         print("Trapdoor interaction completed. Scene 10 will transition to Scene 11.")
+        
+        DispatchQueue.main.async {
+            print("Attempting to start transition via GameViewController.shared.")
+            GameViewController.shared.startTransitionToScene11()
+        }
+    }
+    
+    func checkProximityToTransition() -> Bool {
+        return trapDoorEntered
     }
     
     func setupGestureRecognizers(for view: UIView) {

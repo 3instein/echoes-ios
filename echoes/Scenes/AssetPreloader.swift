@@ -113,7 +113,8 @@ class AssetPreloader {
             "scene11Background.wav",
             "dialogue1.mp3",
             "dialogue2.mp3",
-            "effect1.wav"
+            "effect1.wav",
+            "s11-polisi.mp3"
         ]
         preloadSceneWithAudio(named: sceneName, audioFiles: audioFiles, completion: completion)
     }

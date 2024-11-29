@@ -23,6 +23,7 @@ class GameViewController: UIViewController, Scene2Delegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        GameViewController.shared = self
         
         // Set up the SCNView
         scnView = SCNView(frame: self.view.frame)
@@ -66,12 +67,6 @@ class GameViewController: UIViewController, Scene2Delegate {
             
             // Start the walking sequence and cutscene in Scene2
             gameScene.startWalkingToHouse()
-        }
-        
-        if let gameScene = self.scnView.scene as? Scene11 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 20.0) { [weak self] in
-                gameScene.showPurpleBackgroundOverlay(in: self!.view!)
-            }
         }
         
         // Configure the SCNView
@@ -165,11 +160,11 @@ class GameViewController: UIViewController, Scene2Delegate {
                                 // Stop the loading screen after Scene5and6 is fully loaded
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                                     loadingView.stopLoading()
+                                    GameViewController.joystickComponent.showJoystick()
                                 }
                             } else {
                                 print("Error: Failed to prepare Scene5and6 assets.")
                                 loadingView.stopLoading()
-                                GameViewController.joystickComponent.showJoystick()
                             }
                             
                             // Reset the transition state
@@ -355,11 +350,11 @@ class GameViewController: UIViewController, Scene2Delegate {
                                 // Stop the loading screen after Scene8 is fully loaded
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                                     loadingView.stopLoading()
+                                    GameViewController.joystickComponent.showJoystick()
                                 }
                             } else {
                                 print("Error: Failed to prepare Scene8 assets.")
                                 loadingView.stopLoading()
-                                GameViewController.joystickComponent.showJoystick()
                             }
                             
                             // Reset the transition state
@@ -436,7 +431,7 @@ class GameViewController: UIViewController, Scene2Delegate {
                             if success {
                                 print("Scene9 assets successfully prepared.")
                                 
-                                // Load Scene9
+                                // Load Scene 9
                                 SceneManager.shared.loadScene9()
                                 
                                 // Configure Scene9 after loading
@@ -469,11 +464,11 @@ class GameViewController: UIViewController, Scene2Delegate {
                                 
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                                     loadingView.stopLoading()
+                                    GameViewController.joystickComponent.showJoystick()
                                 }
                             } else {
                                 print("Error: Failed to prepare Scene9 assets.")
                                 loadingView.stopLoading()
-                                GameViewController.joystickComponent.showJoystick()
                             }
                             
                             // Reset the transition state
@@ -558,9 +553,6 @@ class GameViewController: UIViewController, Scene2Delegate {
                 // Fade in the loading view and transition to Scene10
                 loadingView.fadeIn { [weak self] in
                     guard let self = self else { return }
-                    
-                    // Clean up Scene9 and preload Scene10
-                    print("Cleaning up Scene9...")
                     SceneManager.shared.cleanupCurrentScene()
                     
                     AssetPreloader.preloadScene10 { success in
@@ -574,6 +566,8 @@ class GameViewController: UIViewController, Scene2Delegate {
                                 self.isTransitioning = false // Allow retry
                             }
                         }
+                        // Reset the transition state
+                        self.isTransitioning = false
                     }
                 }
             }
@@ -583,65 +577,17 @@ class GameViewController: UIViewController, Scene2Delegate {
         if let gameScene = scnView.scene as? Scene10 {
             gameScene.checkProximity()
             
-            if !isTransitioning && gameScene.trapDoorEntered {
-                isTransitioning = true
-                GameViewController.joystickComponent.hideJoystick()
-                
-                // Display the loading screen
-                let loadingView = LoadingView(frame: scnView.bounds)
-                scnView.addSubview(loadingView)
-                loadingView.fadeIn { [weak self] in
-                    guard let self = self else { return }
-                    
-                    // Clean up Scene 10 and preload Scene 11 assets
-                    SceneManager.shared.cleanupCurrentScene()
-                    AssetPreloader.preloadScene11 { success in
-                        DispatchQueue.main.async {
-                            if success {
-                                print("Scene11 assets successfully prepared.")
-                                
-                                // Load Scene11
-                                SceneManager.shared.loadScene11()
-                                
-                                // Configure Scene11 after loading
-                                if let gameScene = self.scnView.scene as? Scene11 {
-                                    GameViewController.playerEntity = gameScene.playerEntity
-                                    
-                                    // Set up movement components
-                                    let movementComponent = MovementComponent(
-                                        playerNode: gameScene.playerEntity.playerNode!,
-                                        cameraNode: gameScene.cameraNode,
-                                        lightNode: gameScene.lightNode
-                                    )
-                                    GameViewController.playerEntity.movementComponent = movementComponent
-                                    
-                                    if let movementComponent = gameScene.playerEntity.movementComponent {
-                                        movementComponent.joystickComponent = GameViewController.joystickComponent
-                                        self.scnView.scene?.physicsWorld.contactDelegate = movementComponent
-                                    }
-                                    
-                                    gameScene.setupGestureRecognizers(for: self.scnView)
-                                    GameViewController.joystickComponent.showJoystick()
-                                }
-                                
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                                    loadingView.stopLoading()
-                                }
-                            } else {
-                                print("Error: Failed to prepare Scene11 assets.")
-                                loadingView.stopLoading()
-                            }
-                            
-                            self.isTransitioning = false
-                        }
-                    }
-                }
+            if !isTransitioning && gameScene.checkProximityToTransition() {
+                startTransitionToScene11()
             }
         }
         
         // Scene 11
         if let gameScene = scnView.scene as? Scene11 {
-            print(gameScene.isDeathPicked)
+            // print(gameScene.isDeathPicked)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 20.0) { [weak self] in
+                gameScene.showPurpleBackgroundOverlay(in: self?.view ?? UIView())
+            }
             
             if gameScene.isDeathPicked {
                 isTransitioning = true
@@ -657,8 +603,6 @@ class GameViewController: UIViewController, Scene2Delegate {
                     AssetPreloader.preloadScene12 { success in
                         DispatchQueue.main.async {
                             if success {
-                                print("Scene12 assets successfully prepared.")
-                                
                                 // Load Scene12
                                 SceneManager.shared.loadScene12()
                                 
@@ -680,7 +624,6 @@ class GameViewController: UIViewController, Scene2Delegate {
                                     }
                                     
                                     gameScene.setupGestureRecognizers(for: self.scnView)
-                                    GameViewController.joystickComponent.showJoystick()
                                     
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) { [weak self] in
                                         gameScene.setupAndStartSlideshow(on: self?.view ?? UIView())
@@ -693,8 +636,10 @@ class GameViewController: UIViewController, Scene2Delegate {
                             } else {
                                 print("Error: Failed to preload Scene12.")
                                 loadingView.stopLoading()
-                                self.isTransitioning = false
                             }
+                            
+                            // Reset the transition state
+                            self.isTransitioning = false
                         }
                     }
                 }
@@ -766,7 +711,6 @@ class GameViewController: UIViewController, Scene2Delegate {
     }
     
     func loadScene10() {
-        print("Loading Scene10...")
         SceneManager.shared.loadScene10()
         
         // Configure Scene10
@@ -786,8 +730,6 @@ class GameViewController: UIViewController, Scene2Delegate {
             }
             
             gameScene.setupGestureRecognizers(for: scnView)
-            GameViewController.joystickComponent.showJoystick()
-            
             print("Scene10 loaded successfully.")
             
             DispatchQueue.main.async {
@@ -801,13 +743,72 @@ class GameViewController: UIViewController, Scene2Delegate {
                 self.scnView.subviews.forEach { subview in
                     if let loadingView = subview as? LoadingView {
                         loadingView.stopLoading()
+                        GameViewController.joystickComponent.showJoystick()
                         loadingView.removeFromSuperview()
-                        print("Loading view removed.")
                     }
                 }
             }
         } else {
             print("Error: Scene10 not loaded correctly.")
+        }
+    }
+    
+    func startTransitionToScene11() {
+        isTransitioning = true
+        GameViewController.joystickComponent.hideJoystick()
+        
+        // Display the loading screen
+        let loadingView = LoadingView(frame: scnView.bounds)
+        scnView.addSubview(loadingView)
+        loadingView.fadeIn { [weak self] in
+            guard let self = self else {
+                print("GameViewController is nil during transition to Scene11.")
+                return
+            }
+            print("Loading view displayed.")
+            SceneManager.shared.cleanupCurrentScene()
+            
+            AssetPreloader.preloadScene11 { success in
+                DispatchQueue.main.async {
+                    if success {
+                        print("Scene11 assets successfully prepared.")
+                        
+                        // Load Scene11
+                        SceneManager.shared.loadScene11()
+                        
+                        // Configure Scene11 after loading
+                        if let gameScene = self.scnView.scene as? Scene11 {
+                            GameViewController.playerEntity = gameScene.playerEntity
+                            print("Scene11 loaded successfully.")
+                            
+                            // Set up movement components
+                            let movementComponent = MovementComponent(
+                                playerNode: gameScene.playerEntity.playerNode!,
+                                cameraNode: gameScene.cameraNode,
+                                lightNode: gameScene.lightNode
+                            )
+                            GameViewController.playerEntity.movementComponent = movementComponent
+                            
+                            if let movementComponent = gameScene.playerEntity.movementComponent {
+                                movementComponent.joystickComponent = GameViewController.joystickComponent
+                                self.scnView.scene?.physicsWorld.contactDelegate = movementComponent
+                            }
+                            
+                            gameScene.setupGestureRecognizers(for: self.scnView)
+                        }
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+                            loadingView.stopLoading()
+                        }
+                    } else {
+                        print("Error: Failed to prepare Scene11 assets.")
+                        self.isTransitioning = false // Allow retry
+                    }
+                    
+                    // Reset the transition state
+                    self.isTransitioning = false
+                }
+            }
         }
     }
     
@@ -852,7 +853,6 @@ class GameViewController: UIViewController, Scene2Delegate {
     }
     
     func transitionToScene4() {
-        // Load Scene4 after Scene2 finishes
         SceneManager.shared.loadScene4()
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
