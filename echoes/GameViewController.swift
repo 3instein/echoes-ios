@@ -24,73 +24,45 @@ class GameViewController: UIViewController, Scene2Delegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         GameViewController.shared = self
-        
+
         // Set up the SCNView
         scnView = SCNView(frame: self.view.frame)
         self.view.addSubview(scnView)
-        
+
         // Configure the SceneManager with the SCNView
         SceneManager.shared.configure(with: scnView)
-        
+
         // Set up joystick component
         GameViewController.joystickComponent = VirtualJoystickComponent.shared
         GameViewController.joystickComponent.attachToView(self.view)
-        
-        // Load the initial game scene
-        SceneManager.shared.loadScene2()
-        
-        // Scene 2
-        if let gameScene = self.scnView.scene as? Scene2 {
+
+        // Load Scene 10 for testing
+        SceneManager.shared.loadScene10()
+
+        // Configure Scene 10
+        if let gameScene = scnView.scene as? Scene10 {
             GameViewController.playerEntity = gameScene.playerEntity
-            // Set delegate to handle Scene2 transition
-            gameScene.delegate = self
-            
-            // Create a movement component to handle player movement, including the light node
-            let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode)
+
+            // Set up movement components
+            let movementComponent = MovementComponent(
+                playerNode: gameScene.playerEntity.playerNode!,
+                cameraNode: gameScene.cameraNode,
+                lightNode: gameScene.lightNode
+            )
             GameViewController.playerEntity.movementComponent = movementComponent
-            
-            GameViewController.joystickComponent.hideJoystick()
-            
-            // Link the joystick with the movement component
+
             if let movementComponent = gameScene.playerEntity.movementComponent {
                 movementComponent.joystickComponent = GameViewController.joystickComponent
                 scnView.scene?.physicsWorld.contactDelegate = movementComponent
             }
-            
-            // Set up fog properties for the scene
-            gameScene.fogStartDistance = 100.0
-            gameScene.fogEndDistance = 300.0
-            gameScene.fogDensityExponent = 0.2
-            gameScene.fogColor = UIColor.black
-            
-            gameScene.setupGestureRecognizers(for: self.scnView)
-            
-            // Start the cutscene in Scene2
-            gameScene.startWalkingToHouse()
+
+            gameScene.setupGestureRecognizers(for: scnView)
         }
-        
+
         // Configure the SCNView
         scnView.allowsCameraControl = false
         scnView.backgroundColor = UIColor.black
-        
-        // Create and configure the interaction button
-        interactButton = UIButton(type: .system)
-        interactButton.setTitle("Play", for: .normal)
-        if let customFont = UIFont(name: "SpecialElite-Regular", size: 16) {
-            interactButton.titleLabel?.font = customFont
-        } else {
-            print("Failed to load SpecialElite-Regular font.")
-        }
-        interactButton.titleLabel?.numberOfLines = -1
-        interactButton.titleLabel?.textAlignment = .center
-        interactButton.backgroundColor = UIColor.white.withAlphaComponent(0.7)
-        interactButton.setTitleColor(.blue, for: .normal)
-        interactButton.layer.cornerRadius = 15
-        interactButton.frame = CGRect(x: 100, y: 100, width: 100, height: 30)
-        interactButton.isHidden = true
-        interactButton.addTarget(self, action: #selector(interactWithCake), for: .touchUpInside)
-        self.view.addSubview(interactButton)
-        
+
         // Start the update loop
         let displayLink = CADisplayLink(target: self, selector: #selector(updateScene))
         displayLink.add(to: .main, forMode: .default)
@@ -603,55 +575,64 @@ class GameViewController: UIViewController, Scene2Delegate {
                 let loadingView = LoadingView(frame: scnView.bounds)
                 scnView.addSubview(loadingView)
                 
-                // Fade in the loading screen and transition to Scene12
+                // Fade in the loading screen
                 loadingView.fadeIn { [weak self] in
                     guard let self = self else { return }
                     
-                    // Cleanup Scene 11 only
-                    if !(self.scnView.scene is Scene12) {
-                        SceneManager.shared.cleanupCurrentScene()
-                    }
-                    
-                    // Load Scene 12
-                    SceneManager.shared.loadScene12()
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
-                        if let gameScene = self.scnView.scene as? Scene12 {
-                            // Configure Scene12 safely
-                            GameViewController.playerEntity = gameScene.playerEntity
-                            
-                            let movementComponent = MovementComponent(
-                                playerNode: gameScene.playerEntity.playerNode!,
-                                cameraNode: gameScene.cameraNode,
-                                lightNode: gameScene.lightNode
-                            )
-                            GameViewController.playerEntity.movementComponent = movementComponent
-                            
-                            if let movementComponent = gameScene.playerEntity.movementComponent {
-                                movementComponent.joystickComponent = GameViewController.joystickComponent
-                                self.scnView.scene?.physicsWorld.contactDelegate = movementComponent
-                            }
-                            
-                            // Ensure scnView exists before gesture setup
-                            if let scnView = self.scnView {
-                                gameScene.setupGestureRecognizers(for: scnView)
+                    // Preload Scene12 assets
+                    AssetPreloader.preloadScene12 { success in
+                        DispatchQueue.main.async {
+                            if success {
+                                print("Scene12 assets successfully prepared.")
+                                
+                                // Cleanup Scene 11 only
+                                if !(self.scnView.scene is Scene12) {
+                                    SceneManager.shared.cleanupCurrentScene()
+                                }
+                                
+                                // Load Scene12
+                                SceneManager.shared.loadScene12()
+                                
+                                if let gameScene = self.scnView.scene as? Scene12 {
+                                    // Configure Scene12 safely
+                                    GameViewController.playerEntity = gameScene.playerEntity
+                                    
+                                    let movementComponent = MovementComponent(
+                                        playerNode: gameScene.playerEntity.playerNode!,
+                                        cameraNode: gameScene.cameraNode,
+                                        lightNode: gameScene.lightNode
+                                    )
+                                    GameViewController.playerEntity.movementComponent = movementComponent
+                                    
+                                    if let movementComponent = gameScene.playerEntity.movementComponent {
+                                        movementComponent.joystickComponent = GameViewController.joystickComponent
+                                        self.scnView.scene?.physicsWorld.contactDelegate = movementComponent
+                                    }
+                                    
+                                    // Ensure scnView exists before gesture setup
+                                    if let scnView = self.scnView {
+                                        gameScene.setupGestureRecognizers(for: scnView)
+                                    } else {
+                                        print("Error: SCNView not available for gesture recognizer setup.")
+                                    }
+                                    
+                                    // Start the slideshow after a delay
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) { [weak self] in
+                                        gameScene.setupAndStartSlideshow(on: self?.view ?? UIView())
+                                    }
+                                    
+                                    print("Scene12 successfully loaded.")
+                                } else {
+                                    print("Error: Scene12 not loaded correctly.")
+                                }
                             } else {
-                                print("Error: SCNView not available for gesture recognizer setup.")
+                                print("Error: Failed to preload Scene12 assets.")
                             }
                             
-                            // Start the slideshow after a delay
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) { [weak self] in
-                                gameScene.setupAndStartSlideshow(on: self?.view ?? UIView())
-                            }
-                            
-                            print("Scene12 successfully loaded.")
-                        } else {
-                            print("Error: Scene12 not loaded correctly.")
+                            // Stop loading screen and reset transition state
+                            loadingView.stopLoading()
+                            self.isTransitioning = false
                         }
-                        
-                        // Stop loading screen and reset transition state
-                        loadingView.stopLoading()
-                        self.isTransitioning = false
                     }
                 }
             }
@@ -681,6 +662,12 @@ class GameViewController: UIViewController, Scene2Delegate {
                     // 4. Auto transition to another view controller after 5 seconds
                     DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
                         self.transitionToNextViewController()
+                        
+                        // Cleanup Scene 12 after transitioning
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            SceneManager.shared.cleanupCurrentScene()
+                            print("Last scene 'scene12' cleanup complete.")
+                        }
                     }
                 }
             }
