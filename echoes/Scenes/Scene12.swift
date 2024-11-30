@@ -19,6 +19,7 @@ class Scene12: SCNScene, SCNPhysicsContactDelegate {
     weak var scnView: SCNView?
     var durationSalah = 0.0
     var isFinished: Bool = false
+    var isGameEnding: Bool = false
     
     init(lightNode: SCNNode) {
         super.init()
