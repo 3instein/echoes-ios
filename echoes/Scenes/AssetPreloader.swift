@@ -114,7 +114,12 @@ class AssetPreloader {
             "dialogue1.mp3",
             "dialogue2.mp3",
             "effect1.wav",
-            "s11-polisi.mp3"
+            "s11-polisi.mp3",
+            "thunder1.wav",
+            "thunder2.wav",
+            "thunder3.wav",
+            "thunder4.wav",
+            "thunder5.wav"
         ]
         preloadSceneWithAudio(named: sceneName, audioFiles: audioFiles, completion: completion)
     }

@@ -19,7 +19,7 @@ class GameViewController: UIViewController, Scene2Delegate {
     var scnView: SCNView!
     var interactButton: UIButton!
     var isTransitioning: Bool = false
-    var didTriggerPurpleOverlayForScene11: Bool = false // Add a flag to prevent duplicate calls
+    var didTriggerPurpleOverlayForScene11: Bool = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -588,64 +588,70 @@ class GameViewController: UIViewController, Scene2Delegate {
                 didTriggerPurpleOverlayForScene11 = true
                 print("Scene11 detected, scheduling purple background overlay.")
                 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 8.0) { [weak self] in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 12.0) { [weak self] in
                     gameScene.showPurpleBackgroundOverlay(in: self?.view ?? UIView())
                     print("Purple background overlay shown in Scene11.")
                 }
             }
             
             if gameScene.isDeathPicked {
+                guard !isTransitioning else { return } // Prevent multiple transitions
                 isTransitioning = true
                 GameViewController.joystickComponent.hideJoystick()
                 
-                // Display loading view
+                // Display the loading view
                 let loadingView = LoadingView(frame: scnView.bounds)
                 scnView.addSubview(loadingView)
+                
+                // Fade in the loading screen and transition to Scene12
                 loadingView.fadeIn { [weak self] in
                     guard let self = self else { return }
-                    SceneManager.shared.cleanupCurrentScene()
                     
-                    AssetPreloader.preloadScene12 { success in
-                        DispatchQueue.main.async {
-                            if success {
-                                // Load Scene12
-                                SceneManager.shared.loadScene12()
-                                
-                                // Configure Scene12
-                                if let gameScene = self.scnView.scene as? Scene12 {
-                                    GameViewController.playerEntity = gameScene.playerEntity
-                                    
-                                    // Set up movement component
-                                    let movementComponent = MovementComponent(
-                                        playerNode: gameScene.playerEntity.playerNode!,
-                                        cameraNode: gameScene.cameraNode,
-                                        lightNode: gameScene.lightNode
-                                    )
-                                    GameViewController.playerEntity.movementComponent = movementComponent
-                                    
-                                    if let movementComponent = gameScene.playerEntity.movementComponent {
-                                        movementComponent.joystickComponent = GameViewController.joystickComponent
-                                        self.scnView.scene?.physicsWorld.contactDelegate = movementComponent
-                                    }
-                                    
-                                    gameScene.setupGestureRecognizers(for: self.scnView)
-                                    
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) { [weak self] in
-                                        gameScene.setupAndStartSlideshow(on: self?.view ?? UIView())
-                                    }
-                                }
-                                
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                                    loadingView.stopLoading()
-                                }
-                            } else {
-                                print("Error: Failed to preload Scene12.")
-                                loadingView.stopLoading()
+                    // Cleanup Scene 11 only
+                    if !(self.scnView.scene is Scene12) {
+                        SceneManager.shared.cleanupCurrentScene()
+                    }
+                    
+                    // Load Scene 12
+                    SceneManager.shared.loadScene12()
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
+                        if let gameScene = self.scnView.scene as? Scene12 {
+                            // Configure Scene12 safely
+                            GameViewController.playerEntity = gameScene.playerEntity
+                            
+                            let movementComponent = MovementComponent(
+                                playerNode: gameScene.playerEntity.playerNode!,
+                                cameraNode: gameScene.cameraNode,
+                                lightNode: gameScene.lightNode
+                            )
+                            GameViewController.playerEntity.movementComponent = movementComponent
+                            
+                            if let movementComponent = gameScene.playerEntity.movementComponent {
+                                movementComponent.joystickComponent = GameViewController.joystickComponent
+                                self.scnView.scene?.physicsWorld.contactDelegate = movementComponent
                             }
                             
-                            // Reset the transition state
-                            self.isTransitioning = false
+                            // Ensure scnView exists before gesture setup
+                            if let scnView = self.scnView {
+                                gameScene.setupGestureRecognizers(for: scnView)
+                            } else {
+                                print("Error: SCNView not available for gesture recognizer setup.")
+                            }
+                            
+                            // Start the slideshow after a delay
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) { [weak self] in
+                                gameScene.setupAndStartSlideshow(on: self?.view ?? UIView())
+                            }
+                            
+                            print("Scene12 successfully loaded.")
+                        } else {
+                            print("Error: Scene12 not loaded correctly.")
                         }
+                        
+                        // Stop loading screen and reset transition state
+                        loadingView.stopLoading()
+                        self.isTransitioning = false
                     }
                 }
             }
@@ -654,9 +660,12 @@ class GameViewController: UIViewController, Scene2Delegate {
         // Scene 12
         if let gameScene = scnView.scene as? Scene12 {
             if gameScene.isFinished {
+                guard !gameScene.isGameEnding else { return } // Ensure the logic runs only once
+                gameScene.isGameEnding = true
+                
                 // 1. Fade to black
                 let fadeToBlackAction = SCNAction.run { [weak self] _ in
-                    gameScene.fadeScreenToBlack(on: self!.view)
+                    gameScene.fadeScreenToBlack(on: self?.view ?? UIView())
                 }
                 
                 // 2. Run the fade-to-black action
@@ -704,14 +713,17 @@ class GameViewController: UIViewController, Scene2Delegate {
     }
     
     func transitionToNextViewController() {
-        // Replace "NextViewController" with your target view controller
         let nextVC = ViewController()
         nextVC.modalPresentationStyle = .fullScreen
         nextVC.modalTransitionStyle = .crossDissolve
         
-        // Present the next view controller
-        if let currentVC = UIApplication.shared.keyWindow?.rootViewController {
-            currentVC.present(nextVC, animated: true, completion: nil)
+        DispatchQueue.main.async {
+            if let presentedVC = self.presentedViewController, presentedVC is ViewController {
+                print("Next view controller already presented.")
+                return
+            }
+            
+            self.present(nextVC, animated: true, completion: nil)
         }
     }
     
