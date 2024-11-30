@@ -6,7 +6,6 @@ import GameplayKit
 import AVKit
 import AVFoundation
 
-
 class GameViewController: UIViewController, Scene2Delegate {
     static var shared = GameViewController()
     static var playerEntity: PlayerEntity!
@@ -20,6 +19,7 @@ class GameViewController: UIViewController, Scene2Delegate {
     var scnView: SCNView!
     var interactButton: UIButton!
     var isTransitioning: Bool = false
+    var didTriggerPurpleOverlayForScene11: Bool = false // Add a flag to prevent duplicate calls
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -65,7 +65,7 @@ class GameViewController: UIViewController, Scene2Delegate {
             
             gameScene.setupGestureRecognizers(for: self.scnView)
             
-            // Start the walking sequence and cutscene in Scene2
+            // Start the cutscene in Scene2
             gameScene.startWalkingToHouse()
         }
         
@@ -584,9 +584,14 @@ class GameViewController: UIViewController, Scene2Delegate {
         
         // Scene 11
         if let gameScene = scnView.scene as? Scene11 {
-            // print(gameScene.isDeathPicked)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 20.0) { [weak self] in
-                gameScene.showPurpleBackgroundOverlay(in: self?.view ?? UIView())
+            if !didTriggerPurpleOverlayForScene11 { // Ensure this logic runs only once
+                didTriggerPurpleOverlayForScene11 = true
+                print("Scene11 detected, scheduling purple background overlay.")
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 8.0) { [weak self] in
+                    gameScene.showPurpleBackgroundOverlay(in: self?.view ?? UIView())
+                    print("Purple background overlay shown in Scene11.")
+                }
             }
             
             if gameScene.isDeathPicked {
