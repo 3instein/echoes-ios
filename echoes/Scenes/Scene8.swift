@@ -194,24 +194,6 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         // Apply font to necklaceLabel safely
         applyCustomFont(to: necklaceLabel, fontSize: 14)
-        
-        addFollowingLight()
-    }
-    
-    func addFollowingLight() {
-        // Create the light
-        let light = SCNLight()
-        light.type = .omni
-        light.color = UIColor(red: 0.5, green: 0.5, blue: 1.0, alpha: 1.0)
-        light.intensity = 500
-        
-        // Create the light node and position it
-        let lightNode = SCNNode()
-        lightNode.light = light
-        lightNode.position = SCNVector3(0, 5, 0) // Offset above the player node
-        
-        // Add the light node as a child of the player node
-        playerEntity.playerNode?.addChildNode(lightNode)
     }
     
     @objc func examinePipe(on view: UIView) {
