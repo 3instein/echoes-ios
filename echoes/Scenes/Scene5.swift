@@ -54,7 +54,7 @@ class Scene5: SCNScene, SCNPhysicsContactDelegate {
             return
         }
         
-        cameraComponent = CameraComponent(cameraNode: cameraNode)
+        cameraComponent = CameraComponent(cameraNode: cameraNode, playerNode: playerNode)
         
         rootNode.addChildNode(lightNode)
         

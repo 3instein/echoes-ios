@@ -48,7 +48,7 @@ class Scene1: SCNScene {
         cameraNode.camera?.automaticallyAdjustsZRange = true
 
         // Add the camera component to handle the camera logic
-        cameraComponent = CameraComponent(cameraNode: cameraNode)
+        cameraComponent = CameraComponent(cameraNode: cameraNode, playerNode: playerNode)
 
         // Add the external light node to the scene
         rootNode.addChildNode(lightNode)

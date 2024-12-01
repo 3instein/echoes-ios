@@ -72,7 +72,7 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
         }
         
         setupPlayerEntityAndMovementComponent()
-        cameraComponent = CameraComponent(cameraNode: cameraNode)
+        cameraComponent = CameraComponent(cameraNode: cameraNode, playerNode: playerNode)
         
         rootNode.addChildNode(lightNode)
         

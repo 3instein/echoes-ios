@@ -54,7 +54,7 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
             return
         }
         cameraNode.camera?.fieldOfView = 75
-        cameraComponent = CameraComponent(cameraNode: cameraNode)
+        cameraComponent = CameraComponent(cameraNode: cameraNode, playerNode: playerNode)
         
         doorNode = rootNode.childNode(withName: "door", recursively: true)
         trapdoorNode = rootNode.childNode(withName: "trap_door", recursively: true)

@@ -76,7 +76,7 @@ class Scene2: SCNScene {
         cameraNode.camera?.automaticallyAdjustsZRange = false
         
         // Camera component to handle the camera logic
-        cameraComponent = CameraComponent(cameraNode: cameraNode)
+        cameraComponent = CameraComponent(cameraNode: cameraNode, playerNode: playerNode)
         cameraComponent.lockCamera()
         rootNode.addChildNode(lightNode)
         

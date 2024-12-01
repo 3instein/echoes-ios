@@ -5,12 +5,14 @@ import UIKit
 
 class CameraComponent {
     private var cameraNode: SCNNode
+    private var playerNode: SCNNode?
     private var isCameraLocked: Bool = false
-
-    init(cameraNode: SCNNode) {
+    
+    init(cameraNode: SCNNode, playerNode: SCNNode?) {
         self.cameraNode = cameraNode
+        self.playerNode = playerNode
     }
-
+    
     func setupGestureRecognizers(for view: UIView) {
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(_:)))
         view.addGestureRecognizer(panGesture)
@@ -19,36 +21,42 @@ class CameraComponent {
     func lockCamera() {
         isCameraLocked = true
     }
-
+    
     func unlockCamera() {
         isCameraLocked = false
     }
-
+    
     @objc private func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
         guard !isCameraLocked else { return } // Prevent gesture handling if the camera is locked
-
+        
         let translation = gesture.translation(in: gesture.view)
-
+        let sensitivity: Float = 0.005 // Adjust sensitivity as needed
+        
         switch gesture.state {
-        case .began:
-            // Nothing specific needed on gesture begin.
-            break
         case .changed:
-            let deltaX = Float(translation.x) * 0.005
-            let deltaY = Float(translation.y) * 0.005
-
-            let currentOrientation = cameraNode.eulerAngles
-            cameraNode.eulerAngles = SCNVector3(
-                currentOrientation.x - deltaY,
-                currentOrientation.y + deltaX,
-                currentOrientation.z
-            )
-
+            // Calculate the rotation deltas
+            let deltaX = Float(translation.x) * sensitivity
+            let deltaY = Float(translation.y) * sensitivity
+            
+            // Update camera rotation
+            var currentOrientation = cameraNode.eulerAngles
+            
+            // Limit vertical rotation (up/down) to a reasonable range, e.g., -90 to 90 degrees
+            currentOrientation.x = max(min(currentOrientation.x - deltaY, .pi / 4), -.pi / 4)
+            
+            // Limit horizontal rotation (left/right) if needed
+            currentOrientation.y += deltaX
+            
+            // Apply the clamped rotations to the camera node
+            cameraNode.eulerAngles = currentOrientation
+            
+            // Update player rotation to match camera's horizontal rotation (Y-axis only)
+            if let playerNode = playerNode {
+                playerNode.eulerAngles.y = currentOrientation.y
+            }
+            
             // Reset translation to avoid compounding the movement excessively
             gesture.setTranslation(.zero, in: gesture.view)
-        case .ended, .cancelled:
-            // Gesture ended or cancelled, nothing to reset here.
-            break
         default:
             break
         }

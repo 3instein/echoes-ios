@@ -69,7 +69,7 @@ class Scene4: SCNScene, SCNPhysicsContactDelegate {
         
         cameraNode.camera?.fieldOfView = 75
         cameraNode.camera?.automaticallyAdjustsZRange = false
-        cameraComponent = CameraComponent(cameraNode: cameraNode)
+        cameraComponent = CameraComponent(cameraNode: cameraNode, playerNode: playerNode)
         
         rootNode.addChildNode(lightNode)
     }

@@ -88,7 +88,7 @@ class Scene3: SCNScene {
             playerNode.addChildNode(self.cameraNode)
         }
         
-        cameraComponent = CameraComponent(cameraNode: cameraNode)
+        cameraComponent = CameraComponent(cameraNode: cameraNode, playerNode: playerNode)
         rootNode.addChildNode(lightNode)
         
 //        let movementComponent = MovementComponent(playerNode: playerNode, cameraNode: cameraNode, lightNode: lightNode)
