@@ -866,6 +866,12 @@ class Scene7: SCNScene, SCNPhysicsContactDelegate {
                                         print("grandma audio finished")
                                         isGrandmaFinishedTalking = true
                                         isGrandmaisTalking = false
+                                        
+                                        // Place the code here to reset the camera and re-enable controls
+                                        if let playerNode = self.playerEntity.playerNode {
+                                            self.cameraComponent.resetCameraOrientation(to: playerNode)
+                                        }
+                                        
                                         // Show the joystick again after grandma's speech
                                         GameViewController.joystickComponent.joystickView.isHidden = false
                                     }

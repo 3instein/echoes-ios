@@ -23,6 +23,15 @@ class CameraComponent {
     func unlockCamera() {
         isCameraLocked = false
     }
+    
+    func resetCameraOrientation(to playerNode: SCNNode) {
+        // Align the camera's orientation with the player's current orientation
+        cameraNode.eulerAngles = SCNVector3(
+            playerNode.eulerAngles.x,
+            playerNode.eulerAngles.y,
+            playerNode.eulerAngles.z
+        )
+    }
 
     @objc private func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
         guard !isCameraLocked else { return } // Prevent gesture handling if the camera is locked
