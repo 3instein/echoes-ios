@@ -87,8 +87,8 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         "pipeclue-21", "pipeclue-22", "pipeclue-23"
     ]
     
-    var currentPipeIndex: Int = 0 // Property to track the current pipe index
-    var lastActivatedPipeIndex: Int = -1 // Track the last activated pipe index
+    var currentPipeIndex: Int = 0  // Property to track the current pipe index
+    var lastActivatedPipeIndex: Int = -1  // Track the last activated pipe index
     
     var isNecklaceFalling = false
     var isPipeSuccess = false
@@ -140,6 +140,24 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         rootNode.addChildNode(lightNode)
         
+        // Remove collision for specific nodes
+        if let smallCabinet = rootNode.childNode(withName: "smallCabinet", recursively: true) {
+            removePhysicsBodies(for: smallCabinet)
+        }
+        
+        if let sink = rootNode.childNode(withName: "sink_M_sink_0", recursively: true) {
+            removePhysicsBodies(for: sink)
+        }
+        
+        if let cube = rootNode.childNode(withName: "Cube_018", recursively: true) {
+            removePhysicsBodies(for: cube)
+        }
+        
+        if let bathtub = rootNode.childNode(withName: "bathtub", recursively: true) {
+            removePhysicsBodies(for: bathtub)
+        }
+        
+        // Muffled rain background sound
         if let muffledNode = rootNode.childNode(withName: "muffledRain", recursively: true) {
             attachAudio(to: muffledNode, audioFileName: "muffledRain.wav", volume: 0.5, delay: 0)
         }
@@ -176,6 +194,24 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         
         // Apply font to necklaceLabel safely
         applyCustomFont(to: necklaceLabel, fontSize: 14)
+        
+        addFollowingLight()
+    }
+    
+    func addFollowingLight() {
+        // Create the light
+        let light = SCNLight()
+        light.type = .omni
+        light.color = UIColor(red: 0.5, green: 0.5, blue: 1.0, alpha: 1.0)
+        light.intensity = 500
+        
+        // Create the light node and position it
+        let lightNode = SCNNode()
+        lightNode.light = light
+        lightNode.position = SCNVector3(0, 5, 0) // Offset above the player node
+        
+        // Add the light node as a child of the player node
+        playerEntity.playerNode?.addChildNode(lightNode)
     }
     
     @objc func examinePipe(on view: UIView) {
@@ -214,9 +250,9 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             
             let imageView = UIImageView(image: image)
             imageView.frame = CGRect(
-                x: CGFloat(index / rows) * pipeSize, // Column positioning
-                y: CGFloat(index % rows) * pipeSize, // Row positioning
-                width: pipeSize + 7.5, // Use calculated size
+                x: CGFloat(index / rows) * pipeSize,  // Column positioning
+                y: CGFloat(index % rows) * pipeSize,  // Row positioning
+                width: pipeSize + 7.5,  // Use calculated size
                 height: pipeSize + 7.5  // Maintain square aspect ratio
             )
             imageView.contentMode = .scaleAspectFit
@@ -226,7 +262,6 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             // Rotate the imageView by 90 degrees
             if pieceImage != "pipeclue-1" && pieceImage != "pipeclue-24" {
                 // Random rotation angle: 0, 90, 180, or 270 degrees (in radians)
-                
                 var randomAngleIndex = Int.random(in: 1...3)
                 
                 if pieceImage == "pipeclue-2" || pieceImage == "pipeclue-11" || pieceImage == "pipeclue-22" || pieceImage == "pipeclue-23" {
@@ -258,15 +293,15 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
         // Place the time label to the right of pipeBackground
         timeLabel = UILabel(frame: CGRect(
             x: pipeBackground!.frame.maxX + 10,  // Position to the right of pipeBackground with a small padding
-            y: pipeBackground!.frame.minY / 2,       // Align vertically with the top of pipeBackground
-            width: 100,                          // Set width for the label
-            height: 50                           // Set height for the label
+            y: pipeBackground!.frame.minY / 2,  // Align vertically with the top of pipeBackground
+            width: 100,  // Set width for the label
+            height: 50  // Set height for the label
         ))
         
         timeLabel.textAlignment = .center
-        timeLabel.font = UIFont.boldSystemFont(ofSize: 24) // Bigger font size
-        timeLabel.textColor = .white // Changed to black for better visibility
-        updateTimeLabel() // Set the initial time
+        timeLabel.font = UIFont.boldSystemFont(ofSize: 24)  // Bigger font size
+        timeLabel.textColor = .white  // Changed to black for better visibility
+        updateTimeLabel()  // Set the initial time
         view.addSubview(timeLabel)
         
         // Start the timer
@@ -615,7 +650,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             node.categoryBitMask = 2 // Enable glow effect for the specified node
             
             if node == clueCabinetNode! {
-                let cabinetNodeName = "smallCabinetDoor"
+                let cabinetNodeName = "smallCabinet"
                 if let cabinetNode = rootNode.childNode(withName: cabinetNodeName, recursively: true) {
                     // Set the category bitmask for post-processing
                     cabinetNode.categoryBitMask = 2
@@ -636,7 +671,7 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
             node.categoryBitMask = 1 // Disable glow effect for the specified node
             
             if node == clueCabinetNode! {
-                let cabinetNodeName = "smallCabinetDoor"
+                let cabinetNodeName = "smallCabinet"
                 if let cabinetNode = rootNode.childNode(withName: cabinetNodeName, recursively: true) {
                     // Set the category bitmask for post-processing
                     cabinetNode.categoryBitMask = 1
@@ -834,6 +869,15 @@ class Scene8: SCNScene, SCNPhysicsContactDelegate {
                 self.attachAudio(to: self.cluePipeNode, audioFileName: "pipeNecklace.mp3", volume: 1.0, delay: 0)
                 self.attachAudio(to: self.playerEntity.playerNode!, audioFileName: "s8-andra3.mp3", volume: 5, delay: 2)
             }
+        }
+    }
+    
+    // Function to remove physics body recursively
+    func removePhysicsBodies(for node: SCNNode?) {
+        guard let node = node else { return }
+        node.physicsBody = nil // Remove physics body from the current node
+        for child in node.childNodes {
+            removePhysicsBodies(for: child) // Recursively remove physics body from child nodes
         }
     }
     
