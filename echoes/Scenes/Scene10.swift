@@ -13,12 +13,15 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
     var knockDoorNode: SCNNode!
     var lockButton: UIButton?
     var enterButton: UIButton?
+    var trapDoorEntered = false
+    
     weak var scnView: SCNView?
     private var keyImageView: UIImageView!
     private var doorImageView: UIImageView!
+    private var instructionLabel: UILabel?
     private var miniGameCompleted = false
     private var isMiniGameActive = false
-    private var trapDoorEntered = false
+    
     let doorTriggerDistance: Float = 135.0  // Distance "Lock" button for door room should appear
     let trapdoorTriggerDistance: Float = 110.0  // Distance "Enter" button for trap door should appear
     
@@ -59,9 +62,12 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         
         rootNode.addChildNode(lightNode)
         
-        // Add collision bodies to furniture (-temporarily disabled, causing crash*)
-        // setupFurnitureCollision()
+        setupFurnitureCollision()
         playAndraSound()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+            self?.showInstructionLabel()
+        }
         
         self.physicsWorld.contactDelegate = self
     }
@@ -86,31 +92,75 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         rootNode.runAction(playAndraSound)
     }
     
-    private func setupFurnitureCollision() {
-        if let bedNode = rootNode.childNode(withName: "victorian_bed", recursively: true) {
-            bedNode.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
-            bedNode.physicsBody?.categoryBitMask = 2
-            bedNode.physicsBody?.collisionBitMask = 1
+    private func showInstructionLabel() {
+        guard let scnView = scnView else { return }
+        
+        // Create the label if it doesn't exist
+        if instructionLabel == nil {
+            instructionLabel = UILabel()
+            instructionLabel?.text = "Quickly lock the door!"
+            instructionLabel?.textAlignment = .center
+            instructionLabel?.textColor = UIColor.white
+            instructionLabel?.backgroundColor = UIColor.black.withAlphaComponent(0.2)
+            instructionLabel?.layer.cornerRadius = 10
+            instructionLabel?.clipsToBounds = true
+            instructionLabel?.alpha = 0.0
+            applyCustomFont(to: instructionLabel!, fontSize: 14)
+            
+            // Add the label to the SCNView
+            scnView.addSubview(instructionLabel!)
         }
+        
+        // Position and size the label
+        let offsetFromTop: CGFloat = 150 // Adjust offset from top
+        instructionLabel?.frame = CGRect(
+            x: (scnView.frame.width - 195) / 2, // Center horizontally
+            y: scnView.frame.height / 2 - offsetFromTop, // Position slightly above center
+            width: 195,
+            height: 25
+        )
+        
+        // Fade in the label
+        UIView.animate(withDuration: 0.5) {
+            self.instructionLabel?.alpha = 1.0
+        }
+    }
+    
+    private func hideInstructionLabel() {
+        // Fade out and hide the label
+        UIView.animate(withDuration: 0.5, animations: {
+            self.instructionLabel?.alpha = 0.0
+        }, completion: { _ in
+            self.instructionLabel?.removeFromSuperview()
+            self.instructionLabel = nil
+        })
+    }
+    
+    private func applyCustomFont(to label: UILabel, fontSize: CGFloat) {
+        if let customFont = UIFont(name: "SpecialElite-Regular", size: fontSize) {
+            label.font = customFont
+        } else {
+            print("Failed to load SpecialElite-Regular font.")
+        }
+    }
+    
+    private func setupFurnitureCollision() {
         if let leftEndTable = rootNode.childNode(withName: "end_table01", recursively: true) {
             leftEndTable.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
             leftEndTable.physicsBody?.categoryBitMask = 2
             leftEndTable.physicsBody?.collisionBitMask = 1
         }
+        
         if let rightEndTable = rootNode.childNode(withName: "end_table02", recursively: true) {
             rightEndTable.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
             rightEndTable.physicsBody?.categoryBitMask = 2
             rightEndTable.physicsBody?.collisionBitMask = 1
         }
+        
         if let doorNode = doorNode {
             doorNode.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
             doorNode.physicsBody?.categoryBitMask = 2
             doorNode.physicsBody?.collisionBitMask = 1
-        }
-        if let trapdoorNode = trapdoorNode {
-            trapdoorNode.physicsBody = SCNPhysicsBody(type: .static, shape: nil)
-            trapdoorNode.physicsBody?.categoryBitMask = 2
-            trapdoorNode.physicsBody?.collisionBitMask = 1
         }
     }
     
@@ -205,6 +255,7 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
         hideLockButton()
         GameViewController.joystickComponent.joystickView.isHidden = true
         setupMiniGameUI()
+        hideInstructionLabel()
     }
     
     private func setupMiniGameUI() {
@@ -277,11 +328,16 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
     @objc private func enterTrapdoor() {
         hideEnterButton()
         trapDoorEntered = true
-        UIView.animate(withDuration: 1.0, animations: {
-            self.scnView?.alpha = 0.0
-        }) { _ in
-            // SceneManager.shared.loadScene11()
+        print("Trapdoor interaction completed. Scene 10 will transition to Scene 11.")
+        
+        DispatchQueue.main.async {
+            print("Attempting to start transition via GameViewController.shared.")
+            GameViewController.shared.startTransitionToScene11()
         }
+    }
+    
+    func checkProximityToTransition() -> Bool {
+        return trapDoorEntered
     }
     
     func setupGestureRecognizers(for view: UIView) {

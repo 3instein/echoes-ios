@@ -1,3 +1,5 @@
+//  Scene6.swift
+
 import SceneKit
 import UIKit
 

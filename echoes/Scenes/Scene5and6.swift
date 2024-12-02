@@ -29,7 +29,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
     var isPhotoObtained: Bool = false  // Track if the game is completed
     var isCodeDone: Bool = false  // Track if the game is completed
     var isJumpscareDone: Bool = false
-
+    
     let snapDistance: CGFloat = 45.0
     
     var timer: Timer?
@@ -149,47 +149,59 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         if let muffledNode = rootNode.childNode(withName: "muffledRain", recursively: true) {
             attachAudio(to: muffledNode, audioFileName: "muffledRain.wav", volume: 0.7, delay: 0)
         }
-                
+        
         if let grandmaAudioNode = grandmaNode.childNode(withName: "s5-grandma", recursively: false) {
+            print("Attaching audio to grandmaNode: \(grandmaAudioNode)")
             attachAudio(to: grandmaAudioNode, audioFileName: "s5-grandma.wav", volume: 10, delay: 10)
-        }
-         
-        if let andraParentNode = rootNode.childNode(withName: "player", recursively: true) {
-            if let andraNode = andraParentNode.childNode(withName: "s5-andra", recursively: false) {
-                attachAudio(to: andraNode, audioFileName: "s5-andra.wav", volume: 8, delay: 20)
-            }
+        } else {
+            print("Error: 's5-grandma' node not found in grandmaNode")
         }
         
-        addFallingCupSound()
-        addSpoonSound()
+        if let andraParentNode = rootNode.childNode(withName: "player", recursively: true) {
+            if let andraNode = andraParentNode.childNode(withName: "s5-andra", recursively: false) {
+                print("Attaching audio to andraNode: \(andraNode)")
+                attachAudio(to: andraNode, audioFileName: "s5-andra.wav", volume: 8, delay: 20)
+            } else {
+                print("Error: 's5-andra' node not found in player node")
+            }
+        } else {
+            print("Error: 'player' node not found in rootNode")
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+            self?.addFallingCupSound()
+            self?.addSpoonSound()
+        }
         
         if let chandelierNode = rootNode.childNode(withName: "chandelier", recursively: false) {
             attachAudio(to: chandelierNode, audioFileName: "rustyChandelier.mp3", volume: 0.9, delay: 17)
         }
         
         doorOpenNode.isHidden = true
-
-        jumpscareDoll()
-
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) { [weak self] in
+            self?.jumpscareDoll()
+        }
+        
         dollNode.isHidden = true
         self.physicsWorld.contactDelegate = self
         
         // Apply font to necklaceLabel safely
         applyCustomFont(to: puzzleLabel, fontSize: 14)
     }
-        
+    
     func jumpscareDoll() {
         let playerPosition = (playerEntity.playerNode?.position)!
-
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 26.0) { [weak self] in
             self?.isDollJumpscare = true
             self?.dollNode.isHidden = false
             self?.cameraComponent.lockCamera()
-
+            
             self?.cameraNode.look(at: self!.dollNode.position)
             
             self?.attachAudio(to: self!.dollNode!, audioFileName: "jumpscare3.wav", volume: 40.0, delay: 0)
-
+            
             self?.attachAudio(to: self!.dollNode!, audioFileName: "doll1.wav", volume: 4.5, delay: 1.0)
             
             guard let cameraNode = self?.cameraNode else { return }
@@ -217,7 +229,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
             self?.cameraNode.camera?.fieldOfView = 75  // Default value for normal view
             
             guard let cameraNode = self?.cameraNode else { return }
-
+            
             // Get current Euler angles and only adjust X and Z axes
             let eulerAngles = cameraNode.eulerAngles
             cameraNode.eulerAngles = SCNVector3(
@@ -232,7 +244,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
                 self?.cameraComponent.unlockCamera()
                 
                 guard let cameraNode = self?.cameraNode else { return }
-
+                
                 // Get current Euler angles and only adjust X and Z axes
                 let eulerAngles = cameraNode.eulerAngles
                 cameraNode.eulerAngles = SCNVector3(
@@ -339,7 +351,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
     
     func startTimer() {
         applyCustomFont(to: timeLabel, fontSize: 24)
-
+        
         timer?.invalidate() // Reset any existing timer
         timer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(updateTime), userInfo: nil, repeats: true)
     }
@@ -371,7 +383,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
             triggerPuzzleFailedTransition()
         }
     }
-
+    
     func triggerPuzzleFailedTransition() {
         print("Puzzle failed!")
         
@@ -391,19 +403,19 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
                 puzzleNode.isHidden = false
             }
         }
-
+        
         isPhotoObtained = false
         isPlayingPuzzle = false
         isPuzzleFailed = true
         hasGroupedTwoPieces = false  // Track if two pieces have been grouped
         currentCombination = [] // Initialize currentCombination if not already done
     }
-
+    
     func displayJumpscareLabel(on view: UIView) {
         puzzleLabel.text = "Find ritual items... Kirana is coming for you!"
         puzzleLabel.numberOfLines = -1 // Enable multiline
         puzzleLabel.lineBreakMode = .byWordWrapping
-
+        
         view.addSubview(puzzleLabel)
         
         // Position the camera instruction label above the center of the screen
@@ -542,7 +554,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         // Add the sound node to the root node
         rootNode.addChildNode(soundNode)
     }
-
+    
     func checkForNearbyPieces(_ currentPiece: UIView) {
         guard let currentImageView = currentPiece as? UIImageView,
               let currentImageName = currentImageView.accessibilityIdentifier else { return }
@@ -645,7 +657,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
             isPhotoObtained = true // Mark as completed
             timer?.invalidate() // Stop the timer
             timeLabel.removeFromSuperview()
-
+            
             if timeLimit <= 0 {
                 // Call the function to handle game failure if time runs out
                 triggerPuzzleFailedTransition()
@@ -669,7 +681,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         puzzleBackground?.backgroundColor = UIColor.white.withAlphaComponent(0)
         
         guard let superview = combinedPieces.keys.first?.superview else { return }
-                
+        
         // Get the center of the screen
         let screenCenter = CGPoint(x: superview.bounds.midX, y: superview.bounds.midY)
         
@@ -744,18 +756,18 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         fireNode.addParticleSystem(fireParticleSystem!)
         
         scnView?.antialiasingMode = .multisampling4X // Apply anti-aliasing for smoother visuals
-
+        
         // Add the fire node to the scene
         rootNode.addChildNode(fireNode)
     }
     
     // Check if the player is close to the transition trigger point
-     func checkProximityToTransition() -> Bool {
-         guard let playerPosition = playerEntity.playerNode?.position else { return false }
-         let distance = playerPosition.distance(to: transitionTriggerPosition)
-         return distance < triggerDistance
-     }
-
+    func checkProximityToTransition() -> Bool {
+        guard let playerPosition = playerEntity.playerNode?.position else { return false }
+        let distance = playerPosition.distance(to: transitionTriggerPosition)
+        return distance < triggerDistance
+    }
+    
     func findPiece(byName name: String, in superview: UIView?) -> UIView? {
         guard let superview = superview else { return nil }
         
@@ -805,7 +817,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
             // Disable the technique
             scnView?.technique = nil
             objCakeNode.categoryBitMask = 1
-
+            
             // Reset the category bitmask if needed
             for i in 2...6 {
                 let puzzleNodeName = "Puzzle_\(i)"
@@ -821,28 +833,24 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
             print("Warning: Audio file '\(audioFileName)' not found")
             return
         }
-
+        
+        print("Attaching audio '\(audioFileName)' to node: \(node.name ?? "Unnamed Node")")
+        
         if audioFileName == "muffledRain.wav" {
             audioSource.loops = true
         }
         
         audioSource.shouldStream = false
+        audioSource.isPositional = false
         audioSource.load()
         audioSource.volume = volume
-        audioSource.isPositional = true
-
-        // Create a new node to attach the audio and position it
-        let audioNode = SCNNode()
-        node.addChildNode(audioNode)
-
-        // Play audio with delay
+        
         let playAudioAction = SCNAction.sequence([
             SCNAction.wait(duration: delay),
             SCNAction.playAudio(audioSource, waitForCompletion: false)
         ])
         
-        // Play the audio
-        audioNode.runAction(playAudioAction)
+        node.runAction(playAudioAction)
     }
     
     func addFallingCupSound() {

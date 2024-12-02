@@ -101,15 +101,49 @@ class AssetPreloader {
     static func preloadScene10(completion: @escaping (Bool) -> Void) {
         let sceneName = "scene10.scn"
         let audioFiles = [
-            "ritualSuccess.wav",
-            "doorCreaking.mp3",
-            "finalDialogue1.wav",
-            "finalDialogue2.wav",
-            "backgroundAmbience.mp3"
+            "s10-andra.mp3",
+            "doorKnockHard.wav",
         ]
         preloadSceneWithAudio(named: sceneName, audioFiles: audioFiles, completion: completion)
     }
-
+    
+    static func preloadScene11(completion: @escaping (Bool) -> Void) {
+        let sceneName = "scene11.scn"
+        let audioFiles = [
+            "scene11Background.wav",
+            "dialogue1.mp3",
+            "dialogue2.mp3",
+            "effect1.wav",
+            "s11-polisi.mp3",
+            "thunder1.wav",
+            "thunder2.wav",
+            "thunder3.wav",
+            "thunder4.wav",
+            "thunder5.wav"
+        ]
+        preloadSceneWithAudio(named: sceneName, audioFiles: audioFiles, completion: completion)
+    }
+    
+    static func preloadScene12(completion: @escaping (Bool) -> Void) {
+        let sceneName = "scene12.scn"
+        let audioFiles = [
+            "muffledRain.wav",
+            "s12-benar.mp3",
+            "s12-salah.mp3",
+            "s12-salahAyu.mp3",
+            "s12-salahReza.mp3",
+            "thunder1.wav",
+            "thunder2.wav",
+            "thunder3.wav",
+            "thunder4.wav",
+            "thunder5.wav",
+            "startPoliceCar.wav",
+            "siren.wav",
+            "jumpscare3.wav",
+            "s12-grandmaLaugh.wav"
+        ]
+        preloadSceneWithAudio(named: sceneName, audioFiles: audioFiles, completion: completion)
+    }
     
     // MARK: - Core Preloading Logic
     static func preloadSceneWithAudio(named sceneName: String, audioFiles: [String], completion: @escaping (Bool) -> Void) {
