@@ -9,6 +9,7 @@ protocol Scene2Delegate: AnyObject {
 }
 
 class Scene2: SCNScene {
+    // MARK: - Properties
     weak var delegate: Scene2Delegate?
     
     var playerEntity: PlayerEntity!
@@ -33,13 +34,13 @@ class Scene2: SCNScene {
     private let doorOpenDuration: TimeInterval = 2.5
     private let grandmaMovePosition = SCNVector3(x: 0, y: -9.575, z: 0)
     
+    // MARK: - Initializer
     init(lightNode: SCNNode) {
         super.init()
         self.lightNode = lightNode
         
         guard let combinedScene = SCNScene(named: "scene2.scn") else {
-            print("Warning: Scene named 'scene2.scn' not found")
-            return
+            fatalError("Error: Scene named 'scene2.scn' not found")
         }
         
         // Add all nodes from the combined scene to rootNode
@@ -51,19 +52,8 @@ class Scene2: SCNScene {
         attachAmbientSounds()
     }
     
-    private func loadAudio(named fileName: String) -> SCNAudioSource? {
-        guard let audioSource = SCNAudioSource(fileNamed: fileName) else {
-            print("Error loading audio file: \(fileName)")
-            return nil
-        }
-        audioSource.shouldStream = false
-        audioSource.loops = false
-        audioSource.volume = 1.0
-        audioSource.load()
-        return audioSource
-    }
-    
-    func setupSceneComponents() {
+    // MARK: - Scene Setup
+    private func setupSceneComponents() {
         doorNode = rootNode.childNode(withName: "Door", recursively: true)
         grandmaNode = rootNode.childNode(withName: "Grandma", recursively: true)
         
@@ -94,7 +84,7 @@ class Scene2: SCNScene {
         setupNPCEntities()
     }
     
-    func setupNPCEntities() {
+    private func setupNPCEntities() {
         if let doorNode = doorNode {
             doorEntity = NPCEntity(npcNode: doorNode, lightNode: lightNode)
         }
@@ -104,12 +94,8 @@ class Scene2: SCNScene {
         }
     }
     
-    func activateEcholocation() {
-        doorEntity?.activateEcholocation()
-        grandmaEntity?.activateEcholocation()
-    }
-    
-    func attachAmbientSounds() {
+    // MARK: - Ambient Audio
+    private func attachAmbientSounds() {
         attachAmbientAudio(named: "wind.wav", to: "wind", volume: 0.1)
         attachAmbientAudio(named: "crow.wav", to: "crow", volume: 0.1)
         attachAmbientAudio(named: "outsideRain.wav", to: "outsideRain", volume: 0.1)
@@ -123,7 +109,7 @@ class Scene2: SCNScene {
         attachAudio(to: node, audioFileName: fileName, volume: volume)
     }
     
-    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float = 1.0) {
+    private func attachAudio(to node: SCNNode, audioFileName: String, volume: Float = 1.0) {
         guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
             print("Warning: Audio file '\(audioFileName)' not found")
             return
@@ -140,12 +126,33 @@ class Scene2: SCNScene {
         node.runAction(playAudioAction)
     }
     
+    private func loadAudio(named fileName: String) -> SCNAudioSource? {
+        guard let audioSource = SCNAudioSource(fileNamed: fileName) else {
+            print("Error loading audio file: \(fileName)")
+            return nil
+        }
+        audioSource.shouldStream = false
+        audioSource.loops = false
+        audioSource.volume = 1.0
+        audioSource.load()
+        return audioSource
+    }
+    
+    // MARK: - Cutscene Handling
+    func activateEcholocation() {
+        doorEntity?.activateEcholocation()
+        grandmaEntity?.activateEcholocation()
+    }
+    
     func startWalkingToHouse() {
         let firstPosition = SCNVector3(x: -15.441, y: -30.882, z: 0.253)
         let secondPosition = SCNVector3(x: -15.388, y: -30.067, z: 0.728)
         
-        // Play grass footsteps and move to the first position
-        playFootstepAudio(named: "grassFootsteps.wav", player: &grassFootstepAudioPlayer)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) { [self] in
+            // Play grass footsteps and move to the first position
+            playFootstepAudio(named: "grassFootsteps.wav", player: &grassFootstepAudioPlayer)
+        }
+        
         playerEntity.movementComponent.movePlayer(to: firstPosition, duration: 18.0) { [weak self] in
             // Stop grass footsteps when reaching the first position
             self?.stopFootstepAudio(player: &self!.grassFootstepAudioPlayer)
@@ -164,7 +171,6 @@ class Scene2: SCNScene {
         }
     }
     
-    // Helper function to play footstep audio using AVAudioPlayer
     private func playFootstepAudio(named fileName: String, player: inout AVAudioPlayer?) {
         guard let url = Bundle.main.url(forResource: fileName, withExtension: nil) else {
             print("Audio file \(fileName) not found.")
@@ -181,7 +187,6 @@ class Scene2: SCNScene {
         }
     }
     
-    // Helper function to stop footstep audio
     private func stopFootstepAudio(player: inout AVAudioPlayer?) {
         player?.stop()
         player = nil
@@ -222,20 +227,20 @@ class Scene2: SCNScene {
     
     func moveGrandma(completion: @escaping () -> Void) {
         guard let grandmaNode = grandmaNode else { return }
-
+        
         // Trigger echolocation and play footstep sound
         grandmaEntity?.activateEcholocation()
-
+        
         // Play wood footsteps while grandma is moving
         playFootstepAudio(named: "woodFootsteps.wav", player: &woodFootstepAudioPlayer)
-
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.grandmaEntity?.activateEcholocation()
         }
         
         // Move grandma to the target position
         let moveAction = SCNAction.move(to: grandmaMovePosition, duration: 2.0)
-
+        
         grandmaNode.runAction(moveAction) {
             // Stop wood footsteps when grandma reaches her position
             self.stopFootstepAudio(player: &self.woodFootstepAudioPlayer)
@@ -275,7 +280,7 @@ class Scene2: SCNScene {
             self?.rootNode.addChildNode(temporaryLightNode)
         }
         
-        let delayBetweenDialogues: TimeInterval = 1.0
+        let delayBetweenDialogues: TimeInterval = 1.5
         playDialogueSequence([(andraGreetingsSound, 3.0)], completion: {
             DispatchQueue.main.asyncAfter(deadline: .now() + delayBetweenDialogues) {
                 self.playDialogueSequence([(grandmaGreetingsSound, 6.0)], completion: {
@@ -304,35 +309,45 @@ class Scene2: SCNScene {
         
         let playSoundAction = SCNAction.playAudio(doorCloseSound, waitForCompletion: false)
         let fadeToBlackAction = SCNAction.run { [weak self] _ in
-            self?.fadeScreenToBlack()
+            self?.fadeScreenToBlackAndLoadScene4()
         }
         
         let groupAction = SCNAction.group([playSoundAction, fadeToBlackAction])
         rootNode.runAction(groupAction) { [weak self] in
             print("Scene 2 ended")
-            // Notify GameViewController to load Scene4
-            self?.delegate?.transitionToScene4()
         }
     }
     
-    func fadeScreenToBlack() {
+    func fadeScreenToBlackAndLoadScene4() {
         guard let scnView = scnView else { return }
         
         DispatchQueue.main.async {
-            let blackOverlay = UIView(frame: scnView.bounds)
-            blackOverlay.backgroundColor = .black
-            blackOverlay.alpha = 0
-            scnView.addSubview(blackOverlay)
+            let loadingView = LoadingView(frame: scnView.bounds)
+            scnView.addSubview(loadingView)
             
-            UIView.animate(withDuration: 2.0, animations: {
-                blackOverlay.alpha = 1.0
-            }, completion: { _ in
-                blackOverlay.removeFromSuperview()
-                print("Fade to black complete")
-            })
+            loadingView.fadeIn {
+                // Prepare Scene 4
+                AssetPreloader.preloadScene4 { success in
+                    DispatchQueue.main.async {
+                        if success {
+                            print("Scene 4 assets successfully prepared.")
+                            
+                            // Transition to Scene 4
+                            self.delegate?.transitionToScene4()
+                            
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                loadingView.stopLoading()
+                            }
+                        } else {
+                            print("Error: Failed to prepare Scene 4 assets.")
+                        }
+                    }
+                }
+            }
         }
     }
     
+    // MARK: - Gesture Recognizers
     func setupGestureRecognizers(for view: SCNView) {
         guard scnView == nil, let cameraComponent = cameraComponent else { return }
         self.scnView = view

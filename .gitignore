@@ -6,6 +6,9 @@
 #
 # gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
 
+*.scn
+ritualBackground.wav
+
 ## User settings
 xcuserdata/
 
@@ -103,3 +106,4 @@ iOSInjectionProject/
 **/.DS_Store
 
 # End of https://www.toptal.com/developers/gitignore/api/swift,xcode
+echoes/Scenes/Scene3.scn

@@ -153,13 +153,3 @@ class Scene5: SCNScene, SCNPhysicsContactDelegate {
         // Add any additional setup for the scene here
     }
 }
-
-// SCNVector3 extension to calculate the distance between two points
-extension SCNVector3 {
-    func distance(to vector: SCNVector3) -> Float {
-        let dx = self.x - vector.x
-        let dy = self.y - vector.y
-        let dz = self.z - vector.z
-        return sqrt(dx * dx + dy * dy + dz * dz)
-    }
-}
