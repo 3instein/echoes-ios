@@ -37,10 +37,10 @@ class GameViewController: UIViewController, Scene2Delegate {
         GameViewController.joystickComponent.attachToView(self.view)
         
         // Load the initial game scene
-        SceneManager.shared.loadScene4()
+        SceneManager.shared.loadScene11()
         
         // Set up the PlayerEntity for Scene2
-        if let gameScene = self.scnView.scene as? Scene4 {
+        if let gameScene = self.scnView.scene as? Scene11 {
             GameViewController.playerEntity = gameScene.playerEntity
             // Set delegate to handle Scene2 transition
 //            gameScene.delegate = self
@@ -647,7 +647,11 @@ class GameViewController: UIViewController, Scene2Delegate {
                                     
                                     // Start the slideshow after a delay
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) { [weak self] in
-                                        gameScene.setupAndStartSlideshow(on: self?.view ?? UIView())
+                                        if (GameViewController.isGrandmaPicked && GameViewController.isCauseCorrect) ||
+                                            GameViewController.isAyuPicked || GameViewController.isRezaPicked {                        DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) { [weak self] in
+                                                gameScene.setupAndStartSlideshow(on: self!.view!)
+                                            }
+                                        }
                                     }
                                     
                                     print("Scene12 successfully loaded.")
