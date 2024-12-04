@@ -33,7 +33,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
     let snapDistance: CGFloat = 45.0
     
     var timer: Timer?
-    var timeLimit: Int = 210 // 5-minute timer
+    var timeLimit: Int = 300 // 5-minute timer
     private var timeLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .center
