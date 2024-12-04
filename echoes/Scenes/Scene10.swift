@@ -327,6 +327,7 @@ class Scene10: SCNScene, SCNPhysicsContactDelegate {
     
     @objc private func enterTrapdoor() {
         hideEnterButton()
+        hideInstructionLabel()
         trapDoorEntered = true
         print("Trapdoor interaction completed. Scene 10 will transition to Scene 11.")
         
