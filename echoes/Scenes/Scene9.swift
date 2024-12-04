@@ -958,9 +958,10 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
                                 self.scnView?.scene?.physicsWorld.contactDelegate = movementComponent
                             }
                             
+                            // Set up fog properties for the scene
                             gameScene.fogStartDistance = 25.0
                             gameScene.fogEndDistance = 300.0
-                            gameScene.fogDensityExponent = 0.3
+                            gameScene.fogDensityExponent = 0.2
                             gameScene.fogColor = UIColor.black
                             gameScene.setupGestureRecognizers(for: self.scnView ?? UIView())
                         }

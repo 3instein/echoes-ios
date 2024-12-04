@@ -37,19 +37,19 @@ class GameViewController: UIViewController, Scene2Delegate {
         GameViewController.joystickComponent.attachToView(self.view)
         
         // Load the initial game scene
-        SceneManager.shared.loadScene2()
+        SceneManager.shared.loadScene4()
         
         // Set up the PlayerEntity for Scene2
-        if let gameScene = self.scnView.scene as? Scene2 {
+        if let gameScene = self.scnView.scene as? Scene4 {
             GameViewController.playerEntity = gameScene.playerEntity
             // Set delegate to handle Scene2 transition
-            gameScene.delegate = self
+//            gameScene.delegate = self
             
             // Create a movement component to handle player movement, including the light node
             let movementComponent = MovementComponent(playerNode: gameScene.playerEntity.playerNode!, cameraNode: gameScene.cameraNode, lightNode: gameScene.lightNode)
             GameViewController.playerEntity.movementComponent = movementComponent
             
-            GameViewController.joystickComponent.hideJoystick()
+//            GameViewController.joystickComponent.hideJoystick()
             
             // Link the joystick with the movement component
             if let movementComponent = gameScene.playerEntity.movementComponent {
@@ -66,7 +66,7 @@ class GameViewController: UIViewController, Scene2Delegate {
             gameScene.setupGestureRecognizers(for: self.scnView)
             
             // Start the cutscene in Scene2
-            gameScene.startWalkingToHouse()
+//            gameScene.startWalkingToHouse()
         }
         
         // Configure the SCNView
@@ -109,7 +109,7 @@ class GameViewController: UIViewController, Scene2Delegate {
                 
                 // Play the door opening sound
                 if let doorNode = gameScene.rootNode.childNode(withName: "doorFamilyRoom", recursively: true) {
-                    attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 3, delay: 0)
+                    attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 1, delay: 0)
                 }
                 
                 // Display the loading screen
@@ -185,7 +185,7 @@ class GameViewController: UIViewController, Scene2Delegate {
                 
                 // Play the door opening sound
                 if let doorNode = gameScene.rootNode.childNode(withName: "doorKiranaBedroom", recursively: true) {
-                    attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 3, delay: 0)
+                    attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 1, delay: 0)
                 }
                 
                 // Display the loading screen
@@ -299,7 +299,7 @@ class GameViewController: UIViewController, Scene2Delegate {
                 
                 // Play the door opening sound
                 if let doorNode = gameScene.rootNode.childNode(withName: "doorToilet", recursively: true) {
-                    attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 3, delay: 0)
+                    attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 1, delay: 0)
                 }
                 
                 // Display the loading screen
@@ -414,7 +414,7 @@ class GameViewController: UIViewController, Scene2Delegate {
                 
                 // Play the door opening sound
                 if let doorNode = gameScene.rootNode.childNode(withName: "doorFamilyRoom", recursively: true) {
-                    attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 3, delay: 0)
+                    attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 1, delay: 0)
                 }
                 
                 // Display the loading screen

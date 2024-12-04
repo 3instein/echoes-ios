@@ -87,7 +87,8 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
     init(lightNode: SCNNode) {
         super.init()
         self.lightNode = lightNode
-        
+        scnView?.pointOfView = cameraNode
+
         // Load the house scene from the Scenes folder
         guard let houseScene = SCNScene(named: "scene5and6ely.scn") else {
             fatalError("Error: Scene named 'scene5and6ely.scn' not found")
@@ -134,47 +135,23 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         grandmaNode = rootNode.childNode(withName: "grandma", recursively: true)
         dollNode = rootNode.childNode(withName: "doll", recursively: true)
         
-        if let doorNode = rootNode.childNode(withName: "doorFamilyRoom", recursively: true) {
-            attachAudio(to: doorNode, audioFileName: "doorClose.MP3", volume: 3, delay: 0)
-        }
+        attachAudioNode(named: "s5-grandma.wav", to: "grandma", volume: 10000, delay: 10)
         
-        if let woodNode = rootNode.childNode(withName: "woodenFloor", recursively: false) {
-            attachAudio(to: woodNode, audioFileName: "woodenFloor.wav", volume: 0.7, delay: 0)
-        }
+        attachAudioNode(named: "doorClose.MP3", to: "doorFamilyRoom", volume: 0.5, delay: 0)
         
-        if let clockNode = rootNode.childNode(withName: "clockTicking", recursively: true) {
-            attachAudio(to: clockNode, audioFileName: "clockTicking.wav", volume: 0.7, delay: 0)
-        }
+        attachAudioNode(named: "woodenFloor.wav", to: "woodenFloor", volume: 0.2, delay: 0)
+
+        attachAudioNode(named: "clockTicking.wav", to: "clockTicking", volume: 5000, delay: 0)
         
-        if let muffledNode = rootNode.childNode(withName: "muffledRain", recursively: true) {
-            attachAudio(to: muffledNode, audioFileName: "muffledRain.wav", volume: 0.7, delay: 0)
-        }
+        attachAudioNode(named: "muffledRain.wav", to: "muffledRain", volume: 0.3, delay: 0)
         
-        if let grandmaAudioNode = grandmaNode.childNode(withName: "s5-grandma", recursively: false) {
-            print("Attaching audio to grandmaNode: \(grandmaAudioNode)")
-            attachAudio(to: grandmaAudioNode, audioFileName: "s5-grandma.wav", volume: 10, delay: 10)
-        } else {
-            print("Error: 's5-grandma' node not found in grandmaNode")
-        }
+        attachAudioNode(named: "s5-andra.wav", to: "player", volume: 1, delay: 20)
         
-        if let andraParentNode = rootNode.childNode(withName: "player", recursively: true) {
-            if let andraNode = andraParentNode.childNode(withName: "s5-andra", recursively: false) {
-                print("Attaching audio to andraNode: \(andraNode)")
-                attachAudio(to: andraNode, audioFileName: "s5-andra.wav", volume: 8, delay: 20)
-            } else {
-                print("Error: 's5-andra' node not found in player node")
-            }
-        } else {
-            print("Error: 'player' node not found in rootNode")
-        }
+        attachAudioNode(named: "rustyChandelier.mp3", to: "chandelier", volume: 1, delay: 17)
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
-            self?.addFallingCupSound()
-            self?.addSpoonSound()
-        }
-        
-        if let chandelierNode = rootNode.childNode(withName: "chandelier", recursively: false) {
-            attachAudio(to: chandelierNode, audioFileName: "rustyChandelier.mp3", volume: 0.9, delay: 17)
+            self?.attachAudioNode(named: "fallingCup.mp3", to: "cup", volume: 5000, delay: 20.0)
+            self?.attachAudioNode(named: "movingSpoon.wav", to: "fork", volume: 5000, delay: 25.0)
         }
         
         doorOpenNode.isHidden = true
@@ -188,6 +165,38 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
         
         // Apply font to necklaceLabel safely
         applyCustomFont(to: puzzleLabel, fontSize: 14)
+    }
+    
+    private func attachAudioNode(named fileName: String, to nodeName: String, volume: Float, delay: TimeInterval) {
+        guard let node = rootNode.childNode(withName: nodeName, recursively: true) else {
+            print("Warning: Node '\(nodeName)' not found in the scene model")
+            return
+        }
+        attachAudio(to: node, audioFileName: fileName, volume: volume, delay: delay)
+    }
+    
+    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
+        guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
+            print("Warning: Audio file '\(audioFileName)' not found")
+            return
+        }
+        
+        if audioFileName == "s5-grandma.wav" || audioFileName == "clockTicking.wav" {
+            audioSource.loops = true
+        }
+
+        audioSource.isPositional = true
+        audioSource.shouldStream = false
+        audioSource.volume = volume
+
+        audioSource.load()
+                
+        let playAudioAction = SCNAction.sequence([
+            SCNAction.wait(duration: delay),
+            SCNAction.playAudio(audioSource, waitForCompletion: false)
+        ])
+        
+        node.runAction(playAudioAction)
     }
     
     func jumpscareDoll() {
@@ -827,32 +836,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
             }
         }
     }
-    
-    func attachAudio(to node: SCNNode, audioFileName: String, volume: Float, delay: TimeInterval) {
-        guard let audioSource = SCNAudioSource(fileNamed: audioFileName) else {
-            print("Warning: Audio file '\(audioFileName)' not found")
-            return
-        }
         
-        print("Attaching audio '\(audioFileName)' to node: \(node.name ?? "Unnamed Node")")
-        
-        if audioFileName == "muffledRain.wav" {
-            audioSource.loops = true
-        }
-        
-        audioSource.shouldStream = false
-        audioSource.isPositional = false
-        audioSource.load()
-        audioSource.volume = volume
-        
-        let playAudioAction = SCNAction.sequence([
-            SCNAction.wait(duration: delay),
-            SCNAction.playAudio(audioSource, waitForCompletion: false)
-        ])
-        
-        node.runAction(playAudioAction)
-    }
-    
     func addFallingCupSound() {
         // Find the cup node
         guard let cupNode = rootNode.childNode(withName: "cup", recursively: true) else {

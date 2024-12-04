@@ -232,6 +232,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
         if let stepSoundURL = Bundle.main.url(forResource: resource, withExtension: "mp3") {
             do {
                 stepAudioPlayer = try AVAudioPlayer(contentsOf: stepSoundURL)
+                stepAudioPlayer?.volume = 0.4 // Set volume (0.0 to 1.0, where 1.0 is full volume)
                 stepAudioPlayer?.prepareToPlay() // Prepare to play
                 print(isToilet)
                 print(resource)
@@ -259,6 +260,7 @@ class MovementComponent: GKComponent, SCNPhysicsContactDelegate {
         }
         
         if !stepAudioPlayer.isPlaying {
+            stepAudioPlayer.volume = 0.3 // Dynamically adjust volume here if needed
             stepAudioPlayer.play()  // Start playing the sound
         }
     }
