@@ -181,7 +181,7 @@ class Scene5and6: SCNScene, SCNPhysicsContactDelegate {
             return
         }
         
-        if audioFileName == "s5-grandma.wav" || audioFileName == "clockTicking.wav" {
+        if audioFileName == "clockTicking.wav" {
             audioSource.loops = true
         }
 
