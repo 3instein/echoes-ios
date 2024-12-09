@@ -36,7 +36,7 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
     let winningPoint = SCNVector3(-41.819, 741.735, 35.809)
     let winningDistanceThreshold: Float = 5.0
     
-    private let proximityThreshold: Float = 50.0
+    private let proximityThreshold: Float = 100.0
     
     init(lightNode: SCNNode, scnView: SCNView) {
         self.scnView = scnView
