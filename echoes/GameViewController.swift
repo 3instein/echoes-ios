@@ -109,7 +109,7 @@ class GameViewController: UIViewController, Scene2Delegate {
                 
                 // Play the door opening sound
                 if let doorNode = gameScene.rootNode.childNode(withName: "doorFamilyRoom", recursively: true) {
-                    attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 3, delay: 0)
+                    attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 1, delay: 0)
                 }
                 
                 // Display the loading screen
@@ -185,7 +185,7 @@ class GameViewController: UIViewController, Scene2Delegate {
                 
                 // Play the door opening sound
                 if let doorNode = gameScene.rootNode.childNode(withName: "doorKiranaBedroom", recursively: true) {
-                    attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 3, delay: 0)
+                    attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 1, delay: 0)
                 }
                 
                 // Display the loading screen
@@ -299,7 +299,7 @@ class GameViewController: UIViewController, Scene2Delegate {
                 
                 // Play the door opening sound
                 if let doorNode = gameScene.rootNode.childNode(withName: "doorToilet", recursively: true) {
-                    attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 3, delay: 0)
+                    attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 1, delay: 0)
                 }
                 
                 // Display the loading screen
@@ -414,7 +414,7 @@ class GameViewController: UIViewController, Scene2Delegate {
                 
                 // Play the door opening sound
                 if let doorNode = gameScene.rootNode.childNode(withName: "doorFamilyRoom", recursively: true) {
-                    attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 3, delay: 0)
+                    attachAudio(to: doorNode, audioFileName: "doorOpen.MP3", volume: 1, delay: 0)
                 }
                 
                 // Display the loading screen
@@ -647,7 +647,11 @@ class GameViewController: UIViewController, Scene2Delegate {
                                     
                                     // Start the slideshow after a delay
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) { [weak self] in
-                                        gameScene.setupAndStartSlideshow(on: self?.view ?? UIView())
+                                        if (GameViewController.isGrandmaPicked && GameViewController.isCauseCorrect) ||
+                                            GameViewController.isAyuPicked || GameViewController.isRezaPicked {                        DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) { [weak self] in
+                                                gameScene.setupAndStartSlideshow(on: self!.view!)
+                                            }
+                                        }
                                     }
                                     
                                     print("Scene12 successfully loaded.")

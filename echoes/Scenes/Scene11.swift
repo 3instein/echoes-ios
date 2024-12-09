@@ -280,7 +280,6 @@ class Scene11: SCNScene, SCNPhysicsContactDelegate {
         }
     }
     
-    
     var isTappedOnce = false // Flag to track if any image has been tapped
     
     @objc func handleCharacterTap(_ sender: UITapGestureRecognizer) {

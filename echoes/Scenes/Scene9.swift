@@ -36,7 +36,7 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
     let winningPoint = SCNVector3(-41.819, 741.735, 35.809)
     let winningDistanceThreshold: Float = 5.0
     
-    private let proximityThreshold: Float = 50.0
+    private let proximityThreshold: Float = 100.0
     
     init(lightNode: SCNNode, scnView: SCNView) {
         self.scnView = scnView
@@ -821,57 +821,65 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
     }
     
     func transitionToScene10() {
-        guard let scnView = self.scnView else {
-            print("Error: SCNView not found.")
-            return
-        }
-        
-        // Show loading screen
-        let loadingView = LoadingView(frame: scnView.bounds)
-        scnView.addSubview(loadingView)
-        
-        loadingView.fadeIn { [weak self] in
-            guard let self = self else { return }
+            guard let scnView = self.scnView else {
+                print("Error: SCNView not found.")
+                return
+            }
             
-            SceneManager.shared.cleanupCurrentScene()
+            DispatchQueue.main.async {
+                UIView.animate(withDuration: 0.3, animations: {
+                    self.playButton?.alpha = 0.0
+                }, completion: { _ in
+                    self.playButton?.isHidden = true
+                })
+            }
             
-            AssetPreloader.preloadScene10 { success in
-                DispatchQueue.main.async {
-                    loadingView.stopLoading()
-                    
-                    if success {
-                        print("Scene10 assets loaded successfully.")
-                        SceneManager.shared.loadScene10()
+            // Show loading screen
+            let loadingView = LoadingView(frame: scnView.bounds)
+            scnView.addSubview(loadingView)
+            
+            loadingView.fadeIn { [weak self] in
+                guard let self = self else { return }
+                
+                SceneManager.shared.cleanupCurrentScene()
+                
+                AssetPreloader.preloadScene10 { success in
+                    DispatchQueue.main.async {
+                        loadingView.stopLoading()
                         
-                        if let gameScene = scnView.scene as? Scene10 {
-                            GameViewController.playerEntity = gameScene.playerEntity
+                        if success {
+                            print("Scene10 assets loaded successfully.")
+                            SceneManager.shared.loadScene10()
                             
-                            let movementComponent = MovementComponent(
-                                playerNode: gameScene.playerEntity.playerNode!,
-                                cameraNode: gameScene.cameraNode,
-                                lightNode: gameScene.lightNode
-                            )
-                            GameViewController.playerEntity.movementComponent = movementComponent
-                            
-                            if let movementComponent = gameScene.playerEntity.movementComponent {
-                                movementComponent.joystickComponent = GameViewController.joystickComponent
+                            if let gameScene = scnView.scene as? Scene10 {
+                                GameViewController.playerEntity = gameScene.playerEntity
                                 
-                                if let scnScene = self.scnView?.scene {
-                                    scnScene.physicsWorld.contactDelegate = movementComponent
+                                let movementComponent = MovementComponent(
+                                    playerNode: gameScene.playerEntity.playerNode!,
+                                    cameraNode: gameScene.cameraNode,
+                                    lightNode: gameScene.lightNode
+                                )
+                                GameViewController.playerEntity.movementComponent = movementComponent
+                                
+                                if let movementComponent = gameScene.playerEntity.movementComponent {
+                                    movementComponent.joystickComponent = GameViewController.joystickComponent
+                                    
+                                    if let scnScene = self.scnView?.scene {
+                                        scnScene.physicsWorld.contactDelegate = movementComponent
+                                    }
                                 }
+                                
+                                gameScene.setupGestureRecognizers(for: scnView)
+                            } else {
+                                print("Error: Scene10 not loaded correctly.")
                             }
-                            
-                            gameScene.setupGestureRecognizers(for: scnView)
                         } else {
-                            print("Error: Scene10 not loaded correctly.")
+                            print("Error: Failed to preload Scene10.")
                         }
-                    } else {
-                        print("Error: Failed to preload Scene10.")
                     }
                 }
             }
         }
-    }
     
     private func showWinningMessage() {
         guard let view = scnView else { return }
@@ -958,9 +966,10 @@ class Scene9: SCNScene, SCNPhysicsContactDelegate {
                                 self.scnView?.scene?.physicsWorld.contactDelegate = movementComponent
                             }
                             
+                            // Set up fog properties for the scene
                             gameScene.fogStartDistance = 25.0
                             gameScene.fogEndDistance = 300.0
-                            gameScene.fogDensityExponent = 0.3
+                            gameScene.fogDensityExponent = 0.2
                             gameScene.fogColor = UIColor.black
                             gameScene.setupGestureRecognizers(for: self.scnView ?? UIView())
                         }
